@@ -23,8 +23,8 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibDeflate\LibDeflate.lua
 Libs\LibSerialize\LibSerialize.lua
 
-Init.lua
 ModuleRegistry.lua
+Init.lua
 Locale_enUS.lua
 logger.lua
 util.lua
