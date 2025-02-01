@@ -23,11 +23,13 @@ Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibDeflate\LibDeflate.lua
 Libs\LibSerialize\LibSerialize.lua
 
+logger.lua
+util.lua
 core.lua
 config.lua
 events.lua
 history.lua
 notifications.lua
-util.lua
 ui.lua
 SleekChat.lua
+

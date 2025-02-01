@@ -1,28 +1,24 @@
 -- logger.lua
-local Util = require("Util") or _G.SleekChat.Util
+if not _G.SleekChat then _G.SleekChat = {} end
+if _G.SleekChat.Logger and _G.SleekChat.Logger._loaded then return end
+_G.SleekChat.Logger = _G.SleekChat.Logger or {}
+local Logger = _G.SleekChat.Logger
 
-local Logger = Util.singleton("Logger", function()
-    local self = {}
+function Logger:Info(message)
+    print("|cff00ff00[INFO]|r " .. tostring(message))
+end
 
-    function self:Info(message)
-        print("|cff00ff00[INFO]|r " .. tostring(message))
-    end
+function Logger:Warn(message)
+    print("|cffffff00[WARN]|r " .. tostring(message))
+end
 
-    function self:Warn(message)
-        print("|cffffff00[WARN]|r " .. tostring(message))
-    end
+function Logger:Error(message)
+    print("|cffff0000[ERROR]|r " .. tostring(message))
+end
 
-    function self:Error(message)
-        print("|cffff0000[ERROR]|r " .. tostring(message))
-    end
+function Logger:Debug(message)
+    -- Debug logs for development; adjust as needed.
+    self:Info("[DEBUG] " .. tostring(message))
+end
 
-    function self:Debug(message)
-        if _G.SleekChat and _G.SleekChat.db and _G.SleekChat.db.profile and _G.SleekChat.db.profile.debug then
-            print("|cff00ffff[DEBUG]|r " .. tostring(message))
-        end
-    end
-
-    return self
-end)
-
-return Logger
+Logger._loaded = true

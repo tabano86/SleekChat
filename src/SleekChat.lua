@@ -1,31 +1,25 @@
 -- SleekChat.lua
+if not _G.SleekChat then _G.SleekChat = {} end
 local AceAddon = LibStub("AceAddon-3.0")
 local addon = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 
-local Util = require("Util") or _G.SleekChat.Util
-local Logger = require("Logger") or _G.SleekChat.Logger
+-- Ensure that all modules are attached to _G.SleekChat.
+local Util   = _G.SleekChat.Util
+local Logger = _G.SleekChat.Logger
+local Core   = _G.SleekChat.Core
+local Config = _G.SleekChat.Config
+local Events = _G.SleekChat.Events
+local History= _G.SleekChat.History
+local UI     = _G.SleekChat.UI
 
--- Load all modules as singletons.
-local Core          = require("Core")
-local Config        = require("Config")
-local Events        = require("Events")
-local History       = require("History")
-local Notifications = require("Notifications")
-local UI            = require("UI")
+Logger:Debug("SleekChat Loading...")
 
--- Resource loader: preload modules and attach to global namespace.
-local function loadStubs()
-    if not SleekChat then _G.SleekChat = {} end
-    SleekChat.Core = Core
-    SleekChat.Config = Config
-    SleekChat.Events = Events
-    SleekChat.History = History
-    SleekChat.Notifications = Notifications
-    SleekChat.UI = UI
-    Logger:Debug("Global stubs loaded.")
-end
-
-loadStubs()
+-- Defensive checks (you may remove these in production).
+if not Core then error("Core module not loaded. Check your .toc order!") end
+if not History then error("History module not loaded. Check your .toc order!") end
+if not Config then error("Config module not loaded. Check your .toc order!") end
+if not Events then error("Events module not loaded. Check your .toc order!") end
+if not UI then error("UI module not loaded. Check your .toc order!") end
 
 function addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("SleekChatDB", Core.getDefaults(), true)
@@ -51,7 +45,7 @@ function addon:OnAddonMessage(event, prefix, message, channel, sender)
 end
 
 function addon:ChatCommand(input)
-    input = (input or ""):trim():lower()
+    input = Util.trim(input or ""):lower()
     if input == "" or input == "config" then
         LibStub("AceConfigDialog-3.0"):Open("SleekChat")
     elseif input == "reset" then
@@ -64,3 +58,4 @@ function addon:ChatCommand(input)
 end
 
 _G.SleekChat = addon
+Logger:Debug("SleekChat Loaded!")
