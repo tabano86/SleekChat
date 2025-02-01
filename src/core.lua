@@ -19,7 +19,7 @@ function Core.getDefaults()
             bgColor = { r = 0.1, g = 0.1, b = 0.1, a = 0.8 },
             width = 600,
             height = 350,
-            position = { "CENTER", UIParent, "CENTER", 0, 0 },
+            position = { "CENTER", "UIParent", "CENTER", 0, 0 },
             historySize = 500,
             tabs = { "SAY", "YELL", "PARTY", "GUILD", "RAID", "WHISPER" },
             debug = false,

@@ -24,9 +24,8 @@ Libs\Ace3\AceTimer-3.0\AceTimer-3.0.lua
 Libs\Ace3\AceHook-3.0\AceHook-3.0.lua
 Libs\Ace3\AceLocale-3.0\AceLocale-3.0.lua
 
-ModuleRegistry.lua
 Init.lua
-Locale_enUS.lua
+ModuleRegistry.lua
 logger.lua
 util.lua
 core.lua
@@ -35,4 +34,5 @@ history.lua
 notifications.lua
 config.lua
 ui.lua
+Locale_enUS.lua
 SleekChat.lua

@@ -22,7 +22,7 @@ end
 -- Use the real locale table if it exists; otherwise, fall back.
 local L = _G.SleekChat.L or createDummyLocale()
 
-function Config.generateOptions(getter, setter)
+function Config.generateOptions(instance, getter, setter)
     return {
         name = "SleekChat",
         type = "group",
@@ -92,13 +92,13 @@ function Config.generateOptions(getter, setter)
                         name = L["Background Color"],
                         hasAlpha = true,
                         get = function()
-                            local c = _G.SleekChat.db.profile.bgColor
+                            local c = instance.db.profile.bgColor
                             return c.r or 0, c.g or 0, c.b or 0, c.a or 1
                         end,
                         set = function(_, r, g, b, a)
-                            _G.SleekChat.db.profile.bgColor = { r = r, g = g, b = b, a = a }
-                            if _G.SleekChat.UI and _G.SleekChat.UI.UpdateBackground then
-                                _G.SleekChat.UI.UpdateBackground(_G.SleekChat)
+                            instance.db.profile.bgColor = { r = r, g = g, b = b, a = a }
+                            if instance.UI and instance.UI.UpdateBackground then
+                                instance.UI.UpdateBackground(instance)
                             end
                         end,
                         order = 3,
@@ -121,7 +121,7 @@ function Config.Setup(instance, configGenerator)
             instance:ApplySettings()
         end
     end
-    local options = configGenerator(getter, setter)
+    local options = configGenerator(instance, getter, setter)
     AceConfig:RegisterOptionsTable("SleekChat", options)
     AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
     Logger:Debug("Config.Setup completed.")
