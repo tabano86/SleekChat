@@ -1,28 +1,25 @@
-SleekChatEvents = {
-    events = {
-        "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_GUILD",
-        "CHAT_MSG_OFFICER", "CHAT_MSG_PARTY", "CHAT_MSG_RAID",
-        "CHAT_MSG_WHISPER", "CHAT_MSG_CHANNEL",
-    }
-}
+-- events.lua
+-- Events module. Its primary function is pure: processing chat messages and returning a message data table.
+local Events = {}
 
-function SleekChatEvents:Initialize()
-    for _, event in ipairs(self.events) do
-        SleekChat:RegisterEvent(event, function(...) self:OnEvent(event, ...) end)
+function Events.ProcessMessage(prefix, message, channel, sender, profile)
+    -- For testability, the GUID is omitted (or can be passed in).
+    local guid = nil
+    local class = nil
+    if guid and guid ~= "" then
+        local _, engClass = GetPlayerInfoByGUID(guid)
+        class = engClass or nil
     end
+
+    local msgData = {
+        text    = message,
+        sender  = sender,
+        channel = (channel:match("CHAT_MSG_(.*)") or channel),
+        class   = class,
+        time    = os.date(profile.timestampFormat or "[%H:%M]"),
+    }
+    return msgData
 end
 
-function SleekChatEvents:OnEvent(event, msg, sender, _, _, _, _, _, _, _, _, guid)
-    local channel = event:match("CHAT_MSG_(.*)")
-    local class = guid and select(2, GetPlayerInfoByGUID(guid))
-
-    SleekChatHistory:AddMessage({
-        text = msg,
-        sender = sender,
-        channel = channel,
-        class = class,
-        time = time(),
-    })
-
-    SleekChatUI:AddMessage(sender, msg, channel, class)
-end
+SleekChat = SleekChat or {}
+SleekChat.Events = Events

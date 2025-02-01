@@ -1,40 +1,32 @@
 -- history.lua
-SleekChatHistory = {}
-local History = SleekChatHistory
+-- History module for storing and retrieving chat messages.
+local History = {}
 
-function History:InitializeHistory()
-    self.history = {}  -- Local buffer for messages.
-    SleekChatUtil:Log("History module initialized.", "DEBUG")
-end
-
-function History:AddToHistory(message)
-    table.insert(self.history, message)
-    local maxSize = SleekChat.db.profile.messageHistorySize or 1000
-    if #self.history > maxSize then
-        table.remove(self.history, 1)
+function History.Initialize(instance)
+    instance.history = { messages = {} }
+    instance.history.maxSize = instance.db.profile.historySize
+    if instance.db.profile.debug then
+        instance:Print("History module initialized with maxSize " .. instance.history.maxSize)
     end
-    SleekChatUtil:Log("Message added to history. Total messages: " .. #self.history, "DEBUG")
 end
 
-function History:GetHistory()
-    return self.history
-end
-
-function History:SearchHistory(query)
-    local results = {}
-    if query and query ~= "" then
-        local lowerQuery = query:lower()
-        for _, msg in ipairs(self.history) do
-            if (msg.text and msg.text:lower():find(lowerQuery)) or
-                    (msg.sender and msg.sender:lower():find(lowerQuery)) then
-                table.insert(results, msg)
-            end
-        end
+function History.AddMessage(instance, msg)
+    table.insert(instance.history.messages, msg)
+    while #instance.history.messages > instance.history.maxSize do
+        table.remove(instance.history.messages, 1)
     end
-    return results
+    if instance.db.profile.debug then
+        instance:Print("Added message. Total messages: " .. #instance.history.messages)
+    end
 end
 
-function History:ClearHistory()
-    self.history = {}
-    SleekChatUtil:Log("History cleared.", "DEBUG")
+function History.GetMessages(instance)
+    return instance.history.messages
 end
+
+function History.Clear(instance)
+    instance.history.messages = {}
+end
+
+SleekChat = SleekChat or {}
+SleekChat.History = History

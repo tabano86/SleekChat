@@ -1,28 +1,18 @@
 -- util.lua
-SleekChatUtil = {}
-local util = SleekChatUtil
+-- Utility module with pure helper functions.
+local Util = {}
 
-function util:Log(msg, level)
-    level = level or "INFO"
-    if SleekChat and SleekChat.db and SleekChat.db.profile.debug then
-        print(string.format("[%s][SleekChat]: %s", level, msg))
-    end
+function Util.trim(s)
+    return s:match("^%s*(.-)%s*$")
 end
 
-function util:SafeCall(func, ...)
-    if type(func) == "function" then
-        local success, result = pcall(func, ...)
-        if not success then
-            self:Log("Error in function call: " .. tostring(result), "ERROR")
-        end
-        return success, result
-    end
-    return false, nil
+function Util.ColorizeHex(color, text)
+    return string.format("|cff%02x%02x%02x%s|r",
+            math.floor(color.r * 255),
+            math.floor(color.g * 255),
+            math.floor(color.b * 255),
+            text)
 end
 
-
-function SleekChatUtil:Debug(...)
-    if SleekChat.db.profile.debug then
-        print("|cff33ff99SleekChat|r:", ...)
-    end
-end
+SleekChat = SleekChat or {}
+SleekChat.Util = Util

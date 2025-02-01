@@ -1,254 +1,127 @@
 -- ui.lua
-SleekChatUI = {}
-local UI = SleekChatUI
-local TAB_PADDING = 12  -- Extra pixels for tab width
+-- UI module. Contains functions for creating and updating the main UI.
+local UI = {}
 
-function UI:InitializeUI()
-    -- Main chat frame.
-    UI.frame = CreateFrame("Frame", "SleekChat_MainFrame", UIParent, "BackdropTemplate")
-    UI.frame:SetSize(600, 350)
-    UI.frame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 50, 50)
-    UI.frame:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+-- Pure helper: calculates the frame position from a sequential array.
+local function calculateFramePosition(profile)
+    return unpack(profile.position)
+end
+
+function UI.Initialize(instance)
+    -- Create the main frame.
+    instance.UIFrame = CreateFrame("Frame", "SleekChatFrame", UIParent, "BackdropTemplate")
+    instance.UIFrame:SetSize(instance.db.profile.width, instance.db.profile.height)
+    instance.UIFrame:SetPoint(calculateFramePosition(instance.db.profile))
+    instance.UIFrame:SetBackdrop({
+        bgFile   = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+        edgeSize = 16,
+        insets   = { left = 4, right = 4, top = 4, bottom = 4 },
     })
-    UI.frame:SetBackdropColor(
-            SleekChat.db.profile.backgroundColor.r,
-            SleekChat.db.profile.backgroundColor.g,
-            SleekChat.db.profile.backgroundColor.b,
-            SleekChat.db.profile.backgroundColor.a
-    )
-    UI.frame:EnableMouse(true)
-    if SleekChat.db.profile.draggableWindow then
-        UI.frame:SetMovable(true)
-        UI.frame:RegisterForDrag("LeftButton")
-        UI.frame:SetScript("OnDragStart", UI.frame.StartMoving)
-        UI.frame:SetScript("OnDragStop", UI.frame.StopMovingOrSizing)
-    end
-    UI.frame:Show()
-
-    -- Create dynamic tabs.
-    UI:CreateTabs()
-
-    -- Create scroll frame for messages.
-    UI.scrollFrame = CreateFrame("ScrollFrame", "SleekChat_ScrollFrame", UI.frame, "UIPanelScrollFrameTemplate")
-    UI.scrollFrame:SetPoint("TOPLEFT", UI.frame, "TOPLEFT", 10, -50)
-    UI.scrollFrame:SetPoint("BOTTOMRIGHT", UI.frame, "BOTTOMRIGHT", -30, 40)
-    UI.scrollFrame:EnableMouse(true)
-    UI.scrollFrame:SetClipsChildren(true)
-
-    -- Create content frame (the scroll child).
-    UI.content = CreateFrame("Frame", "SleekChat_Content", UI.scrollFrame)
-    UI.content:SetSize(560, 240)
-    UI.scrollFrame:SetScrollChild(UI.content)
-
-    UI.messages = {}
-    UI.messageCount = 0
-
-    -- Create input box.
-    UI.inputBox = CreateFrame("EditBox", "SleekChat_InputBox", UI.frame, "InputBoxTemplate")
-    UI.inputBox:SetSize(560, 24)
-    UI.inputBox:SetPoint("BOTTOMLEFT", UI.frame, "BOTTOMLEFT", 10, 10)
-    UI.inputBox:SetAutoFocus(false)
-    UI.inputBox:SetScript("OnEnterPressed", function(self)
-        UI:ProcessInput(self:GetText())
-        self:SetText("")
-        self:ClearFocus()
+    instance.UIFrame:SetMovable(true)
+    instance.UIFrame:EnableMouse(true)
+    instance.UIFrame:RegisterForDrag("LeftButton")
+    instance.UIFrame:SetScript("OnDragStart", instance.UIFrame.StartMoving)
+    instance.UIFrame:SetScript("OnDragStop", function(frame)
+        frame:StopMovingOrSizing()
+        local point, _, _, x, y = frame:GetPoint()
+        instance.db.profile.position = { point = point, x = x, y = y }
     end)
-    UI.inputHistory = {}
-    UI.historyIndex = 0
-    UI.inputBox:SetScript("OnKeyDown", function(self, key)
-        if key == "UP" then
-            UI:ShowPreviousHistory()
-        elseif key == "DOWN" then
-            UI:ShowNextHistory()
+
+    -- Create Tabs.
+    UI.CreateTabs(instance)
+
+    -- Create Scroll Frame.
+    instance.scrollFrame = CreateFrame("ScrollFrame", "SleekChatScroll", instance.UIFrame, "UIPanelScrollFrameTemplate")
+    instance.scrollFrame:SetPoint("TOPLEFT", 10, -40)
+    instance.scrollFrame:SetPoint("BOTTOMRIGHT", -30, 40)
+    instance.content = CreateFrame("Frame", nil, instance.scrollFrame)
+    instance.content:SetSize(100, 100)
+    instance.scrollFrame:SetScrollChild(instance.content)
+
+    -- Create Input Box.
+    instance.inputBox = CreateFrame("EditBox", "SleekChatInput", instance.UIFrame, "InputBoxTemplate")
+    instance.inputBox:SetSize(instance.UIFrame:GetWidth() - 20, 20)
+    instance.inputBox:SetPoint("BOTTOM", 0, 10)
+    instance.inputBox:SetAutoFocus(false)
+    instance.inputBox:SetScript("OnEnterPressed", function(box)
+        local text = box:GetText()
+        if text and text ~= "" then
+            UI.SendMessage(instance, text)
+            box:SetText("")
         end
     end)
 
-    UI:InitializeHyperlinkHandling()
-    SleekChatUtil:Log("UI initialized.", "DEBUG")
+    UI.UpdateBackground(instance)
 end
 
-function UI:CreateTabs()
-    UI.tabs = {}
-    local tabNames = SleekChat.db.profile.chatTabs.tabOrder or { "SAY", "YELL", "GUILD", "PARTY", "RAID", "WHISPER", "CHANNEL" }
-    local xOffset = 10
-    for _, name in ipairs(tabNames) do
-        -- Create the tab with a unique global name.
-        local tab = CreateFrame("Button", "SleekChat_Tab_" .. name, UI.frame, "OptionsFrameTabButtonTemplate")
-        tab:SetText(name)
-        -- Adjust width based on text.
-        local fs = tab:GetFontString()
-        local textWidth = fs and fs:GetStringWidth() or 50
-        tab:SetWidth(textWidth + TAB_PADDING)
-        tab:SetPoint("TOPLEFT", UI.frame, "TOPLEFT", xOffset, -10)
-        tab:SetScript("OnClick", function() UI:SelectTab(name) end)
-        UI.tabs[name] = tab
-        xOffset = xOffset + tab:GetWidth() - 5  -- slight overlap for aesthetics
+function UI.CreateTabs(instance)
+    instance.tabs = {}
+    local lastTab = nil
+    for i, tabName in ipairs(instance.db.profile.tabs) do
+        local tab = CreateFrame("Button", "SleekChatTab" .. tabName, instance.UIFrame, "CharacterFrameTabButtonTemplate")
+        tab:SetText(tabName)
+        if lastTab then
+            tab:SetPoint("BOTTOMLEFT", lastTab, "BOTTOMRIGHT", 0, 30)
+        else
+            tab:SetPoint("BOTTOMLEFT", instance.UIFrame, "BOTTOMLEFT", 0, 30)
+        end
+        tab:SetScript("OnClick", function()
+            UI.SwitchTab(instance, tabName)
+        end)
+        instance.tabs[tabName] = tab
+        lastTab = tab
     end
-    UI.selectedTab = tabNames[1]
-    UI:HighlightTab(UI.selectedTab)
+    UI.SwitchTab(instance, instance.db.profile.tabs[1])
 end
 
-function UI:SelectTab(tabName)
-    UI:HighlightTab(tabName)
-end
-
-function UI:HighlightTab(tabName)
-    for name, tab in pairs(UI.tabs) do
+function UI.SwitchTab(instance, tabName)
+    instance.currentTab = tabName
+    for name, tab in pairs(instance.tabs) do
         if name == tabName then
             PanelTemplates_SelectTab(tab)
         else
             PanelTemplates_DeselectTab(tab)
         end
     end
-    UI.selectedTab = tabName
-    UI:RefreshMessages()
 end
 
-function UI:UpdateFontSettings()
-    for _, msg in ipairs(UI.messages) do
-        msg.text:SetFont(SleekChat.db.profile.font, SleekChat.db.profile.fontSize)
+function UI.UpdateBackground(instance)
+    local c = instance.db.profile.bgColor
+    if instance.UIFrame then
+        instance.UIFrame:SetBackdropColor(c.r, c.g, c.b, c.a)
     end
 end
 
-function UI:UpdateBackgroundColor()
-    local c = SleekChat.db.profile.backgroundColor
-    UI.frame:SetBackdropColor(c.r, c.g, c.b, c.a)
+function UI.AddMessage(instance, msg)
+    instance.UIFrame.messages = instance.UIFrame.messages or {}
+    local offset = (#instance.UIFrame.messages) * 20
+    local frame = CreateFrame("Frame", nil, instance.content)
+    frame:SetSize(instance.content:GetWidth(), 20)
+    frame:SetPoint("TOPLEFT", 0, -offset)
+    local text = frame:CreateFontString(nil, "OVERLAY")
+    text:SetFont(instance.db.profile.font, instance.db.profile.fontSize)
+    text:SetPoint("LEFT")
+    text:SetJustifyH("LEFT")
+    if instance.db.profile.classColors and msg.class and RAID_CLASS_COLORS[msg.class] then
+        local color = RAID_CLASS_COLORS[msg.class]
+        text:SetTextColor(color.r, color.g, color.b)
+    end
+    if instance.db.profile.urlDetection then
+        msg.text = msg.text:gsub("([wW][wW][wW]%.[%w_-]+%.%S+)", "|cff00ffff|Hurl:%1|h[%1]|h|r")
+    end
+    text:SetText(string.format("%s %s: %s", msg.time, msg.sender, msg.text))
+    table.insert(instance.UIFrame.messages, frame)
+    instance.scrollFrame:SetVerticalScroll(#instance.UIFrame.messages * 20)
 end
 
-function UI:UpdateDraggable()
-    if SleekChat.db.profile.draggableWindow then
-        UI.frame:SetMovable(true)
-        UI.frame:RegisterForDrag("LeftButton")
+function UI.SendMessage(instance, text)
+    if instance.currentTab == "WHISPER" then
+        SendChatMessage(text, "WHISPER", nil, UnitName("target"))
     else
-        UI.frame:SetMovable(false)
-        UI.frame:EnableMouse(false)
+        SendChatMessage(text, instance.currentTab)
     end
 end
 
-function UI:ProcessInput(text)
-    if text and text ~= "" then
-        table.insert(UI.inputHistory, text)
-        UI.historyIndex = #UI.inputHistory + 1
-        if text:sub(1, 1) == "/" then
-            ChatEdit_SendText(UI.inputBox, 0)
-        else
-            UI:AddMessage("You", text, UI.selectedTab)
-            if UI.selectedTab == "SAY" then
-                SendChatMessage(text, "SAY")
-            elseif UI.selectedTab == "YELL" then
-                SendChatMessage(text, "YELL")
-            elseif UI.selectedTab == "GUILD" then
-                SendChatMessage(text, "GUILD")
-            elseif UI.selectedTab == "PARTY" then
-                SendChatMessage(text, "PARTY")
-            elseif UI.selectedTab == "RAID" then
-                SendChatMessage(text, "RAID")
-            elseif UI.selectedTab == "WHISPER" then
-                SendChatMessage(text, "WHISPER", nil, "target")
-            else
-                SendChatMessage(text, "CHANNEL")
-            end
-        end
-    end
-end
-
-function UI:ShowPreviousHistory()
-    if #UI.inputHistory > 0 then
-        UI.historyIndex = math.max(1, UI.historyIndex - 1)
-        UI.inputBox:SetText(UI.inputHistory[UI.historyIndex])
-    end
-end
-
-function UI:ShowNextHistory()
-    if #UI.inputHistory > 0 then
-        UI.historyIndex = math.min(#UI.inputHistory, UI.historyIndex + 1)
-        UI.inputBox:SetText(UI.inputHistory[UI.historyIndex])
-    end
-end
-
-function UI:AddMessage(sender, text, channel)
-    UI.messageCount = UI.messageCount + 1
-    local yOffset = (UI.messageCount - 1) * 20
-    local msgFrame = CreateFrame("Frame", nil, UI.content)
-    msgFrame:SetSize(560, 20)
-    msgFrame:SetPoint("TOPLEFT", UI.content, "TOPLEFT", 0, -yOffset)
-    local msgText = msgFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    msgText:SetAllPoints()
-    msgText:SetJustifyH("LEFT")
-    msgText:SetFont(SleekChat.db.profile.font, SleekChat.db.profile.fontSize)
-
-    local timestamp = ""
-    if SleekChat.db.profile.showTimestamps then
-        timestamp = date("[%H:%M:%S] ")
-    end
-    local formattedText = string.format("%s[%s] %s: %s", timestamp, channel, sender, text)
-    msgText:SetText(formattedText)
-
-    -- If the fontstring supports hyperlink enabling, call it.
-    if msgText.SetHyperlinksEnabled then
-        msgText:SetHyperlinksEnabled(true)
-    end
-
-    -- Right-click for additional actions.
-    msgText:SetScript("OnMouseDown", function(self, button)
-        if button == "RightButton" then
-            SleekChat:Print("Right-click on message: " .. formattedText)
-        end
-    end)
-
-    table.insert(UI.messages, { frame = msgFrame, text = msgText, channel = channel })
-    UI:RefreshMessages()
-    SleekChatHistory:AddToHistory({ sender = sender, text = text, channel = channel })
-    SleekChatNotifications:ShowNotification("New message from " .. sender)
-end
-
-function UI:RefreshMessages()
-    if not UI.content then
-        SleekChatUtil:Log("UI.content is nil in RefreshMessages", "ERROR")
-        return
-    end
-    UI.content:Hide()
-    UI.content:Show()
-    local y = 0
-    for _, msg in ipairs(UI.messages) do
-        if msg.channel == UI.selectedTab then
-            msg.frame:ClearAllPoints()
-            msg.frame:SetPoint("TOPLEFT", UI.content, "TOPLEFT", 0, -y)
-            msg.frame:Show()
-            y = y + 20
-        else
-            msg.frame:Hide()
-        end
-    end
-end
-
-function UI:InitializeHyperlinkHandling()
-    hooksecurefunc("SetItemRef", function(link, text, button)
-        if link:sub(1, 6) == "Sleek:" then
-            UI:HandleCustomLink(link, text, button)
-        end
-    end)
-end
-
-function UI:HandleHyperlink(link, text, button)
-    if link:find("item:") then
-        GameTooltip:SetOwner(UI.frame, "ANCHOR_CURSOR")
-        GameTooltip:SetHyperlink(link)
-        GameTooltip:Show()
-    elseif link:find("player:") then
-        local playerName = link:match("player:(.+)")
-        if playerName then
-            NotifyInspect(playerName)
-        end
-    else
-        SetItemRef(link, text, button)
-    end
-end
-
-function UI:HandleCustomLink(link, text, button)
-    SleekChat:Print("Custom link clicked: " .. link)
-end
+SleekChat = SleekChat or {}
+SleekChat.UI = UI

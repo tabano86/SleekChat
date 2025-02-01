@@ -1,16 +1,16 @@
 -- notifications.lua
-SleekChatNotifications = {}
-local Notifications = SleekChatNotifications
+-- Notifications module. Contains functions to show and fade out notifications.
+local Notifications = {}
 
-function Notifications:InitializeNotifications()
-    self.activeNotifications = {}
-    SleekChatUtil:Log("Notifications module initialized.", "DEBUG")
+function Notifications.Initialize(instance)
+    instance.notifications = { active = {} }
+    if instance.db.profile.debug then
+        instance:Print("Notifications module initialized.")
+    end
 end
 
-function Notifications:ShowNotification(message)
-    if not SleekChat.db.profile.enableNotifications then
-        return
-    end
+function Notifications.ShowNotification(instance, message)
+    if not instance.db.profile.enableNotifications then return end
 
     local notif = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     notif:SetSize(250, 40)
@@ -29,25 +29,27 @@ function Notifications:ShowNotification(message)
     notif.text = text
 
     notif:Show()
-    table.insert(self.activeNotifications, notif)
-    SleekChatUtil:Log("Notification shown: " .. message, "DEBUG")
+    table.insert(instance.notifications.active, notif)
+
+    if instance.db.profile.debug then
+        instance:Print("Notification shown: " .. message)
+    end
 
     C_Timer.After(3, function()
-        self:FadeOut(notif, 1)
+        Notifications.FadeOut(instance, notif, 1)
     end)
 end
 
-function Notifications:FadeOut(frame, duration)
+function Notifications.FadeOut(instance, frame, duration)
     if not frame then return end
-    -- Use Blizzard's UIFrameFade functions with a finished callback to remove the frame.
     frame.fadeInfo = {
         mode         = "OUT",
         timeToFade   = duration,
         finishedFunc = function()
             frame:Hide()
-            for i, f in ipairs(self.activeNotifications) do
+            for i, f in ipairs(instance.notifications.active) do
                 if f == frame then
-                    table.remove(self.activeNotifications, i)
+                    table.remove(instance.notifications.active, i)
                     break
                 end
             end
@@ -55,3 +57,6 @@ function Notifications:FadeOut(frame, duration)
     }
     UIFrameFade(frame, frame.fadeInfo)
 end
+
+SleekChat = SleekChat or {}
+SleekChat.Notifications = Notifications

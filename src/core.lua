@@ -1,46 +1,72 @@
-local defaults = {
-    profile = {
-        hideDefaultChat = true,
-        classColors = true,
-        showTimestamps = true,
-        timestampFormat = "%H:%M",
-        urlDetection = true,
-        font = "Friz Quadrata TT",
-        fontSize = 12,
-        backgroundColor = {r=0,g=0,b=0,a=0.8},
-        windowWidth = 600,
-        windowHeight = 350,
-        messageHistory = 1000,
-    },
-}
+-- core.lua
+-- Core module: handles defaults, initialization, and applying settings.
+local Core = {}
 
-function SleekChat:OnInitialize()
-    self.db = LibStub("AceDB-3.0"):New("SleekChatDB", defaults)
-    self:SetupDefaultUI()
-    self:RegisterChatCommand("sc", "HandleCommand")
+-- Pure function: returns the defaults table.
+function Core.getDefaults()
+    return {
+        profile = {
+            hideDefault   = true,
+            classColors   = true,
+            timestamps    = true,
+            timestampFormat = "[%H:%M]",
+            urlDetection  = true,
+            font          = "Fonts\\FRIZQT__.TTF",
+            fontSize      = 12,
+            bgColor       = { r = 0.1, g = 0.1, b = 0.1, a = 0.8 },
+            width         = 600,
+            height        = 350,
+            position      = {"CENTER", nil, "CENTER", 0, 0},
+            historySize   = 500,
+            tabs          = {"SAY", "YELL", "PARTY", "GUILD", "RAID", "WHISPER"},
+            debug         = false,
+            enableNotifications = true,
+        }
+    }
 end
 
-function SleekChat:OnEnable()
-    SleekChatUI:Initialize()
-    SleekChatEvents:Initialize()
-    SleekChatHistory:Initialize()
+-- Pure function: compute desired actions based on profile.
+function Core.computeActions(profile)
+    local actions = {}
+    actions.hideChatFrames = profile.hideDefault
+    return actions
 end
 
-function SleekChat:HandleCommand(input)
-    if input == "reset" then
-        self.db:ResetProfile()
-        self:Print("Settings reset to defaults")
+-- Side-effect function: apply settings to the environment.
+function Core.ApplySettings(instance)
+    local actions = Core.computeActions(instance.db.profile)
+    if actions.hideChatFrames then
+        for i = 1, NUM_CHAT_WINDOWS do
+            if _G["ChatFrame" .. i] then
+                _G["ChatFrame" .. i]:Hide()
+            end
+        end
     else
-        InterfaceOptionsFrame_OpenToCategory("SleekChat")
-    end
-end
-
-function SleekChat:SetupDefaultUI()
-    for i = 1, NUM_CHAT_WINDOWS do
-        if self.db.profile.hideDefaultChat then
-            _G["ChatFrame"..i]:Hide()
-        else
-            _G["ChatFrame"..i]:Show()
+        for i = 1, NUM_CHAT_WINDOWS do
+            if _G["ChatFrame" .. i] then
+                _G["ChatFrame" .. i]:Show()
+            end
         end
     end
+    if instance.db.profile.debug then
+        instance:Print("Applied settings: hideChatFrames = " .. tostring(actions.hideChatFrames))
+    end
 end
+
+-- Initialization function that accepts the addon instance.
+function Core.Initialize(instance)
+    if instance.db.profile.debug then
+        instance:Print("Core module initialized.")
+    end
+end
+
+-- Enable function (can include further logic as needed).
+function Core.Enable(instance)
+    if instance.db.profile.debug then
+        instance:Print("Core module enabled.")
+    end
+end
+
+Core.ApplySettings = Core.ApplySettings
+SleekChat = SleekChat or {}
+SleekChat.Core = Core
