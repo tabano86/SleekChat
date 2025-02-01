@@ -5,7 +5,7 @@ local AceAddon = LibStub("AceAddon-3.0")
 local addon = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 
 -- Make sure we always have a global table available to attach our modules.
-_G.SleekChat = _G.SleekChat or {}
+SleekChat = _G.SleekChat or {}
 
 -- Ensure our modules exist before we call them:
 SleekChat.Core      = SleekChat.Core      or {}
