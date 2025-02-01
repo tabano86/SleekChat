@@ -5,24 +5,9 @@ _G.SleekChat.Config = _G.SleekChat.Config or {}
 local Config = _G.SleekChat.Config
 local Logger = _G.SleekChat.Logger
 local Util = _G.SleekChat.Util
+local L = _G.SleekChat.L or error("Locale not loaded; check .toc order!")
 
 Logger:Debug("Config Loading...")
-
--- Register the default locale.
-local L = LibStub("AceLocale-3.0"):NewLocale("SleekChat", "enUS", true)
-if not L then return end  -- if already registered, exit to avoid duplicate default locale registration
-
-L["General"]           = "General"
-L["Hide Default Chat"] = "Hide Default Chat"
-L["Class Colors"]      = "Class Colors"
-L["Timestamps"]        = "Timestamps"
-L["URL Detection"]     = "URL Detection"
-L["Appearance"]        = "Appearance"
-L["Font"]              = "Font"
-L["Font Size"]         = "Font Size"
-L["Background Color"]  = "Background Color"
-
-Logger:Debug("Config module loaded with locale strings.")
 
 function Config.generateOptions(getter, setter)
     return {
@@ -131,3 +116,5 @@ end
 
 Logger:Debug("Config Loaded!")
 Config._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("Config", Config)

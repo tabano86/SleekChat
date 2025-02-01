@@ -17,8 +17,13 @@ function Logger:Error(message)
 end
 
 function Logger:Debug(message)
-    -- Debug logs for development; adjust as needed.
     self:Info("[DEBUG] " .. tostring(message))
 end
 
 Logger._loaded = true
+local registry = _G.SleekChat.Modules
+if registry then
+    registry:register("Logger", Logger)
+else
+    error("Global Modules registry not defined in logger.lua. Check Init.lua and .toc order.")
+end

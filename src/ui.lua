@@ -109,7 +109,7 @@ function UI.RefreshMessages(instance)
         end
     end
     instance.Content.children = {}
-    local messages = _G.SleekChat.History.GetMessages(instance, instance.currentTab) or {}
+    local messages = _G.SleekChat.Modules:get("History").GetMessages(instance, instance.currentTab) or {}
     local yOffset = 0
     for i, msg in ipairs(messages) do
         local frame = UI.CreateMessageFrame(instance, msg, yOffset)
@@ -199,3 +199,5 @@ end
 
 Logger:Debug("UI Loaded!")
 UI._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("UI", UI)

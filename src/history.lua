@@ -28,7 +28,7 @@ function History.AddMessage(instance, msg)
     if #instance.history.messages[channel] > instance.history.maxSize then
         table.remove(instance.history.messages[channel])
     end
-    Logger:Debug("Added message to " .. channel .. ". Total messages: " .. #instance.history.messages[channel])
+    Logger:Debug("Added message to " .. channel)
 end
 
 function History.GetMessages(instance, tabName)
@@ -47,3 +47,5 @@ end
 
 Logger:Debug("History Loaded!")
 History._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("History", History)

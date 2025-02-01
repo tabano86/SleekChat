@@ -1,8 +1,7 @@
 -- core.lua
 if not _G.SleekChat then _G.SleekChat = {} end
 if _G.SleekChat.Core and _G.SleekChat.Core._loaded then return end
-_G.SleekChat.Core = _G.SleekChat.Core or {}
-local Core = _G.SleekChat.Core
+local Core = {}  -- local module table
 local Logger = _G.SleekChat.Logger
 
 Logger:Debug("Core Loading...")
@@ -64,3 +63,5 @@ end
 
 Logger:Debug("Core Loaded!")
 Core._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("Core", Core)

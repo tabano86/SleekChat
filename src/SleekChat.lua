@@ -3,23 +3,17 @@ if not _G.SleekChat then _G.SleekChat = {} end
 local AceAddon = LibStub("AceAddon-3.0")
 local addon = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 
--- Ensure that all modules are attached to _G.SleekChat.
-local Util   = _G.SleekChat.Util
-local Logger = _G.SleekChat.Logger
-local Core   = _G.SleekChat.Core
-local Config = _G.SleekChat.Config
-local Events = _G.SleekChat.Events
-local History= _G.SleekChat.History
-local UI     = _G.SleekChat.UI
+-- Retrieve modules from the global registry.
+local Modules = _G.SleekChat.Modules or error("Modules registry missing. Check Init.lua and .toc order!")
+local Util   = Modules:get("Util") or error("Util module missing. Check .toc order!")
+local Logger = Modules:get("Logger") or error("Logger module missing. Check .toc order!")
+local Core   = Modules:get("Core") or error("Core module missing. Check .toc order!")
+local Config = Modules:get("Config") or error("Config module missing. Check .toc order!")
+local Events = Modules:get("Events") or error("Events module missing. Check .toc order!")
+local History= Modules:get("History") or error("History module missing. Check .toc order!")
+local UI     = Modules:get("UI") or error("UI module missing. Check .toc order!")
 
 Logger:Debug("SleekChat Loading...")
-
--- Defensive checks (you may remove these in production).
-if not Core then error("Core module not loaded. Check your .toc order!") end
-if not History then error("History module not loaded. Check your .toc order!") end
-if not Config then error("Config module not loaded. Check your .toc order!") end
-if not Events then error("Events module not loaded. Check your .toc order!") end
-if not UI then error("UI module not loaded. Check your .toc order!") end
 
 function addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("SleekChatDB", Core.getDefaults(), true)
@@ -58,4 +52,6 @@ function addon:ChatCommand(input)
 end
 
 _G.SleekChat = addon
+local registry = _G.SleekChat.Modules
+registry:register("SleekChat", addon)
 Logger:Debug("SleekChat Loaded!")

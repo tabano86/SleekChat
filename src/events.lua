@@ -27,3 +27,5 @@ end
 
 Logger:Debug("Events Loaded!")
 Events._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("Events", Events)

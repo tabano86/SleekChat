@@ -56,3 +56,5 @@ end
 
 Logger:Debug("Notifications Loaded!")
 Notifications._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("Notifications", Notifications)

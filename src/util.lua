@@ -3,11 +3,10 @@ if not _G.SleekChat then _G.SleekChat = {} end
 if _G.SleekChat.Util and _G.SleekChat.Util._loaded then return end
 _G.SleekChat.Util = _G.SleekChat.Util or {}
 local Util = _G.SleekChat.Util
-local Logger = _G.SleekChat.Logger or { Debug = function() end }
+local Logger = _G.SleekChat.Logger
 
 Logger:Debug("Util Loading...")
 
--- Singleton factory function.
 function Util.singleton(name, creator)
     if _G.SleekChat[name] then
         Logger:Debug(("singleton: returning existing instance for '%s'"):format(name))
@@ -48,3 +47,5 @@ end
 
 Logger:Debug("Util Loaded!")
 Util._loaded = true
+local registry = _G.SleekChat.Modules
+registry:register("Util", Util)
