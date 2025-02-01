@@ -1,5 +1,6 @@
 -- ui.lua
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local UI = Util.singleton("UI", function()
     local self = {}
@@ -75,6 +76,7 @@ local UI = Util.singleton("UI", function()
         self.UpdateBackground(instance)
         self.RefreshMessages(instance)
         self.RefreshPinned(instance)
+        Logger:Info("UI module initialized.")
     end
 
     function self.CreateSidebar(instance)

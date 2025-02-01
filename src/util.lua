@@ -1,6 +1,4 @@
 -- util.lua
--- Utility module: helper functions and a singleton factory
-
 local Util = {}
 
 -- Singleton factory function.

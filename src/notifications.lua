@@ -1,14 +1,13 @@
 -- notifications.lua
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local Notifications = Util.singleton("Notifications", function()
     local self = {}
 
     function self.Initialize(instance)
         instance.notifications = { active = {} }
-        if instance.db.profile.debug then
-            instance:Print("Notifications module initialized.")
-        end
+        Logger:Info("Notifications module initialized.")
     end
 
     function self.ShowNotification(instance, message)
@@ -32,10 +31,7 @@ local Notifications = Util.singleton("Notifications", function()
 
         notif:Show()
         table.insert(instance.notifications.active, notif)
-
-        if instance.db.profile.debug then
-            instance:Print("Notification shown: " .. message)
-        end
+        Logger:Info("Notification shown: " .. message)
 
         C_Timer.After(3, function()
             self.FadeOut(instance, notif, 1)

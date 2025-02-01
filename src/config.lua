@@ -1,13 +1,12 @@
 -- config.lua
--- Singleton Config module
-
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local Config = Util.singleton("Config", function()
     local self = {}
 
     local L = LibStub("AceLocale-3.0"):NewLocale("SleekChat", "enUS", true)
-    if not L then L = {} end  -- fallback if locale already registered
+    if not L then L = {} end  -- Fallback if locale already registered
 
     L["General"]           = L["General"] or "General"
     L["Hide Default Chat"] = L["Hide Default Chat"] or "Hide Default Chat"
@@ -18,6 +17,8 @@ local Config = Util.singleton("Config", function()
     L["Font"]              = L["Font"] or "Font"
     L["Font Size"]         = L["Font Size"] or "Font Size"
     L["Background Color"]  = L["Background Color"] or "Background Color"
+
+    Logger:Debug("Config module loaded with locale strings.")
 
     function self.generateOptions(getter, setter)
         return {
@@ -121,6 +122,7 @@ local Config = Util.singleton("Config", function()
         local options = configGenerator(getter, setter)
         AceConfig:RegisterOptionsTable("SleekChat", options)
         AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
+        Logger:Debug("Config.Setup completed.")
     end
 
     return self

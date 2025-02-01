@@ -1,5 +1,6 @@
 -- events.lua
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local Events = Util.singleton("Events", function()
     local self = {}
@@ -12,13 +13,15 @@ local Events = Util.singleton("Events", function()
             class = engClass
         end
 
-        return {
+        local msg = {
             text    = message,
             sender  = sender,
             channel = (channel:match("CHAT_MSG_(.*)") or channel),
             class   = class,
             time    = os.date(profile.timestampFormat or "[%H:%M]"),
         }
+        Logger:Debug("Events.ProcessMessage: " .. message)
+        return msg
     end
 
     return self

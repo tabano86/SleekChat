@@ -1,5 +1,6 @@
 -- core.lua
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local Core = Util.singleton("Core", function()
     local self = {}
@@ -47,23 +48,16 @@ local Core = Util.singleton("Core", function()
                 end
             end
         end
-        if instance.db.profile.debug then
-            instance:Print("Applied settings: hideChatFrames = " .. tostring(actions.hideChatFrames))
-        end
+        Logger:Debug("Core.ApplySettings: hideChatFrames = " .. tostring(actions.hideChatFrames))
     end
 
     function self.Initialize(instance)
-        if instance.db.profile.debug then
-            instance:Print("Core module initialized.")
-        end
-        -- Expose ApplySettings on the instance.
+        Logger:Info("Core module initialized.")
         instance.ApplySettings = self.ApplySettings
     end
 
     function self.Enable(instance)
-        if instance.db.profile.debug then
-            instance:Print("Core module enabled.")
-        end
+        Logger:Info("Core module enabled.")
     end
 
     return self

@@ -1,5 +1,6 @@
 -- history.lua
 local Util = require("Util") or _G.SleekChat.Util
+local Logger = require("Logger") or _G.SleekChat.Logger
 
 local History = Util.singleton("History", function()
     local self = {}
@@ -10,14 +11,10 @@ local History = Util.singleton("History", function()
             pinned   = {},
             maxSize  = instance.db.profile.historySize,
         }
-        -- Create a table for each configured tab.
         for _, tabName in ipairs(instance.db.profile.tabs) do
             instance.history.messages[tabName] = {}
         end
-
-        if instance.db.profile.debug then
-            instance:Print("History module initialized with maxSize " .. instance.history.maxSize)
-        end
+        Logger:Info("History module initialized with maxSize " .. instance.history.maxSize)
     end
 
     function self.AddMessage(instance, msg)
@@ -29,9 +26,7 @@ local History = Util.singleton("History", function()
         if #instance.history.messages[channel] > instance.history.maxSize then
             table.remove(instance.history.messages[channel])
         end
-        if instance.db.profile.debug then
-            instance:Print("Added message to " .. channel .. ". Total messages: " .. #instance.history.messages[channel])
-        end
+        Logger:Debug("Added message to " .. channel .. ". Total messages: " .. #instance.history.messages[channel])
     end
 
     function self.GetMessages(instance, tabName)
