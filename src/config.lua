@@ -1,13 +1,26 @@
--- config.lua
 if not _G.SleekChat then _G.SleekChat = {} end
-if _G.SleekChat.Config and _G.SleekChat.Config._loaded then return end
+if _G.SleekChat.Config and _G.SleekChat.Config._loaded then
+    return
+end
+
 _G.SleekChat.Config = _G.SleekChat.Config or {}
 local Config = _G.SleekChat.Config
 local Logger = _G.SleekChat.Logger
-local Util = _G.SleekChat.Util
-local L = _G.SleekChat.L or error("Locale not loaded; check .toc order!")
+local Modules = _G.SleekChat.Modules or error("Modules registry missing. Check Init.lua and .toc order!")
 
 Logger:Debug("Config Loading...")
+
+-- Create a dummy locale table that returns the key as-is.
+local function createDummyLocale()
+    return setmetatable({}, {
+        __index = function(_, key)
+            return key
+        end
+    })
+end
+
+-- Use the real locale table if it exists; otherwise, fall back.
+local L = _G.SleekChat.L or createDummyLocale()
 
 function Config.generateOptions(getter, setter)
     return {
@@ -116,5 +129,4 @@ end
 
 Logger:Debug("Config Loaded!")
 Config._loaded = true
-local registry = _G.SleekChat.Modules
-registry:register("Config", Config)
+Modules:register("Config", Config)

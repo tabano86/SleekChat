@@ -4,7 +4,7 @@ if _G.SleekChat.UI and _G.SleekChat.UI._loaded then return end
 _G.SleekChat.UI = _G.SleekChat.UI or {}
 local UI = _G.SleekChat.UI
 local Logger = _G.SleekChat.Logger
-
+local Modules = _G.SleekChat.Modules or error("Modules registry missing. Check Init.lua and .toc order!")
 Logger:Debug("UI Loading...")
 
 function UI.Initialize(instance)
@@ -34,6 +34,14 @@ function UI.Initialize(instance)
     instance.Sidebar:SetSize(150, instance.UIFrame:GetHeight() - 20)
     instance.Sidebar:SetPoint("TOPLEFT", instance.UIFrame, "TOPLEFT", 10, -10)
     UI.CreateSidebar(instance)
+
+    -- Set current tab to the first one in the list
+    if #instance.db.profile.tabs > 0 then
+        instance.currentTab = instance.db.profile.tabs[1]
+        UI.SwitchTab(instance, instance.currentTab)
+    else
+        Logger:Error("No tabs configured in profile.tabs")
+    end
 
     instance.ChatArea = CreateFrame("Frame", "SleekChatChatArea", instance.UIFrame, "BackdropTemplate")
     instance.ChatArea:SetPoint("TOPLEFT", instance.Sidebar, "TOPRIGHT", 10, 0)
@@ -102,22 +110,56 @@ function UI.SwitchTab(instance, tabName)
 end
 
 function UI.RefreshMessages(instance)
-    if instance.Content.children then
-        for _, child in ipairs(instance.Content.children) do
-            child:Hide()
-            child:SetParent(nil)
+    -- Guard against missing instance or content.
+    if not instance or not instance.Content then
+        return
+    end
+
+    -- Ensure instance.Content.children is a valid table.
+    instance.Content.children = instance.Content.children or {}
+
+    -- Hide and detach existing children.
+    for _, child in ipairs(instance.Content.children) do
+        if child then
+            if child.Hide then
+                child:Hide()
+            end
+            if child.SetParent then
+                child:SetParent(nil)
+            end
         end
     end
+
+    -- Reset the children table.
     instance.Content.children = {}
-    local messages = _G.SleekChat.Modules:get("History").GetMessages(instance, instance.currentTab) or {}
-    local yOffset = 0
-    for i, msg in ipairs(messages) do
-        local frame = UI.CreateMessageFrame(instance, msg, yOffset)
-        table.insert(instance.Content.children, frame)
-        yOffset = yOffset + frame:GetHeight() + 5
+
+    -- Safely retrieve messages from your History module.
+    local messages = {}
+    local historyModule = _G.SleekChat and _G.SleekChat.Modules and _G.SleekChat.Modules:get("History")
+    if historyModule and historyModule.GetMessages then
+        messages = historyModule.GetMessages(instance, instance.currentTab) or {}
     end
-    instance.Content:SetHeight(yOffset)
+
+    -- Populate with new message frames.
+    local yOffset = 0
+    if UI.CreateMessageFrame then
+        for _, msg in ipairs(messages) do
+            local frame = UI.CreateMessageFrame(instance, msg, yOffset)
+            if frame then
+                table.insert(instance.Content.children, frame)
+                if frame.GetHeight then
+                    yOffset = yOffset + frame:GetHeight() + 5
+                end
+            end
+        end
+    end
+
+    -- Adjust the container height if possible.
+    if instance.Content.SetHeight then
+        instance.Content:SetHeight(yOffset)
+    end
 end
+
 
 function UI.CreateMessageFrame(instance, msg, yOffset)
     local frame = CreateFrame("Frame", nil, instance.Content, "BackdropTemplate")
@@ -199,5 +241,6 @@ end
 
 Logger:Debug("UI Loaded!")
 UI._loaded = true
-local registry = _G.SleekChat.Modules
-registry:register("UI", UI)
+_G.SleekChat.addon = addon
+Modules:register("UI", UI)
+Logger:Debug("UI Loaded!")

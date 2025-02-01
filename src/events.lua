@@ -19,7 +19,7 @@ function Events.ProcessMessage(prefix, message, channel, sender, profile)
         sender  = sender,
         channel = (channel:match("CHAT_MSG_(.*)") or channel),
         class   = class,
-        time    = os.date(profile.timestampFormat or "[%H:%M]"),
+        time = date(profile.timestampFormat or "[%H:%M]"),
     }
     Logger:Debug("Events.ProcessMessage: " .. message)
     return msg
