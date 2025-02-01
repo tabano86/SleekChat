@@ -1,5 +1,4 @@
 -- events.lua
--- Events module. Its primary function is pure: processing chat messages and returning a message data table.
 local Events = {}
 
 function Events.ProcessMessage(prefix, message, channel, sender, profile)

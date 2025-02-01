@@ -1,5 +1,4 @@
 -- notifications.lua
--- Notifications module. Contains functions to show and fade out notifications.
 local Notifications = {}
 
 function Notifications.Initialize(instance)

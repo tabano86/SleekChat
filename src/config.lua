@@ -1,7 +1,4 @@
 -- config.lua
--- This module produces the configuration options for AceConfig.
--- Its core function is pure: it takes getter/setter functions and returns an options table.
-
 local AceLocale = LibStub("AceLocale-3.0")
 local L = AceLocale:GetLocale("SleekChat", true) or AceLocale:NewLocale("SleekChat", "enUS", true)
 if L then
@@ -16,7 +13,6 @@ if L then
     L["Background Color"]  = "Background Color"
 end
 
--- Pure function: generate a configuration options table.
 local function generateOptions(getter, setter)
     return {
         name = "SleekChat",
@@ -104,7 +100,6 @@ local function generateOptions(getter, setter)
     }
 end
 
--- Setup configuration options by injecting dependency on the addon instance.
 local AceConfig = LibStub("AceConfig-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 local function Setup(instance, configGenerator)
@@ -124,7 +119,6 @@ local function Setup(instance, configGenerator)
     AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
 end
 
--- Expose the module
 SleekChat = SleekChat or {}
 SleekChat.Config = {
     generateOptions = generateOptions,
