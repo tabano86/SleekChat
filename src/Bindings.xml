@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="SLEEKCHAT_TOGGLE">
+        CLICK SleekChatFocusButton
+    </Binding>
+</Bindings>
