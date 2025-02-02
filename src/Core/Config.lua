@@ -106,90 +106,97 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
-            channels = {
-                name = L.channels,
-                type = "group",
+            -- Additional toggles
+            showDefaultChat = {
+                name = L.show_default_chat,
+                desc = L.show_default_chat_desc,
+                type = "toggle",
                 order = 8,
-                args = {
-                    headerChannels = {
-                        name = L.channel_settings,
-                        type = "header",
-                        order = 1,
-                    },
-                    -- Even though we route all chat to one window, these options let the user enable/disable filtering:
-                    enableSay = {
-                        name = L.say,
-                        type = "toggle",
-                        order = 2,
-                        get = function() return addonObj.db.profile.channels.SAY end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.SAY = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                    enableYell = {
-                        name = L.yell,
-                        type = "toggle",
-                        order = 3,
-                        get = function() return addonObj.db.profile.channels.YELL end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.YELL = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                    enableParty = {
-                        name = L.party,
-                        type = "toggle",
-                        order = 4,
-                        get = function() return addonObj.db.profile.channels.PARTY end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.PARTY = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                    enableGuild = {
-                        name = L.guild,
-                        type = "toggle",
-                        order = 5,
-                        get = function() return addonObj.db.profile.channels.GUILD end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.GUILD = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                    enableRaid = {
-                        name = L.raid,
-                        type = "toggle",
-                        order = 6,
-                        get = function() return addonObj.db.profile.channels.RAID end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.RAID = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                    enableWhisper = {
-                        name = L.whisper,
-                        type = "toggle",
-                        order = 7,
-                        get = function() return addonObj.db.profile.channels.WHISPER end,
-                        set = function(_, val)
-                            addonObj.db.profile.channels.WHISPER = val
-                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
-                                addonObj.ChatFrame:CreateTabs()
-                            end
-                        end,
-                    },
-                },
+                get = function() return addonObj.db.profile.showDefaultChat end,
+                set = function(_, val)
+                    addonObj.db.profile.showDefaultChat = val
+                    addonObj:UpdateChatVisibility()
+                end,
+            },
+            debugMode = {
+                name = L.debug_mode,
+                desc = L.debug_mode_desc,
+                type = "toggle",
+                order = 9,
+                get = function() return addonObj.db.profile.debug end,
+                set = function(_, val)
+                    addonObj.db.profile.debug = val
+                    addonObj:Print(val and L.debug_enabled or L.debug_disabled)
+                end,
+            },
+            pinMessages = {
+                name = "Enable Pinning",
+                desc = "Allow pinning of important messages",
+                type = "toggle",
+                order = 10,
+                get = function() return addonObj.db.profile.enablePinning end,
+                set = function(_, val)
+                    addonObj.db.profile.enablePinning = val
+                end,
+            },
+            autoComplete = {
+                name = "Enable Auto-Complete",
+                desc = "Provides auto-completion suggestions for slash commands",
+                type = "toggle",
+                order = 11,
+                get = function() return addonObj.db.profile.enableAutoComplete end,
+                set = function(_, val)
+                    addonObj.db.profile.enableAutoComplete = val
+                end,
+            },
+            scrollSpeed = {
+                name = "Scroll Speed",
+                desc = "Adjust the speed of mouse wheel scrolling",
+                type = "range",
+                order = 12,
+                min = 1,
+                max = 10,
+                step = 1,
+                get = function() return addonObj.db.profile.scrollSpeed or 3 end,
+                set = function(_, val)
+                    addonObj.db.profile.scrollSpeed = val
+                end,
+            },
+            customFontColor = {
+                name = "Custom Font Color",
+                desc = "Override class colors with a fixed color",
+                type = "color",
+                order = 13,
+                get = function() return unpack(addonObj.db.profile.customFontColor or {1,1,1,1}) end,
+                set = function(_, r, g, b, a)
+                    addonObj.db.profile.customFontColor = { r, g, b, a }
+                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
+                        addonObj.ChatFrame:UpdateAll()
+                    end
+                end,
+            },
+            enableEmotes = {
+                name = "Enable Emotes",
+                desc = "Automatically convert emote shorthand to icons",
+                type = "toggle",
+                order = 14,
+                get = function() return addonObj.db.profile.enableEmotes end,
+                set = function(_, val)
+                    addonObj.db.profile.enableEmotes = val
+                end,
+            },
+            hideTimestamp = {
+                name = "Hide Timestamps",
+                desc = "Disable timestamps in chat messages",
+                type = "toggle",
+                order = 15,
+                get = function() return not addonObj.db.profile.timestamps end,
+                set = function(_, val)
+                    addonObj.db.profile.timestamps = not val
+                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
+                        addonObj.ChatFrame:UpdateAll()
+                    end
+                end,
             },
         },
     }
@@ -251,37 +258,27 @@ local function CreateAppearanceOptions(addonObj)
                     end
                 end,
             },
-            tabUnreadHighlight = {
-                name = L.tab_unread_highlight,
-                desc = L.tab_unread_highlight_desc,
-                type = "toggle",
+            customFontColor = {
+                name = "Custom Font Color",
+                desc = "Override class colors with a fixed color",
+                type = "color",
                 order = 5,
-                get = function() return addonObj.db.profile.tabUnreadHighlight end,
-                set = function(_, val)
-                    addonObj.db.profile.tabUnreadHighlight = val
+                get = function() return unpack(addonObj.db.profile.customFontColor or {1,1,1,1}) end,
+                set = function(_, r, g, b, a)
+                    addonObj.db.profile.customFontColor = { r, g, b, a }
+                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
+                        addonObj.ChatFrame:UpdateAll()
+                    end
                 end,
             },
-            debugMode = {
-                name = L.debug_mode,
-                desc = L.debug_mode_desc,
+            enableEmotes = {
+                name = "Enable Emotes",
+                desc = "Convert emote shorthand to icons",
                 type = "toggle",
                 order = 6,
-                get = function() return addonObj.db.profile.debug end,
+                get = function() return addonObj.db.profile.enableEmotes end,
                 set = function(_, val)
-                    addonObj.db.profile.debug = val
-                    addonObj:Print(val and L.debug_enabled or L.debug_disabled)
-                end,
-            },
-            showDefaultChat = {
-                name = L.show_default_chat,
-                desc = L.show_default_chat_desc,
-                type = "toggle",
-                order = 8,
-                get = function() return addonObj.db.profile.showDefaultChat end,
-                set = function(_, val)
-                    addonObj.db.profile.showDefaultChat = val
-                    addonObj:UpdateChatVisibility()
-                    addonObj:Print(val and L.default_chat_visible or L.default_chat_hidden)
+                    addonObj.db.profile.enableEmotes = val
                 end,
             },
         },

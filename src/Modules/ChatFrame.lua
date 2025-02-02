@@ -11,12 +11,13 @@ local URL_PATTERNS = {
     "www%.[%w_-]+%.%S+",
 }
 
--- AutoComplete stub – to be expanded later
+-- AutoComplete stub – can be expanded later.
 local function AutoComplete(editBox)
-    -- Placeholder: could integrate Blizzard’s auto-complete here.
+    -- Placeholder for auto-complete functionality.
+    -- Future expansion: scan for slash commands and suggest completions.
 end
 
--- Returns the player's class for a given sender
+-- Returns the player's class for a given sender name.
 function ChatFrame:GetPlayerClass(sender)
     for i = 1, 4 do
         if UnitName("party" .. i) == sender then
@@ -35,14 +36,14 @@ function ChatFrame:GetPlayerClass(sender)
     return nil
 end
 
--- Initialize SleekChat frame
+-- Initialize the SleekChat frame.
 function ChatFrame:Initialize(addonObj)
     self.db = addonObj.db
     self.activeChannel = "SAY"
     self.tabs = {}
     self.pinnedMessages = {}
 
-    -- Main frame setup
+    -- Main frame.
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
@@ -54,7 +55,7 @@ function ChatFrame:Initialize(addonObj)
     })
     self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
 
-    -- Message frame (where chat text appears)
+    -- Message frame.
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -80,7 +81,7 @@ function ChatFrame:Initialize(addonObj)
         end
     end)
 
-    -- Input box for sending messages (with auto-complete hook)
+    -- Input box.
     self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -95,14 +96,16 @@ function ChatFrame:Initialize(addonObj)
         f:ClearFocus()
     end)
     self.editBox:SetScript("OnTextChanged", function(f)
-        AutoComplete(f)
+        if self.db.profile.enableAutoComplete then
+            AutoComplete(f)
+        end
     end)
 
-    -- Create tabs (for channel filtering; only one active at a time)
+    -- Create tabs.
     self:CreateTabs()
     self:UpdateTabAppearance()
 
-    -- Resize handle
+    -- Resize handle.
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
@@ -115,7 +118,7 @@ function ChatFrame:Initialize(addonObj)
         self:UpdateTabPositions()
     end)
 
-    -- Enable dragging the chat frame
+    -- Enable dragging.
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -130,7 +133,6 @@ function ChatFrame:Initialize(addonObj)
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
 end
 
--- Update font settings
 function ChatFrame:UpdateFonts()
     local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
     local fontSize = math.max(8, math.min(24, tonumber(self.db.profile.fontSize) or 12))
@@ -139,7 +141,6 @@ function ChatFrame:UpdateFonts()
     self.messageFrame:SetShadowOffset(1, -1)
 end
 
--- Create channel tabs – placement based on layout setting
 function ChatFrame:CreateTabs()
     for _, tab in pairs(self.tabs) do
         tab:Hide()
@@ -174,7 +175,6 @@ function ChatFrame:CreateTabs()
     self:UpdateTabPositions()
 end
 
--- Position tabs based on layout setting
 function ChatFrame:UpdateTabPositions()
     local layout = self.db.profile.layout
     local xOffset, yOffset = 5, -5
@@ -190,7 +190,6 @@ function ChatFrame:UpdateTabPositions()
     end
 end
 
--- Switch active channel and refresh messages
 function ChatFrame:SwitchChannel(channel)
     self.activeChannel = channel
     self.messageFrame:Clear()
@@ -215,10 +214,9 @@ function ChatFrame:UpdateTabAppearance()
     end
 end
 
--- Our own SendMessage function (replaces missing global)
+-- Our own SendMessage function.
 function ChatFrame:SendMessage(text, channel, sender)
     self:AddMessage(text, channel, sender)
-    -- Optionally, integrate with Blizzard chat commands here.
 end
 
 function ChatFrame:AddMessage(text, eventType, sender)
@@ -253,7 +251,7 @@ function ChatFrame:FormatMessage(text, sender, channel)
     return table.concat(parts, " ")
 end
 
--- Pinning functionality: right-click messages could invoke this method.
+-- Pinning functionality
 function ChatFrame:PinMessage(message)
     table.insert(self.pinnedMessages, message)
     self.messageFrame:Clear()
