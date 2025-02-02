@@ -6,7 +6,7 @@ local AceLocale = LibStub("AceLocale-3.0")
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
--- Initialize database FIRST before any other operations
+-- OnInitialize: Initialize the DB and core modules.
 function SleekChat:OnInitialize()
     self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
     addon.Core:Initialize(self)
@@ -17,11 +17,11 @@ function SleekChat:OnInitialize()
 end
 
 function SleekChat:HookDefaultChat()
-    -- Disable Blizzard chat elements
-    ChatFrameMenuButton:Hide()
-    QuickJoinToastButton:Hide()
+    -- Disable Blizzard chat elements safely.
+    if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
+    if QuickJoinToastButton then QuickJoinToastButton:Hide() end
 
-    -- Replace chat tabs
+    -- Replace chat tabs.
     for i = 1, 10 do
         local tab = _G["ChatFrame"..i.."Tab"]
         if tab then
@@ -30,8 +30,10 @@ function SleekChat:HookDefaultChat()
         end
     end
 
-    -- Redirect combat text
-    CombatText:SetScript("OnEvent", function() end)
+    -- Redirect combat text.
+    if CombatText then
+        CombatText:SetScript("OnEvent", function() end)
+    end
 end
 
 function SleekChat:PrintDebug(message)
@@ -42,7 +44,6 @@ end
 
 function SleekChat:HideDefaultChatFrames()
     if not self.db or not self.db.profile then return end
-
     if not self.db.profile.showDefaultChat then
         self:PrintDebug("Hiding default chat frames")
         for i = 1, 10 do
@@ -52,9 +53,7 @@ function SleekChat:HideDefaultChatFrames()
                 frame:SetUserPlaced(true)
             end
         end
-        if DEFAULT_CHAT_FRAME then
-            DEFAULT_CHAT_FRAME:Hide()
-        end
+        if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:Hide() end
     end
 end
 
@@ -66,8 +65,6 @@ function SleekChat:OnEnable()
     end
     addon.History:Initialize(self)
     addon.Notifications:Initialize(self)
-
-    -- Initial visibility
     self:UpdateChatVisibility()
     if addon.ChatFrame and addon.ChatFrame.chatFrame then
         addon.ChatFrame.chatFrame:Show()
@@ -76,7 +73,6 @@ end
 
 function SleekChat:UpdateChatVisibility()
     if not self.db or not self.db.profile then return end
-
     if self.db.profile.showDefaultChat then
         self:PrintDebug("Showing default chat frames")
         for i = 1, 10 do

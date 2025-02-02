@@ -39,7 +39,6 @@ function Notifications:ShowWhisperAlert(sender, message)
     end)
     UIFrameFadeOut(f, 5, 1, 0)
     f:SetScript("OnFadeComplete", function() f:Hide() end)
-
     if addon.ChatFrame.activeChannel ~= "WHISPER" and addon.ChatFrame.tabs and addon.ChatFrame.tabs.WHISPER then
         addon.ChatFrame.tabs.WHISPER.text:SetTextColor(1, 0.2, 0.2)
     end
