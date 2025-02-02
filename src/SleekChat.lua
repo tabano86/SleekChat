@@ -1,30 +1,26 @@
 local _, addon = ...
 local AceAddon = LibStub("AceAddon-3.0")
 local AceDB = LibStub("AceDB-3.0")
-local AceConfig = LibStub("AceConfig-3.0")
 local AceLocale = LibStub("AceLocale-3.0")
 
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
-local L = AceLocale:GetLocale("SleekChat")
+local L = AceLocale:GetLocale("SleekChat", true)
 
--- Separate function to initialize database and load defaults
+-- Initialize saved variables with defaults from Core.GetDefaults()
 local function InitializeDatabase(self)
-    self.db = AceDB:New("SleekChatDB", self.Core.GetDefaults())
+    self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
 end
 
--- Separate function to initialize the core functionality
 local function InitializeCore(self)
-    self.Core.Initialize(self)
+    addon.Core:Initialize(self)
 end
 
--- Separate function to initialize configuration settings
 local function InitializeConfig(self)
-    self.Config.Initialize(self)
+    addon.Config:Initialize(self)
 end
 
--- Print a basic loaded message
 local function PrintLoadedMessage(self)
-    self:Print(L.addon_loaded)
+    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version") or ""))
 end
 
 function SleekChat:OnInitialize()
@@ -34,13 +30,14 @@ function SleekChat:OnInitialize()
     PrintLoadedMessage(self)
 end
 
--- Separate function to set up modules
 local function InitializeModulesSafely(self)
     xpcall(function()
-        self.Events.Initialize(self)
-        self.ChatFrame.Initialize(self)
-        self.History.Initialize(self)
-        self.Notifications.Initialize(self)
+        if addon.Events then addon.Events:Initialize(self) end
+        if addon.ChatFrame then addon.ChatFrame:Initialize(self) end
+        if addon.History then addon.History:Initialize(self) end
+        if addon.Notifications and addon.Notifications.Initialize then
+            addon.Notifications:Initialize(self)
+        end
     end, function(err)
         self:Print("|cFFFF0000Initialization Error:|r " .. tostring(err))
         geterrorhandler()(err)

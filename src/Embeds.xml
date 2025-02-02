@@ -1,7 +1,6 @@
 <!-- Embeds.xml -->
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-
-    <!-- Libraries (loaded first) -->
+    <!-- Load libraries first -->
     <Script file="Libs\LibStub\LibStub.lua"/>
     <Script file="Libs\AceAddon-3.0\AceAddon-3.0.lua"/>
     <Script file="Libs\AceDB-3.0\AceDB-3.0.lua"/>
@@ -9,11 +8,15 @@
     <Script file="Libs\AceConsole-3.0\AceConsole-3.0.lua"/>
     <Script file="Libs\AceEvent-3.0\AceEvent-3.0.lua"/>
     <Script file="Libs\AceLocale-3.0\AceLocale-3.0.lua"/>
+    <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 
-    <!-- Addon core and modules -->
+    <!-- Load localization and core modules early -->
+    <Include file="Locales\enUS.lua"/>
     <Include file="Core\Core.lua"/>
     <Include file="Core\Config.lua"/>
     <Include file="Core\Events.lua"/>
+
+    <!-- Load addon modules -->
     <Include file="Modules\ChatFrame.lua"/>
     <Include file="Modules\History.lua"/>
     <Include file="Modules\Notifications.lua"/>

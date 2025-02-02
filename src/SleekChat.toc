@@ -1,29 +1,16 @@
-## Interface: 11403 (WoW Classic)
+## Interface: 110005
 ## Title: SleekChat
-## Author: Anthony T
-## Version: 1.0
-## Notes: Enhanced chat interface
+## Notes: Enhanced chat plugin with improved localization, modular code integration, and sleek appearance.
+## Author: YourName
+## Version: 1.0.0
 ## SavedVariables: SleekChatDB
-## OptionalDeps: LibSharedMedia
-## DefaultState: enabled
 
-# Libraries
-Libs\LibStub\LibStub.lua
-Libs\AceAddon-3.0\AceAddon-3.0.lua
-Libs\AceDB-3.0\AceDB-3.0.lua
-Libs\AceConfig-3.0\AceConfig-3.0.lua
-Libs\AceConsole-3.0\AceConsole-3.0.lua
-Libs\AceEvent-3.0\AceEvent-3.0.lua
-Libs\AceLocale-3.0\AceLocale-3.0.lua
-
-# Core addon files
-SleekChat.lua
+Embeds.xml
 Locales\enUS.lua
 Core\Core.lua
 Core\Config.lua
 Core\Events.lua
-
-# Modules
 Modules\ChatFrame.lua
 Modules\History.lua
 Modules\Notifications.lua
+SleekChat.lua

@@ -1,15 +1,16 @@
 local _, addon = ...
-local L = LibStub("AceLocale-3.0"):GetLocale("SleekChat")
+local AceLocale = LibStub("AceLocale-3.0")
+local L = AceLocale:GetLocale("SleekChat", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
 addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
 local URL_PATTERNS = {
-    "w+%.?[^%s/]*%.%a%a+[^%s]*",
-    "[a-zA-Z0-9]+://[^%s]*"
+    "%w+%.?[^%s/]*%.%a%a+[^%s]*",
+    "[a-zA-Z0-9]+://[^%s]*",
 }
--- Helper: Set up basic chat frame properties
+
 local function ConfigureChatFrameAppearance(self)
     local frame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
     frame:SetSize(self.db.profile.width, self.db.profile.height)
@@ -17,27 +18,22 @@ local function ConfigureChatFrameAppearance(self)
     frame:SetResizable(true)
     frame:SetResizeBounds(300, 200, 800, 600)
     frame:SetBackdrop({
-        bgFile = SM:Fetch("background", "Solid"),
-        edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
-        edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+        bgFile = SM:Fetch("background", (self.db.profile.background and self.db.profile.background.texture) or "Solid") or "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = SM:Fetch("border", (self.db.profile.border and self.db.profile.border.texture) or "Blizzard Tooltip") or "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = (self.db.profile.border and self.db.profile.border.size) or 16,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 },
     })
-    frame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+    frame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity or 0.8)
     return frame
 end
 
--- Helper: Create and configure resize button
 local function CreateResizeButton(self)
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
     resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-
-    resizeButton:SetScript("OnMouseDown", function()
-        self.chatFrame:StartSizing("BOTTOMRIGHT")
-    end)
-
+    resizeButton:SetScript("OnMouseDown", function() self.chatFrame:StartSizing("BOTTOMRIGHT") end)
     resizeButton:SetScript("OnMouseUp", function()
         self.chatFrame:StopMovingOrSizing()
         self.db.profile.width = self.chatFrame:GetWidth()
@@ -45,29 +41,18 @@ local function CreateResizeButton(self)
     end)
 end
 
--- Helper: Set up dragging and saving position
 local function ConfigureFrameMover(self)
     local frame = self.chatFrame
     frame:SetMovable(true)
     frame:RegisterForDrag("LeftButton")
-
-    frame:SetScript("OnDragStart", function(f)
-        f:StartMoving()
-    end)
-
+    frame:SetScript("OnDragStart", function(f) f:StartMoving() end)
     frame:SetScript("OnDragStop", function(f)
         f:StopMovingOrSizing()
         local point, _, relPoint, xOfs, yOfs = f:GetPoint()
-        self.db.profile.position = {
-            point = point,
-            relPoint = relPoint,
-            x = xOfs,
-            y = yOfs
-        }
+        self.db.profile.position = { point = point, relPoint = relPoint, x = xOfs, y = yOfs }
     end)
 end
 
--- Helper: Re-apply any saved position for the chat frame
 local function RestoreSavedPosition(self)
     if self.db.profile.position then
         self.chatFrame:ClearAllPoints()
@@ -81,7 +66,6 @@ local function RestoreSavedPosition(self)
     end
 end
 
--- Helper: Configure the scrolling message frame
 local function CreateMessageFrame(self)
     local msgFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     msgFrame:SetPoint("TOPLEFT", 8, -24)
@@ -91,51 +75,37 @@ local function CreateMessageFrame(self)
     msgFrame:SetMaxLines(500)
     msgFrame:SetFading(false)
     msgFrame:SetHyperlinksEnabled(true)
-
     msgFrame:SetScript("OnHyperlinkClick", function(_, link)
         if link:sub(1, 3) == "url" then
-            local urlToShow = link:sub(5)
-            StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = urlToShow })
+            local url = link:sub(5)
+            StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = url })
         end
     end)
-
     return msgFrame
 end
 
--- Helper: Create a title text for the chat frame
 local function AddFrameTitle(self)
     local title = self.chatFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", 0, -5)
     title:SetText("SleekChat")
 end
 
-function ChatFrame.Initialize(self)
+function ChatFrame:Initialize()
     self.chatFrame = ConfigureChatFrameAppearance(self)
     CreateResizeButton(self)
     ConfigureFrameMover(self)
     RestoreSavedPosition(self)
-
     self.messageFrame = CreateMessageFrame(self)
     AddFrameTitle(self)
-
     self:UpdateFonts()
     self:CreateTabs()
-
-    -- Automatically switch to the first channel if available
-    local firstChannel = next(self.db.profile.channels)
-    if firstChannel then
-        self:SwitchChannel(firstChannel)
-    end
+    local firstChannel = next(self.db.profile.channels or {})
+    if firstChannel then self:SwitchChannel(firstChannel) end
 end
 
-function ChatFrame.UpdateFonts(self)
-    local font
-    if LibStub("LibSharedMedia-3.0", true) then
-        font = LibStub("LibSharedMedia-3.0"):Fetch("font", self.db.profile.font)
-    else
-        font = self.db.profile.font
-    end
-    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, self.db.profile.fontSize)
+function ChatFrame:UpdateFonts()
+    local font = LibStub("LibSharedMedia-3.0"):Fetch("font", self.db.profile.font) or self.db.profile.font
+    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, self.db.profile.fontSize or 12)
 end
 
 local function UpdateURLDetection(text)
@@ -147,60 +117,54 @@ local function UpdateURLDetection(text)
     return text
 end
 
-function ChatFrame.AddMessage(self, text, sender, channel, ...)
+function ChatFrame:AddMessage(text, sender, channel, ...)
     if self.db.profile.urlDetection then
         text = UpdateURLDetection(text)
     end
-
-    local msg = self:FormatMessage(text, sender, channel)
+    local msg = self:FormatMessage(text, sender, channel, ...)
     self.messageFrame:AddMessage(msg)
-
     if channel ~= self.currentChannel and self.db.profile.tabUnreadHighlight then
-        local tab = self.tabs[channel]
-        if tab then
-            tab:SetText(format("|cFF00FF00%s|r", channel))
+        if self.tabs and self.tabs[channel] then
+            self.tabs[channel]:SetText(format("|cFF00FF00%s|r", channel))
         end
     end
 end
 
-function ChatFrame.FormatMessage(self, text, sender, channel, ...)
+function ChatFrame:FormatMessage(text, sender, channel, ...)
     local parts = {}
-
     if self.db.profile.timestamps then
-        table.insert(parts, date(self.db.profile.timestampFormat))
+        table.insert(parts, date(self.db.profile.timestampFormat or "[%H:%M]"))
     end
-
     if sender and self.db.profile.classColors then
         local class = self:GetPlayerClass(sender)
-        if class then
+        if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
             local color = RAID_CLASS_COLORS[class]
             sender = format("|cff%02x%02x%02x%s|r", color.r*255, color.g*255, color.b*255, sender)
         end
     end
-
     table.insert(parts, format("[%s]", channel))
     table.insert(parts, format("%s:", sender or "System"))
     table.insert(parts, text)
-
     return table.concat(parts, " ")
 end
 
-function ChatFrame.UpdateAll(self)
+function ChatFrame:UpdateAll()
     self.messageFrame:Clear()
-    for channel, messages in pairs(self.History.messages) do
-        for _, msg in ipairs(messages) do
-            self:AddMessage(msg.text, msg.sender, msg.channel)
+    if self.History and self.History.messages then
+        for channel, messages in pairs(self.History.messages) do
+            for _, msg in ipairs(messages) do
+                self:AddMessage(msg.text, msg.sender, msg.channel)
+            end
         end
     end
 end
 
-function ChatFrame.GetPlayerClass(self, sender)
+function ChatFrame:GetPlayerClass(sender)
     local unit = self:GetUnitIDFromName(sender)
     if unit then
         local _, class = UnitClass(unit)
         return class
     end
-
     if IsInGuild() then
         for i = 1, GetNumGuildMembers() do
             local name, _, _, _, _, _, _, _, _, _, class = GetGuildRosterInfo(i)
@@ -209,75 +173,66 @@ function ChatFrame.GetPlayerClass(self, sender)
             end
         end
     end
-
     return nil
 end
 
-function ChatFrame.GetUnitIDFromName(self, name)
+function ChatFrame:GetUnitIDFromName(name)
     for i = 1, 4 do
-        if UnitName("party"..i) == name then
-            return "party"..i
-        end
+        if UnitName("party" .. i) == name then return "party" .. i end
     end
-
     if IsInRaid() then
         for i = 1, 40 do
-            if UnitName("raid"..i) == name then
-                return "raid"..i
-            end
+            if UnitName("raid" .. i) == name then return "raid" .. i end
         end
     end
-
     return nil
 end
 
-function ChatFrame.UpdateBackground(self)
-    self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+function ChatFrame:UpdateBackground()
+    self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity or 0.8)
 end
 
-function ChatFrame.CreateTabs(self)
+function ChatFrame:CreateTabs()
     self.tabs = {}
     local xOffset = 0
-    for channel in pairs(self.db.profile.channels) do
+    for channel in pairs(self.db.profile.channels or {}) do
         local tab = CreateFrame("Button", nil, self.chatFrame, "CharacterFrameTabButtonTemplate")
         tab:SetPoint("BOTTOMLEFT", self.chatFrame, "TOPLEFT", xOffset, -4)
         tab:SetText(channel)
         tab:SetWidth(80)
         xOffset = xOffset + 85
-
-        tab:SetScript("OnClick", function()
-            self:SwitchChannel(channel)
-        end)
-
+        tab:SetScript("OnClick", function() self:SwitchChannel(channel) end)
         self.tabs[channel] = tab
     end
 end
 
-function ChatFrame.SwitchChannel(self, channel)
+function ChatFrame:SwitchChannel(channel)
     self.currentChannel = channel
     self.messageFrame:Clear()
-
-    if self.History.messages[channel] then
+    if self.History and self.History.messages and self.History.messages[channel] then
         for _, msg in ipairs(self.History.messages[channel]) do
             self:AddMessage(msg.text, msg.sender, msg.channel)
         end
     end
-
-    for ch, tab in pairs(self.tabs) do
-        if ch == channel then
-            tab:LockHighlight()
-            tab:SetText(ch)
-        else
-            tab:UnlockHighlight()
+    if self.tabs then
+        for ch, tab in pairs(self.tabs) do
+            if ch == channel then
+                tab:LockHighlight()
+                tab:SetText(ch)
+            else
+                tab:UnlockHighlight()
+            end
         end
     end
 end
 
-function ChatFrame.CopyToClipboard(self)
+function ChatFrame:CopyToClipboard()
     local text = ""
     for i = 1, self.messageFrame:GetNumMessages() do
-        text = text .. self.messageFrame:GetMessageInfo(i) .. "\n"
+        text = text .. (self.messageFrame:GetMessageInfo(i) or "") .. "\n"
     end
     EditBox_CopyTextToClipboard(text)
     self:Print(L.history_copied)
 end
+
+return ChatFrame
