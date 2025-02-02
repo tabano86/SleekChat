@@ -38,6 +38,5 @@ function Events:Initialize(addonObj)
     end)
 end
 
--- Ensure the Events module is available globally
 addon.Events = Events
 return Events

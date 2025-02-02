@@ -63,7 +63,7 @@ L.layout_desc = "Select the chat layout (tabs on top or left)"
 L.layout_classic = "Classic (Tabs on top)"
 L.layout_transposed = "Transposed (Tabs on left)"
 
--- Channels (for settings, even if not creating separate tabs per chat type)
+-- Channels
 L.channels = "Channels"
 L.channel_settings = "Channel Settings"
 L.say = "Say"
@@ -72,10 +72,5 @@ L.party = "Party"
 L.guild = "Guild"
 L.raid = "Raid"
 L.whisper = "Whisper"
-L.officer = "Officer"
-L.battleground = "Battleground"
-L.group = "Group"
-L.instance = "Instance"
-
 
 return L

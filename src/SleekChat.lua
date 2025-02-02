@@ -6,7 +6,7 @@ local AceLocale = LibStub("AceLocale-3.0")
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
--- OnInitialize: Initialize the DB and core modules.
+-- OnInitialize: Setup database and core systems.
 function SleekChat:OnInitialize()
     self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
     addon.Core:Initialize(self)
@@ -16,12 +16,10 @@ function SleekChat:OnInitialize()
     self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
+-- Hide the default Blizzard chat frames to prevent overlap.
 function SleekChat:HookDefaultChat()
-    -- Disable Blizzard chat elements safely.
     if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
     if QuickJoinToastButton then QuickJoinToastButton:Hide() end
-
-    -- Replace chat tabs.
     for i = 1, 10 do
         local tab = _G["ChatFrame"..i.."Tab"]
         if tab then
@@ -29,8 +27,6 @@ function SleekChat:HookDefaultChat()
             tab.Show = function() end
         end
     end
-
-    -- Redirect combat text.
     if CombatText then
         CombatText:SetScript("OnEvent", function() end)
     end

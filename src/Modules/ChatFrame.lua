@@ -6,21 +6,18 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
--- URL patterns for hyperlinking
 local URL_PATTERNS = {
     "%w+://%S+",
     "www%.[%w_-]+%.%S+",
 }
 
--- Helper: Auto-complete stub (expand as needed)
-local function AutoComplete(self)
-    -- This is a placeholder that could later be expanded to use Blizzard's auto-complete routines.
-    -- For now, it simply does nothing.
+-- AutoComplete stub – to be expanded later
+local function AutoComplete(editBox)
+    -- Placeholder: could integrate Blizzard’s auto-complete here.
 end
 
--- GetPlayerClass: Returns the player's class for a given sender name
+-- Returns the player's class for a given sender
 function ChatFrame:GetPlayerClass(sender)
-    -- Use UnitClass if sender is the player or in party/raid.
     for i = 1, 4 do
         if UnitName("party" .. i) == sender then
             local _, class = UnitClass("party" .. i)
@@ -38,13 +35,14 @@ function ChatFrame:GetPlayerClass(sender)
     return nil
 end
 
+-- Initialize SleekChat frame
 function ChatFrame:Initialize(addonObj)
     self.db = addonObj.db
     self.activeChannel = "SAY"
     self.tabs = {}
-    self.pinnedMessages = {}  -- table for pinned messages
+    self.pinnedMessages = {}
 
-    -- Main Frame
+    -- Main frame setup
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
@@ -56,7 +54,7 @@ function ChatFrame:Initialize(addonObj)
     })
     self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
 
-    -- Message Frame
+    -- Message frame (where chat text appears)
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -82,7 +80,7 @@ function ChatFrame:Initialize(addonObj)
         end
     end)
 
-    -- Input Box with auto-complete hook
+    -- Input box for sending messages (with auto-complete hook)
     self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -91,21 +89,20 @@ function ChatFrame:Initialize(addonObj)
     self.editBox:SetScript("OnEnterPressed", function(f)
         local text = f:GetText()
         if text ~= "" then
-            -- Instead of calling a nonexistent global, use our own SendMessage method:
             self:SendMessage(text, self.activeChannel, UnitName("player"))
         end
         f:SetText("")
         f:ClearFocus()
     end)
     self.editBox:SetScript("OnTextChanged", function(f)
-        AutoComplete(f)  -- stub for auto-complete functionality
+        AutoComplete(f)
     end)
 
-    -- Tabs
+    -- Create tabs (for channel filtering; only one active at a time)
     self:CreateTabs()
     self:UpdateTabAppearance()
 
-    -- Resize Handle
+    -- Resize handle
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
@@ -118,7 +115,7 @@ function ChatFrame:Initialize(addonObj)
         self:UpdateTabPositions()
     end)
 
-    -- Enable moving the frame
+    -- Enable dragging the chat frame
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -129,10 +126,11 @@ function ChatFrame:Initialize(addonObj)
         self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
     end)
 
-    addonObj:PrintDebug("ChatFrame initialized")
+    addonObj:PrintDebug("SleekChat frame initialized")
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
 end
 
+-- Update font settings
 function ChatFrame:UpdateFonts()
     local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
     local fontSize = math.max(8, math.min(24, tonumber(self.db.profile.fontSize) or 12))
@@ -141,7 +139,7 @@ function ChatFrame:UpdateFonts()
     self.messageFrame:SetShadowOffset(1, -1)
 end
 
--- Create channel tabs (positioned top or left)
+-- Create channel tabs – placement based on layout setting
 function ChatFrame:CreateTabs()
     for _, tab in pairs(self.tabs) do
         tab:Hide()
@@ -176,6 +174,7 @@ function ChatFrame:CreateTabs()
     self:UpdateTabPositions()
 end
 
+-- Position tabs based on layout setting
 function ChatFrame:UpdateTabPositions()
     local layout = self.db.profile.layout
     local xOffset, yOffset = 5, -5
@@ -191,11 +190,35 @@ function ChatFrame:UpdateTabPositions()
     end
 end
 
--- Sends a message: adds it to the chat and also saves it in history.
+-- Switch active channel and refresh messages
+function ChatFrame:SwitchChannel(channel)
+    self.activeChannel = channel
+    self.messageFrame:Clear()
+    if addon.History and addon.History.messages and addon.History.messages[channel] then
+        for _, msg in ipairs(addon.History.messages[channel]) do
+            self:AddMessage(msg.text, msg.channel, msg.sender)
+        end
+    end
+    self:UpdateTabAppearance()
+    self.messageFrame:ScrollToBottom()
+end
+
+function ChatFrame:UpdateTabAppearance()
+    for channel, tab in pairs(self.tabs) do
+        if channel == self.activeChannel then
+            tab.bg:SetColorTexture(0.3, 0.3, 0.5, 1)
+            tab.text:SetTextColor(1, 1, 1)
+        else
+            tab.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+            tab.text:SetTextColor(0.8, 0.8, 0.8)
+        end
+    end
+end
+
+-- Our own SendMessage function (replaces missing global)
 function ChatFrame:SendMessage(text, channel, sender)
-    -- Add the message (and optionally call Blizzard chat functions if desired)
     self:AddMessage(text, channel, sender)
-    -- (Future expansion: send via slash command or auto-complete can be integrated here)
+    -- Optionally, integrate with Blizzard chat commands here.
 end
 
 function ChatFrame:AddMessage(text, eventType, sender)
@@ -230,15 +253,13 @@ function ChatFrame:FormatMessage(text, sender, channel)
     return table.concat(parts, " ")
 end
 
--- Allows pinning of messages. Right-clicking a message could call this.
+-- Pinning functionality: right-click messages could invoke this method.
 function ChatFrame:PinMessage(message)
     table.insert(self.pinnedMessages, message)
-    -- For simplicity, we clear and re-add pinned messages at the top.
     self.messageFrame:Clear()
     for _, msg in ipairs(self.pinnedMessages) do
         self.messageFrame:AddMessage("|cffFFD700[PINNED]|r " .. msg)
     end
-    -- Then add unpinned history (if desired)
     self:UpdateAll()
 end
 
@@ -252,30 +273,6 @@ function ChatFrame:UpdateAll()
             for _, msg in ipairs(messages) do
                 self:AddMessage(msg.text, msg.channel, msg.sender)
             end
-        end
-    end
-end
-
-function ChatFrame:SwitchChannel(channel)
-    self.activeChannel = channel
-    self.messageFrame:Clear()
-    if addon.History and addon.History.messages and addon.History.messages[channel] then
-        for _, msg in ipairs(addon.History.messages[channel]) do
-            self:AddMessage(msg.text, msg.channel, msg.sender)
-        end
-    end
-    self:UpdateTabAppearance()
-    self.messageFrame:ScrollToBottom()
-end
-
-function ChatFrame:UpdateTabAppearance()
-    for channel, tab in pairs(self.tabs) do
-        if channel == self.activeChannel then
-            tab.bg:SetColorTexture(0.3, 0.3, 0.5, 1)
-            tab.text:SetTextColor(1, 1, 1)
-        else
-            tab.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-            tab.text:SetTextColor(0.8, 0.8, 0.8)
         end
     end
 end
