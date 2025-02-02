@@ -1,4 +1,4 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("SleekChat", "enUS", true)
+local L = LibStub('AceLocale-3.0'):NewLocale("SleekChat", "enUS", true, true)
 
 L.general = "General"
 L.appearance = "Appearance"

@@ -7,14 +7,18 @@
 ## OptionalDeps: LibSharedMedia
 ## DefaultState: enabled
 
-# Ensure libraries from Embeds.xml load before addon code
-Embeds.xml
+# Libraries
+Libs\LibStub\LibStub.lua
+Libs\AceAddon-3.0\AceAddon-3.0.lua
+Libs\AceDB-3.0\AceDB-3.0.lua
+Libs\AceConfig-3.0\AceConfig-3.0.lua
+Libs\AceConsole-3.0\AceConsole-3.0.lua
+Libs\AceEvent-3.0\AceEvent-3.0.lua
+Libs\AceLocale-3.0\AceLocale-3.0.lua
 
-# Core addon and localization files
+# Core addon files
 SleekChat.lua
 Locales\enUS.lua
-
-# Core scripts
 Core\Core.lua
 Core\Config.lua
 Core\Events.lua
