@@ -106,6 +106,29 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
+            channels = {
+                name = L.channels,
+                type = "group",
+                order = 8,
+                args = {
+                    headerChannels = {
+                        name = L.channel_settings,
+                        type = "header",
+                        order = 1,
+                    },
+                    enableSay = {
+                        name = L.say,
+                        type = "toggle",
+                        order = 2,
+                        get = function() return addonObj.db.profile.channels.SAY end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.SAY = val
+                            addon.ChatFrame:CreateTabs()
+                        end,
+                    },
+                    -- Repeat for YELL, PARTY, etc.
+                },
+            },
         },
     }
 end

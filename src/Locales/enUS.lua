@@ -63,4 +63,13 @@ L.layout_desc = "Select the chat layout"
 L.layout_classic = "Classic (Tabs on top)"
 L.layout_transposed = "Transposed (Titles left, messages right)"
 
+L.channels = "Channels"
+L.channel_settings = "Channel Settings"
+L.say = "Say"
+L.yell = "Yell"
+L.party = "Party"
+L.guild = "Guild"
+L.raid = "Raid"
+L.whisper = "Whisper"
+
 return L
