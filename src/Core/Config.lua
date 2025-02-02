@@ -232,7 +232,6 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
-            -- Additional settings for advanced features:
             profanityFilter = {
                 name = "Profanity Filter",
                 desc = "Filter out offensive words",

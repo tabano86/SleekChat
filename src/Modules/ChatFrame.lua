@@ -71,16 +71,25 @@ function ChatFrame:DetachTab(channel)
 end
 
 function ChatFrame:ApplyTheme()
+    -- Prevent multiple ApplyTheme calls from stacking
+    if self.isTheming then
+        return
+    end
+    self.isTheming = true
+
     if self.db.profile.darkMode then
         self.chatFrame:SetBackdropColor(0.1, 0.1, 0.1, self.db.profile.backgroundOpacity)
     else
         self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
     end
 
-    -- Only call UpdateAll if it is actually defined
+    -- If you still want to call UpdateAll, be sure it won’t call ApplyTheme again.
+    -- Otherwise, remove or comment this out.
     if type(self.UpdateAll) == "function" then
         self:UpdateAll()
     end
+
+    self.isTheming = false
 end
 
 -- Initialize the SleekChat UI.
@@ -325,6 +334,10 @@ function ChatFrame:PinMessage(message)
 end
 
 function ChatFrame:UpdateAll()
+    if self.isTheming then
+        return
+    end
+
     self.messageFrame:Clear()
     for _, msg in ipairs(self.pinnedMessages) do
         self.messageFrame:AddMessage("|cffFFD700[PINNED]|r " .. msg)
