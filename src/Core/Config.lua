@@ -341,6 +341,195 @@ local function CreateAppearanceOptions(addonObj)
     }
 end
 
+local function CreateTabManagementOptions(addonObj)
+    return {
+        name = "Tab Management",
+        type = "group",
+        order = 4,
+        args = {
+            customTabOrder = {
+                name = "Custom Tab Order",
+                desc = "Allow tabs to be rearranged by dragging",
+                type = "toggle",
+                order = 1,
+                get = function() return addonObj.db.profile.customTabOrder end,
+                set = function(_, val) addonObj.db.profile.customTabOrder = val end,
+            },
+            tabRenaming = {
+                name = "Tab Renaming",
+                desc = "Allow users to rename tabs",
+                type = "toggle",
+                order = 2,
+                get = function() return addonObj.db.profile.tabRenaming end,
+                set = function(_, val) addonObj.db.profile.tabRenaming = val end,
+            },
+            autoCollapseTabs = {
+                name = "Auto-Collapse Inactive Tabs",
+                desc = "Automatically collapse tabs inactive for a set time",
+                type = "toggle",
+                order = 3,
+                get = function() return addonObj.db.profile.autoCollapseTabs end,
+                set = function(_, val) addonObj.db.profile.autoCollapseTabs = val end,
+            },
+            tabColorCustomization = {
+                name = "Tab Color Customization",
+                desc = "Customize background/text colors for tabs",
+                type = "color",
+                order = 4,
+                get = function() return unpack(addonObj.db.profile.tabColor or {0.2, 0.2, 0.2, 0.8}) end,
+                set = function(_, r, g, b, a) addonObj.db.profile.tabColor = { r, g, b, a } end,
+            },
+            unreadBadge = {
+                name = "Unread Message Badge",
+                desc = "Display unread count on tabs",
+                type = "toggle",
+                order = 5,
+                get = function() return addonObj.db.profile.unreadBadge end,
+                set = function(_, val) addonObj.db.profile.unreadBadge = val end,
+            },
+            tabTooltips = {
+                name = "Tab Tooltips",
+                desc = "Show tooltips with last message preview and unread count",
+                type = "toggle",
+                order = 6,
+                get = function() return addonObj.db.profile.tabTooltips end,
+                set = function(_, val) addonObj.db.profile.tabTooltips = val end,
+            },
+            tabLocking = {
+                name = "Tab Locking/Pinning",
+                desc = "Allow users to lock or pin important tabs",
+                type = "toggle",
+                order = 7,
+                get = function() return addonObj.db.profile.tabLocking end,
+                set = function(_, val) addonObj.db.profile.tabLocking = val end,
+            },
+            smartTabGrouping = {
+                name = "Smart Tab Grouping",
+                desc = "Group similar tabs (eg, whispers) together",
+                type = "toggle",
+                order = 8,
+                get = function() return addonObj.db.profile.smartTabGrouping end,
+                set = function(_, val) addonObj.db.profile.smartTabGrouping = val end,
+            },
+            dynamicTabScrolling = {
+                name = "Dynamic Tab Scrolling",
+                desc = "Enable horizontal scrolling when many tabs exist",
+                type = "toggle",
+                order = 9,
+                get = function() return addonObj.db.profile.dynamicTabScrolling end,
+                set = function(_, val) addonObj.db.profile.dynamicTabScrolling = val end,
+            },
+            tabNotificationSound = {
+                name = "Tab Notification Sound",
+                desc = "Custom sound for notifications on a tab",
+                type = "select",
+                order = 10,
+                values = SM:HashTable("sound"),
+                get = function() return addonObj.db.profile.tabNotificationSound end,
+                set = function(_, val) addonObj.db.profile.tabNotificationSound = val end,
+            },
+            tabHistoryPreview = {
+                name = "Tab History Preview",
+                desc = "Show a preview of recent messages on hover",
+                type = "toggle",
+                order = 11,
+                get = function() return addonObj.db.profile.tabHistoryPreview end,
+                set = function(_, val) addonObj.db.profile.tabHistoryPreview = val end,
+            },
+            tabFlashing = {
+                name = "Tab Flashing for Mentions",
+                desc = "Flash the tab when a new message mentions you",
+                type = "toggle",
+                order = 12,
+                get = function() return addonObj.db.profile.tabFlashing end,
+                set = function(_, val) addonObj.db.profile.tabFlashing = val end,
+            },
+            tabFontCustomization = {
+                name = "Tab Font Customization",
+                type = "group",
+                order = 13,
+                args = {
+                    tabFont = {
+                        name = "Tab Font",
+                        type = "select",
+                        dialogControl = "LSM30_Font",
+                        order = 1,
+                        values = SM:HashTable("font"),
+                        get = function() return addonObj.db.profile.tabFont end,
+                        set = function(_, val) addonObj.db.profile.tabFont = val end,
+                    },
+                    tabFontSize = {
+                        name = "Tab Font Size",
+                        type = "range",
+                        order = 2,
+                        min = 8,
+                        max = 24,
+                        step = 1,
+                        get = function() return addonObj.db.profile.tabFontSize or 12 end,
+                        set = function(_, val) addonObj.db.profile.tabFontSize = val end,
+                    },
+                },
+            },
+            autoSwitchTab = {
+                name = "Auto-Switch on New Message",
+                desc = "Automatically switch to a tab when a new message arrives",
+                type = "toggle",
+                order = 14,
+                get = function() return addonObj.db.profile.autoSwitchTab end,
+                set = function(_, val) addonObj.db.profile.autoSwitchTab = val end,
+            },
+            clearUnreadOnDoubleClick = {
+                name = "Clear Unread on Double-Click",
+                desc = "Double-click a tab to mark all messages as read",
+                type = "toggle",
+                order = 15,
+                get = function() return addonObj.db.profile.clearUnreadOnDoubleClick end,
+                set = function(_, val) addonObj.db.profile.clearUnreadOnDoubleClick = val end,
+            },
+            tabLockIcon = {
+                name = "Tab Lock Icon",
+                desc = "Display a lock icon on pinned tabs",
+                type = "toggle",
+                order = 16,
+                get = function() return addonObj.db.profile.tabLockIcon end,
+                set = function(_, val) addonObj.db.profile.tabLockIcon = val end,
+            },
+            dragDropFileSupport = {
+                name = "Drag & Drop File Support",
+                desc = "Enable dragging files/images onto tabs",
+                type = "toggle",
+                order = 17,
+                get = function() return addonObj.db.profile.dragDropFileSupport end,
+                set = function(_, val) addonObj.db.profile.dragDropFileSupport = val end,
+            },
+            customHotkeys = {
+                name = "Custom Hotkeys for Tab Switching",
+                desc = "Define custom hotkeys for quickly switching tabs",
+                type = "input",
+                order = 18,
+                get = function() return addonObj.db.profile.customHotkeys or "" end,
+                set = function(_, val) addonObj.db.profile.customHotkeys = val end,
+            },
+            tabSessionPersistence = {
+                name = "Tab Session Persistence",
+                desc = "Remember tab order and state across sessions",
+                type = "toggle",
+                order = 19,
+                get = function() return addonObj.db.profile.tabSessionPersistence end,
+                set = function(_, val) addonObj.db.profile.tabSessionPersistence = val end,
+            },
+            animatedTabTransitions = {
+                name = "Animated Tab Transitions",
+                desc = "Smooth transitions when switching tabs",
+                type = "toggle",
+                order = 20,
+                get = function() return addonObj.db.profile.animatedTabTransitions end,
+                set = function(_, val) addonObj.db.profile.animatedTabTransitions = val end,
+            },
+        },
+    }
+end
+
 local function CreateNotificationOptions(addonObj)
     return {
         name = L.notifications,
@@ -415,6 +604,7 @@ local function GetOptions(addonObj)
             general = CreateGeneralOptions(addonObj),
             appearance = CreateAppearanceOptions(addonObj),
             notifications = CreateNotificationOptions(addonObj),
+            tabManagement = CreateTabManagementOptions(addonObj),
         },
     }
 end
@@ -429,5 +619,7 @@ function Config:Initialize(addonObj)
         addonObj:Print(L.settings_reset)
     end)
 end
+
+
 
 return Config

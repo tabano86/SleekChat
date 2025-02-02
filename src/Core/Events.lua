@@ -13,6 +13,11 @@ local CHANNEL_COMMANDS = {
     LOOKINGFORGROUP = { event = "CHAT_MSG_CHANNEL", channel = "LookingForGroup" },
 }
 
+-- Register our addon prefix to intercept addon messages if needed.
+if C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix then
+    C_ChatInfo.RegisterAddonMessagePrefix("SleekChat")
+end
+
 function Events:Initialize(addonObj)
     local frame = CreateFrame("Frame")
     for channel, data in pairs(CHANNEL_COMMANDS) do
@@ -21,6 +26,7 @@ function Events:Initialize(addonObj)
     frame:RegisterEvent("CHAT_MSG_SYSTEM")
     frame:SetScript("OnEvent", function(_, event, ...)
         if event == "CHAT_MSG_SYSTEM" then
+            -- Redirect system messages to SleekChat.
             addon.ChatFrame:AddMessage(..., "SYSTEM")
             return
         end
@@ -36,6 +42,7 @@ function Events:Initialize(addonObj)
                         addon.ChatFrame:AddMessage(msg, channel, sender)
                         if channel == "WHISPER" then
                             addon.Notifications:ShowWhisperAlert(sender, msg)
+                            -- Auto-create a whisper tab for the sender.
                             addon.ChatFrame:HandleWhisper(sender, msg)
                         end
                     end
