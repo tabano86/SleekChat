@@ -1,4 +1,4 @@
--- core.lua
+-- Core.lua
 if not _G.SleekChat then _G.SleekChat = {} end
 if _G.SleekChat.Core and _G.SleekChat.Core._loaded then return end
 local Core = {}  -- local module table

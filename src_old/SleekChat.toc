@@ -1,0 +1,38 @@
+## Interface: 11403
+## Title: SleekChat
+## Author: Anthony T
+## Version: 1.1
+## Notes: Modern chat overhaul for WoW Classic
+## Dependencies: Ace3
+## X-Category: Chat
+## X-CompatibleWith: 1.14.3
+## X-Website: https://example.com
+
+Libs\LibDeflate\LibDeflate.lua
+Libs\LibSerialize\LibSerialize.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\Ace3\AceAddon-3.0\AceAddon-3.0.lua
+Libs\Ace3\AceEvent-3.0\AceEvent-3.0.lua
+Libs\Ace3\AceComm-3.0\AceComm-3.0.lua
+Libs\Ace3\AceConsole-3.0\AceConsole-3.0.lua
+Libs\Ace3\AceGUI-3.0\AceGUI-3.0.lua
+Libs\Ace3\AceConfig-3.0\AceConfig-3.0.lua
+Libs\Ace3\AceConfig-3.0\AceConfigDialog-3.0\AceConfigDialog-3.0.lua
+Libs\Ace3\AceDB-3.0\AceDB-3.0.lua
+Libs\Ace3\AceTimer-3.0\AceTimer-3.0.lua
+Libs\Ace3\AceHook-3.0\AceHook-3.0.lua
+Libs\Ace3\AceLocale-3.0\AceLocale-3.0.lua
+
+Init.lua
+ModuleRegistry.lua
+logger.lua
+util.lua
+core.lua
+events.lua
+history.lua
+notifications.lua
+config.lua
+ui.lua
+Locale_enUS.lua
+SleekChat.lua

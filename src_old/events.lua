@@ -1,4 +1,4 @@
--- events.lua
+-- Events.lua
 if not _G.SleekChat then _G.SleekChat = {} end
 if _G.SleekChat.Events and _G.SleekChat.Events._loaded then return end
 _G.SleekChat.Events = _G.SleekChat.Events or {}

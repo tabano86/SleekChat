@@ -1,0 +1,9 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="Libs\LibStub\LibStub.lua"/>
+    <Include file="Core\Core.lua"/>
+    <Include file="Core\Config.lua"/>
+    <Include file="Core\Events.lua"/>
+    <Include file="Modules\ChatFrame.lua"/>
+    <Include file="Modules\History.lua"/>
+    <Include file="Modules\Notifications.lua"/>
+</Ui>
