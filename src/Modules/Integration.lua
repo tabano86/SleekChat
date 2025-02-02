@@ -2,14 +2,12 @@ local _, addon = ...
 addon.Integration = {}
 local Integration = addon.Integration
 
--- Stub: Send message to Discord via webhook.
 function Integration:SendToDiscord(text, channel, sender)
-    -- Future: Implement HTTP POST to Discord webhook URL.
+    -- Stub: Implement HTTP POST to Discord webhook.
 end
 
--- Stub: Sync messages across characters.
 function Integration:SyncMessage(text, channel, sender)
-    -- Future: Implement cross-character syncing using Blizzard APIs.
+    -- Stub: Implement cross-character syncing.
 end
 
 return Integration

@@ -6,6 +6,7 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.Config = {}
 local Config = addon.Config
 
+-- General settings
 local function CreateGeneralOptions(addonObj)
     return {
         name = L.general,
@@ -25,9 +26,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.classColors end,
                 set = function(_, val)
                     addonObj.db.profile.classColors = val
-                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                        addonObj.ChatFrame:UpdateAll()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                 end,
             },
             timestamps = {
@@ -38,9 +37,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.timestamps end,
                 set = function(_, val)
                     addonObj.db.profile.timestamps = val
-                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                        addonObj.ChatFrame:UpdateAll()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                 end,
             },
             timestampFormat = {
@@ -52,9 +49,7 @@ local function CreateGeneralOptions(addonObj)
                 set = function(_, val)
                     if pcall(date, val) then
                         addonObj.db.profile.timestampFormat = val
-                        if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                            addonObj.ChatFrame:UpdateAll()
-                        end
+                        if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                     else
                         addonObj:Print(L.invalid_format)
                     end
@@ -68,9 +63,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.urlDetection end,
                 set = function(_, val)
                     addonObj.db.profile.urlDetection = val
-                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                        addonObj.ChatFrame:UpdateAll()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                 end,
             },
             maxHistory = {
@@ -84,9 +77,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.historySize end,
                 set = function(_, val)
                     addonObj.db.profile.historySize = val
-                    if addonObj.History and addonObj.History.UpdateMaxSize then
-                        addonObj.History:UpdateMaxSize(val)
-                    end
+                    if addonObj.History then addonObj.History:UpdateMaxSize(val) end
                 end,
             },
             layout = {
@@ -169,9 +160,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return unpack(addonObj.db.profile.customFontColor or {1,1,1,1}) end,
                 set = function(_, r, g, b, a)
                     addonObj.db.profile.customFontColor = { r, g, b, a }
-                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                        addonObj.ChatFrame:UpdateAll()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                 end,
             },
             enableEmotes = {
@@ -192,9 +181,7 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return not addonObj.db.profile.timestamps end,
                 set = function(_, val)
                     addonObj.db.profile.timestamps = not val
-                    if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
-                        addonObj.ChatFrame:UpdateAll()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
                 end,
             },
             sidebarEnabled = {

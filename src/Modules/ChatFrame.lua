@@ -16,7 +16,6 @@ local function AutoComplete(editBox)
     -- Placeholder for auto-completion logic.
 end
 
--- Returns the player's class for a given sender.
 function ChatFrame:GetPlayerClass(sender)
     for i = 1, 4 do
         if UnitName("party" .. i) == sender then
@@ -65,9 +64,8 @@ function ChatFrame:HandleWhisper(sender, msg)
     return true
 end
 
--- Initialize the main chat container.
 function ChatFrame:Initialize(addonObj)
-    self.db = addonObj.db  -- Ensure db is set here
+    self.db = addonObj.db  -- Ensure db is assigned
     self.activeChannel = "SAY"
     self.tabs = {}
     self.pinnedMessages = {}
@@ -122,12 +120,8 @@ function ChatFrame:Initialize(addonObj)
         f:SetText("")
         f:ClearFocus()
     end)
-    self.editBox:SetScript("OnEditFocusGained", function(self)
-        self:HighlightText()
-    end)
-    self.editBox:SetScript("OnEditFocusLost", function(self)
-        self:HighlightText(0, 0)
-    end)
+    self.editBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    self.editBox:SetScript("OnEditFocusLost", function(self) self:HighlightText(0, 0) end)
     self.editBox:SetScript("OnTextChanged", function(f)
         if self.db.profile.enableAutoComplete then AutoComplete(f) end
     end)
@@ -157,7 +151,7 @@ function ChatFrame:Initialize(addonObj)
         self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
     end)
 
-    addonObj:PrintDebug("SleekChat frame initialized")
+    addon:PrintDebug("SleekChat frame initialized")
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
     self:ApplyTheme()
 end
@@ -175,7 +169,6 @@ function ChatFrame:CreateTabs()
         tab:Hide()
     end
     self.tabs = {}
-    -- Create tabs for persistent channels (except whispers).
     for channel, enabled in pairs(self.db.profile.channels) do
         if enabled and not channel:find("WHISPER:") and channel ~= "WHISPER" then
             local tab = CreateFrame("Button", nil, self.chatFrame)
@@ -195,20 +188,16 @@ function ChatFrame:CreateTabs()
             text:SetPoint("CENTER")
             text:SetText(channel)
             tab.text = text
-            -- New: Enable drag-drop reordering if customTabOrder is enabled.
             if self.db.profile.customTabOrder then
                 tab:SetMovable(true)
                 tab:EnableMouse(true)
                 tab:RegisterForDrag("LeftButton")
-                tab:SetScript("OnDragStart", function(self)
-                    self:StartMoving()
-                end)
+                tab:SetScript("OnDragStart", function(self) self:StartMoving() end)
                 tab:SetScript("OnDragStop", function(self)
                     self:StopMovingOrSizing()
-                    -- (Persist new order here as needed.)
+                    -- (Persist new order if needed)
                 end)
             end
-            -- New: Add tooltip support if enabled.
             if self.db.profile.tabTooltips then
                 tab:SetScript("OnEnter", function(self)
                     GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
@@ -221,7 +210,6 @@ function ChatFrame:CreateTabs()
                 end)
                 tab:SetScript("OnLeave", GameTooltip_Hide)
             end
-            -- New: Double-click to clear unread count.
             tab:SetScript("OnDoubleClick", function(self)
                 if self.db and self.db.profile.clearUnreadOnDoubleClick then
                     self.unreadCount = 0
@@ -231,7 +219,6 @@ function ChatFrame:CreateTabs()
             self.tabs[channel] = tab
         end
     end
-    -- Create a default "Whispers" tab.
     if self.db.profile.channels.WHISPER then
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
