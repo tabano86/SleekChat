@@ -6,6 +6,7 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.Config = {}
 local Config = addon.Config
 
+-- CreateGeneralOptions: Core settings for chat behavior and filters.
 local function CreateGeneralOptions(addonObj)
     return {
         name = L.general,
@@ -106,7 +107,6 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
-            -- Additional toggles
             showDefaultChat = {
                 name = L.show_default_chat,
                 desc = L.show_default_chat_desc,
@@ -129,7 +129,7 @@ local function CreateGeneralOptions(addonObj)
                     addonObj:Print(val and L.debug_enabled or L.debug_disabled)
                 end,
             },
-            pinMessages = {
+            enablePinning = {
                 name = "Enable Pinning",
                 desc = "Allow pinning of important messages",
                 type = "toggle",
@@ -139,7 +139,7 @@ local function CreateGeneralOptions(addonObj)
                     addonObj.db.profile.enablePinning = val
                 end,
             },
-            autoComplete = {
+            enableAutoComplete = {
                 name = "Enable Auto-Complete",
                 desc = "Provides auto-completion suggestions for slash commands",
                 type = "toggle",
@@ -177,7 +177,7 @@ local function CreateGeneralOptions(addonObj)
             },
             enableEmotes = {
                 name = "Enable Emotes",
-                desc = "Automatically convert emote shorthand to icons",
+                desc = "Convert emote shorthand to icons",
                 type = "toggle",
                 order = 14,
                 get = function() return addonObj.db.profile.enableEmotes end,

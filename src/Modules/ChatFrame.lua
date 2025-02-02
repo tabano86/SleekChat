@@ -11,13 +11,12 @@ local URL_PATTERNS = {
     "www%.[%w_-]+%.%S+",
 }
 
--- AutoComplete stub – can be expanded later.
+-- AutoComplete stub – expand this with real suggestions later.
 local function AutoComplete(editBox)
     -- Placeholder for auto-complete functionality.
-    -- Future expansion: scan for slash commands and suggest completions.
 end
 
--- Returns the player's class for a given sender name.
+-- Returns the player's class for a given sender.
 function ChatFrame:GetPlayerClass(sender)
     for i = 1, 4 do
         if UnitName("party" .. i) == sender then
@@ -36,7 +35,43 @@ function ChatFrame:GetPlayerClass(sender)
     return nil
 end
 
--- Initialize the SleekChat frame.
+-- DetachTab: Detach a channel into its own floating window.
+function ChatFrame:DetachTab(channel)
+    if not self.tabs[channel] then return end
+    local detachFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    detachFrame:SetSize(self.db.profile.width * 0.5, self.db.profile.height * 0.5)
+    detachFrame:SetPoint("CENTER")
+    detachFrame:SetBackdrop({
+        bgFile = SM:Fetch("background", "Solid"),
+        edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
+        edgeSize = 12,
+        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    })
+    detachFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+    local scrollFrame = CreateFrame("ScrollingMessageFrame", nil, detachFrame)
+    scrollFrame:SetAllPoints()
+    scrollFrame:SetHyperlinksEnabled(true)
+    scrollFrame:SetFontObject(ChatFontNormal)
+    scrollFrame:SetJustifyH("LEFT")
+    scrollFrame:SetMaxLines(500)
+    scrollFrame:EnableMouseWheel(true)
+    scrollFrame:SetScript("OnMouseWheel", function(_, delta)
+        if delta > 0 then
+            scrollFrame:ScrollUp()
+        else
+            scrollFrame:ScrollDown()
+        end
+    end)
+    -- Populate with channel history.
+    if addon.History and addon.History.messages and addon.History.messages[channel] then
+        for _, msg in ipairs(addon.History.messages[channel]) do
+            scrollFrame:AddMessage(msg.text)
+        end
+    end
+    detachFrame:Show()
+end
+
+-- Initialize the main SleekChat frame.
 function ChatFrame:Initialize(addonObj)
     self.db = addonObj.db
     self.activeChannel = "SAY"
@@ -65,10 +100,11 @@ function ChatFrame:Initialize(addonObj)
     self.messageFrame:SetMaxLines(500)
     self.messageFrame:EnableMouseWheel(true)
     self.messageFrame:SetScript("OnMouseWheel", function(_, delta)
+        local speed = self.db.profile.scrollSpeed or 3
         if delta > 0 then
-            self.messageFrame:ScrollUp()
+            for i=1, speed do self.messageFrame:ScrollUp() end
         else
-            self.messageFrame:ScrollDown()
+            for i=1, speed do self.messageFrame:ScrollDown() end
         end
     end)
     self.messageFrame:SetScript("OnHyperlinkClick", function(_, link, text, button)
@@ -81,7 +117,7 @@ function ChatFrame:Initialize(addonObj)
         end
     end)
 
-    -- Input box.
+    -- Input box with auto-complete.
     self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -96,9 +132,7 @@ function ChatFrame:Initialize(addonObj)
         f:ClearFocus()
     end)
     self.editBox:SetScript("OnTextChanged", function(f)
-        if self.db.profile.enableAutoComplete then
-            AutoComplete(f)
-        end
+        if self.db.profile.enableAutoComplete then AutoComplete(f) end
     end)
 
     -- Create tabs.
@@ -149,8 +183,13 @@ function ChatFrame:CreateTabs()
     for channel, enabled in pairs(self.db.profile.channels) do
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
-        tab:SetScript("OnClick", function()
-            if enabled then self:SwitchChannel(channel) end
+        tab:SetScript("OnClick", function(selfButton, button)
+            if button == "RightButton" then
+                -- Right-click to detach tab (floating window)
+                self:DetachTab(channel)
+            else
+                if enabled then self:SwitchChannel(channel) end
+            end
         end)
         local bg = tab:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
@@ -214,9 +253,10 @@ function ChatFrame:UpdateTabAppearance()
     end
 end
 
--- Our own SendMessage function.
+-- Our own SendMessage: routes messages into the chat and history.
 function ChatFrame:SendMessage(text, channel, sender)
     self:AddMessage(text, channel, sender)
+    -- Future: integrate with Blizzard chat commands or network transmission.
 end
 
 function ChatFrame:AddMessage(text, eventType, sender)
@@ -251,13 +291,10 @@ function ChatFrame:FormatMessage(text, sender, channel)
     return table.concat(parts, " ")
 end
 
--- Pinning functionality
+-- Pin a message so it stays visible.
 function ChatFrame:PinMessage(message)
+    if not self.db.profile.enablePinning then return end
     table.insert(self.pinnedMessages, message)
-    self.messageFrame:Clear()
-    for _, msg in ipairs(self.pinnedMessages) do
-        self.messageFrame:AddMessage("|cffFFD700[PINNED]|r " .. msg)
-    end
     self:UpdateAll()
 end
 
