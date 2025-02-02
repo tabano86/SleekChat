@@ -205,7 +205,6 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.sidebarEnabled end,
                 set = function(_, val)
                     addonObj.db.profile.sidebarEnabled = val
-                    -- Future: trigger sidebar refresh.
                 end,
             },
             threadedReplies = {
@@ -216,7 +215,6 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.threadedReplies end,
                 set = function(_, val)
                     addonObj.db.profile.threadedReplies = val
-                    -- Future: implement threaded conversation display.
                 end,
             },
             darkMode = {

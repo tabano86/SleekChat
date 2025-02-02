@@ -10,8 +10,8 @@ function Core.GetDefaults()
     return {
         profile = {
             enable = true,
-            version = 4,  -- version 4 includes advanced settings
-            layout = "CLASSIC", -- or "TRANSPOSED"
+            version = 4,
+            layout = "CLASSIC",
             messageFormat = "[{time}] {channel} {sender}: {message}",
             position = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 50, y = 50 },
             width = 600,

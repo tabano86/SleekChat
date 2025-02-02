@@ -6,7 +6,6 @@ local AceLocale = LibStub("AceLocale-3.0")
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
--- OnInitialize: Create the database and load core modules.
 function SleekChat:OnInitialize()
     self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
     addon.Core:Initialize(self)
@@ -16,7 +15,6 @@ function SleekChat:OnInitialize()
     self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
--- HookDefaultChat: Fully hide Blizzard's default chat frames.
 function SleekChat:HookDefaultChat()
     if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
     if QuickJoinToastButton then QuickJoinToastButton:Hide() end

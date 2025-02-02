@@ -11,9 +11,9 @@ local URL_PATTERNS = {
     "www%.[%w_-]+%.%S+",
 }
 
--- AutoComplete stub – implement Blizzard ChatEdit_CompleteChat if desired.
+-- AutoComplete stub – you may integrate ChatEdit_CompleteChat.
 local function AutoComplete(editBox)
-    -- Placeholder: Call ChatEdit_CompleteChat(editBox) if available.
+    -- Placeholder for auto-completion logic.
 end
 
 -- Returns the player's class for a given sender.
@@ -35,61 +35,21 @@ function ChatFrame:GetPlayerClass(sender)
     return nil
 end
 
--- Detach a tab into a floating window.
-function ChatFrame:DetachTab(channel)
-    if not self.tabs[channel] then return end
-    local detachFrame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    detachFrame:SetSize(self.db.profile.width * 0.5, self.db.profile.height * 0.5)
-    detachFrame:SetPoint("CENTER")
-    detachFrame:SetBackdrop({
-        bgFile = SM:Fetch("background", "Solid"),
-        edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
-        edgeSize = 12,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
-    detachFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
-    local scrollFrame = CreateFrame("ScrollingMessageFrame", nil, detachFrame)
-    scrollFrame:SetAllPoints()
-    scrollFrame:SetHyperlinksEnabled(true)
-    scrollFrame:SetFontObject(ChatFontNormal)
-    scrollFrame:SetJustifyH("LEFT")
-    scrollFrame:SetMaxLines(500)
-    scrollFrame:EnableMouseWheel(true)
-    scrollFrame:SetScript("OnMouseWheel", function(_, delta)
-        if delta > 0 then
-            scrollFrame:ScrollUp()
-        else
-            scrollFrame:ScrollDown()
-        end
-    end)
-    if addon.History and addon.History.messages and addon.History.messages[channel] then
-        for _, msg in ipairs(addon.History.messages[channel]) do
-            scrollFrame:AddMessage(msg.text)
-        end
-    end
-    detachFrame:Show()
-end
-
--- Apply theme without recursion (avoid stack overflow).
-function ChatFrame:ApplyTheme()
-    if self.db.profile.darkMode then
-        self.chatFrame:SetBackdropColor(0.1, 0.1, 0.1, self.db.profile.backgroundOpacity)
-    else
-        self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
-    end
-end
-
--- Handle incoming whisper messages: auto-create new whisper tab if needed.
+-- Instead of creating separate floating windows, we simply add new channel tabs.
+-- For whispers, if a tab for a given sender does not exist, create one.
 function ChatFrame:HandleWhisper(sender, msg)
-    -- If there's no existing whisper tab for this sender, create one.
-    if not self.tabs["WHISPER:" .. sender] then
+    local channelName = "WHISPER:" .. sender
+    if not self.db.profile.messageHistory[channelName] then
+        self.db.profile.messageHistory[channelName] = {}
+    end
+    if not self.tabs[channelName] then
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
         tab:SetScript("OnClick", function(selfButton, button)
             if button == "RightButton" then
-                self:DetachTab("WHISPER:" .. sender)
+                -- Do nothing or later add detach functionality.
             else
-                self:SwitchChannel("WHISPER:" .. sender)
+                self:SwitchChannel(channelName)
             end
         end)
         local bg = tab:CreateTexture(nil, "BACKGROUND")
@@ -98,25 +58,23 @@ function ChatFrame:HandleWhisper(sender, msg)
         tab.bg = bg
         local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("CENTER")
-        text:SetText("Whisper:" .. sender)
+        text:SetText(sender)
         tab.text = text
-        self.tabs["WHISPER:" .. sender] = tab
-        -- Create a new history buffer for this whisper if not present.
-        if not self.db.profile.messageHistory["WHISPER:" .. sender] then
-            self.db.profile.messageHistory["WHISPER:" .. sender] = {}
-        end
+        self.tabs[channelName] = tab
+        -- Also add to our channels list.
+        self.db.profile.channels[channelName] = true
     end
     return true
 end
 
--- Initialize the SleekChat UI.
+-- Initialize the main chat frame.
 function ChatFrame:Initialize(addonObj)
     self.db = addonObj.db
-    self.activeChannel = "SAY"
+    self.activeChannel = "SAY"  -- default channel
     self.tabs = {}
     self.pinnedMessages = {}
 
-    -- Create main chat frame.
+    -- Create main container (embedded chat window)
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
@@ -128,7 +86,7 @@ function ChatFrame:Initialize(addonObj)
     })
     self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
 
-    -- Create message display frame.
+    -- Create the ScrollingMessageFrame as a child.
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -179,11 +137,11 @@ function ChatFrame:Initialize(addonObj)
         if self.db.profile.enableAutoComplete then AutoComplete(f) end
     end)
 
-    -- Create default channel tabs.
+    -- Create default channel tabs (for persistent channels).
     self:CreateTabs()
     self:UpdateTabAppearance()
 
-    -- Resize handle.
+    -- Enable dragging and resizing.
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
@@ -196,7 +154,6 @@ function ChatFrame:Initialize(addonObj)
         self:UpdateTabPositions()
     end)
 
-    -- Enable dragging for the chat frame.
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -221,20 +178,19 @@ function ChatFrame:UpdateFonts()
 end
 
 function ChatFrame:CreateTabs()
-    -- Hide any existing tabs.
+    -- Clear existing tabs.
     for _, tab in pairs(self.tabs) do
         tab:Hide()
     end
     self.tabs = {}
-
-    -- Create persistent channel tabs.
+    -- Create a tab for each persistent channel.
     for channel, enabled in pairs(self.db.profile.channels) do
-        if enabled and channel ~= "WHISPER" then  -- Skip ephemeral whispers here.
+        if enabled and not channel:find("WHISPER:") and channel ~= "WHISPER" then
             local tab = CreateFrame("Button", nil, self.chatFrame)
             tab:SetSize(80, 24)
-            tab:SetScript("OnClick", function(selfButton, button)
+            tab:SetScript("OnClick", function(_, button)
                 if button == "RightButton" then
-                    self:DetachTab(channel)
+                    -- Future: detach tab
                 else
                     self:SwitchChannel(channel)
                 end
@@ -250,14 +206,13 @@ function ChatFrame:CreateTabs()
             self.tabs[channel] = tab
         end
     end
-
-    -- Create a dedicated whisper tab for general whispers.
+    -- Create a default “Whispers” tab.
     if self.db.profile.channels.WHISPER then
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
-        tab:SetScript("OnClick", function(selfButton, button)
+        tab:SetScript("OnClick", function(_, button)
             if button == "RightButton" then
-                self:DetachTab("WHISPER")
+                -- Future: detach whispers
             else
                 self:SwitchChannel("WHISPER")
             end
@@ -272,7 +227,6 @@ function ChatFrame:CreateTabs()
         tab.text = text
         self.tabs["WHISPER"] = tab
     end
-
     self:UpdateTabPositions()
 end
 
@@ -318,7 +272,6 @@ function ChatFrame:UpdateTabAppearance()
     end
 end
 
--- Send message function with advanced processing.
 function ChatFrame:SendMessage(text, channel, sender)
     local processedText = text
     if addon.AdvancedMessaging and addon.AdvancedMessaging.ProcessOutgoing then
@@ -328,7 +281,6 @@ function ChatFrame:SendMessage(text, channel, sender)
     if addon.History then
         addon.History:AddMessage(processedText, sender, channel)
     end
-    -- Auto-scroll unless user has manually scrolled up.
     self.messageFrame:ScrollToBottom()
 end
 
@@ -367,7 +319,6 @@ function ChatFrame:FormatMessage(text, sender, channel)
     return table.concat(parts, " ")
 end
 
--- Pin a message so it remains at the top.
 function ChatFrame:PinMessage(message)
     if not self.db.profile.enablePinning then return end
     table.insert(self.pinnedMessages, message)
@@ -387,6 +338,15 @@ function ChatFrame:UpdateAll()
         end
     end
     self:ApplyTheme()
+end
+
+-- Apply theme to the main container.
+function ChatFrame:ApplyTheme()
+    if self.db.profile.darkMode then
+        self.chatFrame:SetBackdropColor(0.1, 0.1, 0.1, self.db.profile.backgroundOpacity)
+    else
+        self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+    end
 end
 
 return ChatFrame

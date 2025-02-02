@@ -2,7 +2,7 @@ local _, addon = ...
 addon.Integration = {}
 local Integration = addon.Integration
 
--- Stub: Send a message to Discord via webhook.
+-- Stub: Send message to Discord via webhook.
 function Integration:SendToDiscord(text, channel, sender)
     -- Future: Implement HTTP POST to Discord webhook URL.
 end
