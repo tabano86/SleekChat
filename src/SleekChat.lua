@@ -31,11 +31,11 @@ end
 
 local function InitializeModulesSafely(addonObj)
     xpcall(function()
-        if addon.Events then addon.Events:Initialize(addonObj) end
-        if addon.ChatFrame then addon.ChatFrame:Initialize(addonObj) end
-        if addon.History then addon.History:Initialize(addonObj) end
+        if addon.Events then addon.Events:Initialize(self) end
+        if addon.ChatFrame then addon.ChatFrame:Initialize(self) end
+        if addon.History then addon.History:Initialize(self) end
         if addon.Notifications and addon.Notifications.Initialize then
-            addon.Notifications:Initialize(addonObj)
+            addon.Notifications:Initialize(self)
         end
     end, function(err)
         self:Print("|cFFFF0000Initialization Error:|r " .. tostring(err))

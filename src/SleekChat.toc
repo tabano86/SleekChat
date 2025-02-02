@@ -6,11 +6,4 @@
 ## SavedVariables: SleekChatDB
 
 Embeds.xml
-Locales\enUS.lua
-Core\Core.lua
-Core\Config.lua
-Core\Events.lua
-Modules\ChatFrame.lua
-Modules\History.lua
-Modules\Notifications.lua
 SleekChat.lua
