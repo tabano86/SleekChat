@@ -18,13 +18,11 @@ function Events:Initialize(addonObj)
     frame:RegisterEvent("CHAT_MSG_SYSTEM")
 
     frame:SetScript("OnEvent", function(_, event, ...)
-        -- System messages
         if event == "CHAT_MSG_SYSTEM" then
             addon.ChatFrame:AddMessage(..., "SYSTEM")
             return
         end
 
-        -- Regular messages
         for channel, data in pairs(CHANNEL_COMMANDS) do
             if event == data.event then
                 local msg, sender = ...
@@ -40,4 +38,6 @@ function Events:Initialize(addonObj)
     end)
 end
 
+-- Assign Events into the addon table
+addon.Events = Events
 return Events

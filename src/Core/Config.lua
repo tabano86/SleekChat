@@ -123,10 +123,71 @@ local function CreateGeneralOptions(addonObj)
                         get = function() return addonObj.db.profile.channels.SAY end,
                         set = function(_, val)
                             addonObj.db.profile.channels.SAY = val
-                            addon.ChatFrame:CreateTabs()
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
                         end,
                     },
-                    -- Repeat for YELL, PARTY, etc.
+                    enableYell = {
+                        name = L.yell,
+                        type = "toggle",
+                        order = 3,
+                        get = function() return addonObj.db.profile.channels.YELL end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.YELL = val
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
+                        end,
+                    },
+                    enableParty = {
+                        name = L.party,
+                        type = "toggle",
+                        order = 4,
+                        get = function() return addonObj.db.profile.channels.PARTY end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.PARTY = val
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
+                        end,
+                    },
+                    enableGuild = {
+                        name = L.guild,
+                        type = "toggle",
+                        order = 5,
+                        get = function() return addonObj.db.profile.channels.GUILD end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.GUILD = val
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
+                        end,
+                    },
+                    enableRaid = {
+                        name = L.raid,
+                        type = "toggle",
+                        order = 6,
+                        get = function() return addonObj.db.profile.channels.RAID end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.RAID = val
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
+                        end,
+                    },
+                    enableWhisper = {
+                        name = L.whisper,
+                        type = "toggle",
+                        order = 7,
+                        get = function() return addonObj.db.profile.channels.WHISPER end,
+                        set = function(_, val)
+                            addonObj.db.profile.channels.WHISPER = val
+                            if addonObj.ChatFrame and addonObj.ChatFrame.CreateTabs then
+                                addonObj.ChatFrame:CreateTabs()
+                            end
+                        end,
+                    },
                 },
             },
         },

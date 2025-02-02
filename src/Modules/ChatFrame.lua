@@ -16,10 +16,10 @@ function ChatFrame:Initialize(addonObj)
     self.activeChannel = "SAY"
     self.tabs = {}
 
-    -- Main Frame
+    -- Main Frame with proper SetPoint call (fixes the SetPoint usage error)
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
-    self.chatFrame:SetPoint(unpack(self.db.profile.position))
+    self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
     self.chatFrame:SetBackdrop({
         bgFile = SM:Fetch("background", "Solid"),
         edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
@@ -69,7 +69,7 @@ function ChatFrame:Initialize(addonObj)
         f:ClearFocus()
     end)
 
-    -- Tabs
+    -- Create Tabs and update their appearance
     self:CreateTabs()
     self:UpdateTabAppearance()
 
@@ -86,6 +86,7 @@ function ChatFrame:Initialize(addonObj)
         self:UpdateTabPositions()
     end)
 
+    -- Frame moving
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -97,7 +98,6 @@ function ChatFrame:Initialize(addonObj)
     end)
 
     addonObj:PrintDebug("ChatFrame initialized")
-    -- Initial messages
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
     self:CreateTabs()
     self:UpdateTabAppearance()
@@ -117,7 +117,6 @@ function ChatFrame:CreateTabs()
     end
     self.tabs = {}
 
-    -- Create tabs for all channels regardless of state
     for channel, enabled in pairs(self.db.profile.channels) do
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
@@ -125,7 +124,6 @@ function ChatFrame:CreateTabs()
             if enabled then self:SwitchChannel(channel) end
         end)
 
-        -- Visual elements
         local bg = tab:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
@@ -137,7 +135,6 @@ function ChatFrame:CreateTabs()
         text:SetTextColor(0.8, 0.8, 0.8)
         tab.text = text
 
-        -- Disabled state
         if not enabled then
             text:SetAlpha(0.5)
             tab:SetScript("OnEnter", function()
@@ -197,7 +194,6 @@ function ChatFrame:AddMessage(text, eventType, sender)
     if self.db.profile.urlDetection then
         text = text:gsub("(%S+://%S+)", "|cff00FFFF|Hurl:%1|h[Link]|h|r")
     end
-
     local formatted = self:FormatMessage(text, sender, eventType)
     self.messageFrame:AddMessage(formatted)
     self.messageFrame:ScrollToBottom()
@@ -210,7 +206,7 @@ function ChatFrame:FormatMessage(text, sender, channel)
     end
     if sender then
         local class = self:GetPlayerClass(sender)
-        if class and RAID_CLASS_COLORS[class] then
+        if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
             local color = RAID_CLASS_COLORS[class]
             sender = format("|cff%02x%02x%02x|Hplayer:%s|h%s|h|r",
                     color.r*255, color.g*255, color.b*255, sender, sender)
@@ -225,3 +221,5 @@ function ChatFrame:FormatMessage(text, sender, channel)
     table.insert(parts, text)
     return table.concat(parts, " ")
 end
+
+return ChatFrame

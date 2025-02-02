@@ -96,8 +96,8 @@ end
 local function RegisterCommands(addonObj)
     addonObj:RegisterChatCommand("scstatus", function()
         addonObj:Print("SleekChat Status Report:")
-        addonObj:Print("Debug Mode: "..(addonObj.db.profile.debug and "|cFF00FF00ON" or "|cFFFF0000OFF"))
-        addonObj:Print("Default Chat Visible: "..(addonObj.db.profile.showDefaultChat and "|cFF00FF00YES" or "|cFFFF0000NO"))
+        addonObj:Print("Debug Mode: " .. (addonObj.db.profile.debug and "|cFF00FF00ON" or "|cFFFF0000OFF"))
+        addonObj:Print("Default Chat Visible: " .. (addonObj.db.profile.showDefaultChat and "|cFF00FF00YES" or "|cFFFF0000NO"))
         if addon.ChatFrame and addon.ChatFrame.chatFrame then
             addonObj:Print(string.format("Main Frame: %s (Visible: %s)",
                     tostring(addon.ChatFrame.chatFrame),

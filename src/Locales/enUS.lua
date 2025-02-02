@@ -63,6 +63,7 @@ L.layout_desc = "Select the chat layout"
 L.layout_classic = "Classic (Tabs on top)"
 L.layout_transposed = "Transposed (Titles left, messages right)"
 
+-- Channel settings
 L.channels = "Channels"
 L.channel_settings = "Channel Settings"
 L.say = "Say"
