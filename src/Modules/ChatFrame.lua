@@ -70,6 +70,19 @@ function ChatFrame:DetachTab(channel)
     detachFrame:Show()
 end
 
+function ChatFrame:ApplyTheme()
+    if self.db.profile.darkMode then
+        self.chatFrame:SetBackdropColor(0.1, 0.1, 0.1, self.db.profile.backgroundOpacity)
+    else
+        self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+    end
+
+    -- Only call UpdateAll if it is actually defined
+    if type(self.UpdateAll) == "function" then
+        self:UpdateAll()
+    end
+end
+
 -- Initialize the SleekChat UI.
 function ChatFrame:Initialize(addonObj)
     self.db = addonObj.db
@@ -164,6 +177,8 @@ function ChatFrame:Initialize(addonObj)
 
     addonObj:PrintDebug("SleekChat frame initialized")
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
+    -- Apply initial theme
+    self:ApplyTheme()
 end
 
 function ChatFrame:UpdateFonts()
@@ -238,6 +253,10 @@ function ChatFrame:SwitchChannel(channel)
     end
     self:UpdateTabAppearance()
     self.messageFrame:ScrollToBottom()
+    -- Trigger advanced messaging (e.g. load thread history) if applicable
+    if addon.AdvancedMessaging and addon.AdvancedMessaging.SwitchChannel then
+        addon.AdvancedMessaging:SwitchChannel(channel)
+    end
 end
 
 function ChatFrame:UpdateTabAppearance()
@@ -255,9 +274,18 @@ end
 -- Our own SendMessage function.
 function ChatFrame:SendMessage(text, channel, sender)
     self:AddMessage(text, channel, sender)
+    if addon.AdvancedMessaging and addon.AdvancedMessaging.ProcessOutgoing then
+        addon.AdvancedMessaging:ProcessOutgoing(text, channel, sender)
+    end
 end
 
 function ChatFrame:AddMessage(text, eventType, sender)
+    if self.db.profile.profanityFilter then
+        -- Call ChatModeration filter
+        if addon.ChatModeration and addon.ChatModeration.FilterMessage then
+            text = addon.ChatModeration:FilterMessage(text)
+        end
+    end
     if self.db.profile.urlDetection then
         text = text:gsub("(%S+://%S+)", "|cff00FFFF|Hurl:%1|h[Link]|h|r")
     end
@@ -308,6 +336,8 @@ function ChatFrame:UpdateAll()
             end
         end
     end
+    -- Apply theme after update
+    self:ApplyTheme()
 end
 
 return ChatFrame

@@ -23,6 +23,8 @@ L.font = "Font"
 L.font_size = "Font Size"
 L.tab_unread_highlight = "Unread Tab Highlight"
 L.tab_unread_highlight_desc = "Highlight tabs with unread messages"
+L.dark_mode = "Dark Mode"
+L.dark_mode_desc = "Toggle dark theme for the chat window"
 
 -- Notifications
 L.notifications = "Notifications"
@@ -72,5 +74,8 @@ L.party = "Party"
 L.guild = "Guild"
 L.raid = "Raid"
 L.whisper = "Whisper"
+L.trade = "Trade"
+L.localdefense = "LocalDefense"
+L.lookingforgroup = "LookingForGroup"
 
 return L

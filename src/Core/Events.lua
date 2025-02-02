@@ -8,6 +8,9 @@ local CHANNEL_COMMANDS = {
     GUILD = { event = "CHAT_MSG_GUILD", prefix = "/g " },
     RAID = { event = "CHAT_MSG_RAID", prefix = "/ra " },
     WHISPER = { event = "CHAT_MSG_WHISPER", prefix = "/w " },
+    TRADE = { event = "CHAT_MSG_CHANNEL", channel = "Trade" },
+    LOCALDEFENSE = { event = "CHAT_MSG_CHANNEL", channel = "LocalDefense" },
+    LOOKINGFORGROUP = { event = "CHAT_MSG_CHANNEL", channel = "LookingForGroup" },
 }
 
 function Events:Initialize(addonObj)
@@ -24,10 +27,17 @@ function Events:Initialize(addonObj)
         for channel, data in pairs(CHANNEL_COMMANDS) do
             if event == data.event then
                 local msg, sender = ...
-                if addonObj.db.profile.channels[channel] then
-                    addon.ChatFrame:AddMessage(msg, channel, sender)
-                    if channel == "WHISPER" then
-                        addon.Notifications:ShowWhisperAlert(sender, msg)
+                if data.channel then
+                    -- For channels like Trade, LocalDefense, etc.
+                    if addonObj.db.profile.channels[data.channel:upper()] then
+                        addon.ChatFrame:AddMessage(msg, data.channel, sender)
+                    end
+                else
+                    if addonObj.db.profile.channels[channel] then
+                        addon.ChatFrame:AddMessage(msg, channel, sender)
+                        if channel == "WHISPER" then
+                            addon.Notifications:ShowWhisperAlert(sender, msg)
+                        end
                     end
                 end
                 break

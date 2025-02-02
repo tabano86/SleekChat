@@ -219,6 +219,44 @@ local function CreateGeneralOptions(addonObj)
                     -- Future: implement threaded conversation display.
                 end,
             },
+            darkMode = {
+                name = "Dark Mode",
+                desc = "Toggle a dark color theme for the chat window",
+                type = "toggle",
+                order = 18,
+                get = function() return addonObj.db.profile.darkMode end,
+                set = function(_, val)
+                    addonObj.db.profile.darkMode = val
+                    if addonObj.ChatFrame and addonObj.ChatFrame.ApplyTheme then
+                        addonObj.ChatFrame:ApplyTheme()
+                    end
+                end,
+            },
+            -- Additional settings for advanced features:
+            profanityFilter = {
+                name = "Profanity Filter",
+                desc = "Filter out offensive words",
+                type = "toggle",
+                order = 19,
+                get = function() return addonObj.db.profile.profanityFilter end,
+                set = function(_, val)
+                    addonObj.db.profile.profanityFilter = val
+                end,
+            },
+            muteList = {
+                name = "Mute List",
+                desc = "List of players to mute",
+                type = "input",
+                order = 20,
+                get = function() return table.concat(addonObj.db.profile.muteList or {}, ", ") end,
+                set = function(_, val)
+                    local t = {}
+                    for word in val:gmatch("([^,]+)") do
+                        t[#t+1] = word:gsub("^%s*(.-)%s*$", "%1")
+                    end
+                    addonObj.db.profile.muteList = t
+                end,
+            },
         },
     }
 end

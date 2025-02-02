@@ -10,7 +10,7 @@ function Core.GetDefaults()
     return {
         profile = {
             enable = true,
-            version = 3,
+            version = 4,  -- bumped version to include new fields
             layout = "CLASSIC", -- or "TRANSPOSED"
             messageFormat = "[{time}] {channel} {sender}: {message}",
             position = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 50, y = 50 },
@@ -33,6 +33,9 @@ function Core.GetDefaults()
                 GUILD = true,
                 RAID = true,
                 WHISPER = true,
+                TRADE = true,
+                LOCALDEFENSE = true,
+                LOOKINGFORGROUP = true,
             },
             backgroundOpacity = 0.8,
             background = {
@@ -60,6 +63,9 @@ function Core.GetDefaults()
             messageHistory = {},
             sidebarEnabled = false,
             threadedReplies = false,
+            darkMode = false,
+            profanityFilter = false,
+            muteList = {},
         },
     }
 end
@@ -96,6 +102,16 @@ local function ApplyMigrations(addonObj)
             size = 16,
         }
         addonObj.db.profile.version = 2
+    end
+    if addonObj.db.profile.version < 4 then
+        -- Migrate new advanced settings
+        addonObj.db.profile.darkMode = addonObj.db.profile.darkMode or false
+        addonObj.db.profile.profanityFilter = addonObj.db.profile.profanityFilter or false
+        addonObj.db.profile.muteList = addonObj.db.profile.muteList or {}
+        addonObj.db.profile.channels.TRADE = true
+        addonObj.db.profile.channels.LOCALDEFENSE = true
+        addonObj.db.profile.channels.LOOKINGFORGROUP = true
+        addonObj.db.profile.version = 4
     end
 end
 

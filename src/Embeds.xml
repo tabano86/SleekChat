@@ -20,4 +20,7 @@
     <Include file="Modules\ChatFrame.lua"/>
     <Include file="Modules\History.lua"/>
     <Include file="Modules\Notifications.lua"/>
+    <Include file="Modules\AdvancedMessaging.lua"/>
+    <Include file="Modules\ChatModeration.lua"/>
+    <Include file="Modules\Integration.lua"/>
 </Ui>
