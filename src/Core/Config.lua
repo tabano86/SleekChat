@@ -6,7 +6,6 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.Config = {}
 local Config = addon.Config
 
--- General options
 local function CreateGeneralOptions(addonObj)
     return {
         name = L.general,
@@ -47,7 +46,6 @@ local function CreateGeneralOptions(addonObj)
                 order = 4,
                 get = function() return addonObj.db.profile.timestampFormat end,
                 set = function(_, val)
-                    -- Validate Lua date format
                     if pcall(date, val) then
                         addonObj.db.profile.timestampFormat = val
                         if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
@@ -78,7 +76,9 @@ local function CreateGeneralOptions(addonObj)
                 get = function() return addonObj.db.profile.historySize end,
                 set = function(_, val)
                     addonObj.db.profile.historySize = val
-                    if addonObj.History then addonObj.History:UpdateMaxSize(val) end
+                    if addonObj.History then
+                        addonObj.History:UpdateMaxSize(val)
+                    end
                 end,
             },
             layout = {
@@ -227,6 +227,14 @@ local function CreateGeneralOptions(addonObj)
                     end
                     addonObj.db.profile.muteList = t
                 end,
+            },
+            autoHideInCombat = {
+                name = "Auto-Hide in Combat",
+                desc = "Fade or hide chat in combat",
+                type = "toggle",
+                order = 21,
+                get = function() return addonObj.db.profile.autoHideInCombat end,
+                set = function(_, val) addonObj.db.profile.autoHideInCombat = val end,
             },
         },
     }
@@ -586,7 +594,6 @@ function Config:Initialize(addonObj)
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
     AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
     AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
-
     addonObj:RegisterChatCommand("screset", function()
         addonObj.db:ResetProfile()
         addonObj:Print(L.settings_reset)

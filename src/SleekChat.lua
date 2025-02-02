@@ -3,7 +3,7 @@ local AceAddon = LibStub("AceAddon-3.0")
 local AceDB = LibStub("AceDB-3.0")
 local AceLocale = LibStub("AceLocale-3.0")
 
--- IMPORTANT: Added "AceTimer-3.0" so we can call self:ScheduleRepeatingTimer
+-- Note: We include "AceTimer-3.0" so ScheduleRepeatingTimer() works.
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
@@ -62,6 +62,7 @@ function SleekChat:OnEnable()
     addon.History:Initialize(self)
     addon.Notifications:Initialize(self)
     self:UpdateChatVisibility()
+
     if addon.ChatFrame and addon.ChatFrame.chatFrame then
         addon.ChatFrame.chatFrame:Show()
     end

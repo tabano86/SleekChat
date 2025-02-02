@@ -2,7 +2,7 @@ local _, addon = ...
 addon.AdvancedMessaging = {}
 local AdvancedMessaging = addon.AdvancedMessaging
 
--- Fixed the emoticon encoding to a normal UTF-8 icon
+-- Emoticon fix (UTF-8)
 function AdvancedMessaging:ProcessOutgoing(text, channel, sender)
     text = text:gsub(":%)", "🙂")
     text = text:gsub("@(%w+)", "|cffFFAA00@%1|r")

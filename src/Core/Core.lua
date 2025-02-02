@@ -10,7 +10,7 @@ function Core.GetDefaults()
     return {
         profile = {
             enable = true,
-            version = 4,
+            version = 5, -- incremented
             layout = "CLASSIC",
             messageFormat = "[{time}] {channel} {sender}: {message}",
             position = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 50, y = 50 },
@@ -38,14 +38,8 @@ function Core.GetDefaults()
                 LOOKINGFORGROUP = true,
             },
             backgroundOpacity = 0.8,
-            background = {
-                texture = "Solid",
-                color = { r = 0, g = 0, b = 0, a = 0.8 },
-            },
-            border = {
-                texture = "Blizzard Tooltip",
-                size = 16,
-            },
+            background = { texture = "Solid", color = { r = 0, g = 0, b = 0, a = 0.8 } },
+            border = { texture = "Blizzard Tooltip", size = 16 },
             tabs = {
                 activeColor = { r = 1, g = 1, b = 1 },
                 inactiveColor = { r = 0.5, g = 0.5, b = 0.5 },
@@ -66,7 +60,6 @@ function Core.GetDefaults()
             darkMode = false,
             profanityFilter = false,
             muteList = {},
-            -- Tab management
             customTabOrder = false,
             tabRenaming = false,
             autoCollapseTabs = false,
@@ -88,12 +81,13 @@ function Core.GetDefaults()
             customHotkeys = "",
             tabSessionPersistence = false,
             animatedTabTransitions = false,
+            -- Newly added optional auto-hide in combat
+            autoHideInCombat = false,
         },
     }
 end
 
 local function SetupStaticPopup()
-    -- Unified definition for opening URLs (used by ChatFrame:HandleURL)
     StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
         text = L.open_url_dialog or "Open URL:",
         button1 = L.open or "Open",
@@ -117,25 +111,9 @@ local function SetupStaticPopup()
 end
 
 local function ApplyMigrations(addonObj)
-    if addonObj.db.profile.version < 2 then
-        addonObj.db.profile.background = addonObj.db.profile.background or {
-            texture = "SleekChat Default",
-            opacity = 0.8,
-        }
-        addonObj.db.profile.border = addonObj.db.profile.border or {
-            texture = "SleekChat Simple",
-            size = 16,
-        }
-        addonObj.db.profile.version = 2
-    end
-    if addonObj.db.profile.version < 4 then
-        addonObj.db.profile.darkMode = addonObj.db.profile.darkMode or false
-        addonObj.db.profile.profanityFilter = addonObj.db.profile.profanityFilter or false
-        addonObj.db.profile.muteList = addonObj.db.profile.muteList or {}
-        addonObj.db.profile.channels.TRADE = true
-        addonObj.db.profile.channels.LOCALDEFENSE = true
-        addonObj.db.profile.channels.LOOKINGFORGROUP = true
-        addonObj.db.profile.version = 4
+    if addonObj.db.profile.version < 5 then
+        addonObj.db.profile.autoHideInCombat = addonObj.db.profile.autoHideInCombat or false
+        addonObj.db.profile.version = 5
     end
 end
 

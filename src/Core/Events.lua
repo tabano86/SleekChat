@@ -19,19 +19,34 @@ end
 
 function Events:Initialize(addonObj)
     local frame = CreateFrame("Frame")
-    for channel, data in pairs(CHANNEL_COMMANDS) do
+
+    for _, data in pairs(CHANNEL_COMMANDS) do
         frame:RegisterEvent(data.event)
     end
     frame:RegisterEvent("CHAT_MSG_SYSTEM")
+    frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     frame:SetScript("OnEvent", function(_, event, ...)
         if event == "CHAT_MSG_SYSTEM" then
             addon.ChatFrame:AddMessage(..., "SYSTEM")
             return
+        elseif event == "PLAYER_REGEN_DISABLED" then
+            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.chatFrame then
+                addon.ChatFrame.chatFrame:SetAlpha(0) -- fade out
+            end
+            return
+        elseif event == "PLAYER_REGEN_ENABLED" then
+            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.chatFrame then
+                addon.ChatFrame.chatFrame:SetAlpha(1) -- restore
+            end
+            return
         end
+
+        -- Normal chat events
+        local msg, sender = ...
         for channel, data in pairs(CHANNEL_COMMANDS) do
             if event == data.event then
-                local msg, sender = ...
                 if data.channel then
                     if addonObj.db.profile.channels[data.channel:upper()] then
                         addon.ChatFrame:AddMessage(msg, data.channel, sender)
@@ -52,4 +67,3 @@ function Events:Initialize(addonObj)
 end
 
 addon.Events = Events
-return Events

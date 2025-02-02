@@ -3,12 +3,11 @@ local AceLocale = LibStub("AceLocale-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
--- Cache frequently used
 local floor, date, format, gsub, ipairs, pairs, select, strlower, strsplit, tinsert =
 math.floor, date, string.format, string.gsub, ipairs, pairs, select, string.lower, strsplit, table.insert
 
-local UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip =
-UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip
+local UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip, CreateFramePool =
+UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip, CreateFramePool
 
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS or CUSTOM_CLASS_COLORS or {}
 local DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
@@ -18,7 +17,7 @@ addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
 ---------------------------------------------------------------------
--- URL patterns, priority rules, mention triggers
+-- URL detection / mention triggers
 ---------------------------------------------------------------------
 local URL_PATTERNS = {
     "https?://[%w-_%%%.%?%.:/%+=&]+",
@@ -45,7 +44,7 @@ local SMART_FEATURES = {
 }
 
 ---------------------------------------------------------------------
--- Simple class cache
+-- Class cache
 ---------------------------------------------------------------------
 local classCache = setmetatable({}, {
     __index = function(t, sender)
@@ -59,7 +58,6 @@ function ChatFrame:GetPlayerClass(sender)
     if sender == PLAYER_NAME then
         return select(2, UnitClass("player"))
     end
-    -- Check party/raid for that name
     for prefix, maxMembers in pairs({ party = 4, raid = 40 }) do
         for i = 1, maxMembers do
             local unit = prefix..i
@@ -84,11 +82,11 @@ function TabManager:AddTab(tabType, identifier)
 end
 
 function TabManager:CleanupOldTabs()
-    -- Example: remove or hide old whisper tabs
+    -- e.g., remove old whisper tabs after inactivity
 end
 
 function TabManager:UpdateTabVisuals()
-    -- Example: highlight or fade tabs
+    -- e.g., highlight/fade
 end
 
 ---------------------------------------------------------------------
@@ -103,7 +101,6 @@ function MessageProcessor:ParseMessage(text, sender, channel)
         mentions = {},
         priority = MESSAGE_PRIORITY[channel] or 1
     }
-
     -- Detect URLs
     for _, pattern in ipairs(URL_PATTERNS) do
         processed.original = gsub(processed.original, pattern, function(url)
@@ -111,8 +108,7 @@ function MessageProcessor:ParseMessage(text, sender, channel)
             return format("|cff00FFFF|Hurl:%s|h[Link]|h|r", url)
         end)
     end
-
-    -- Mention detection
+    -- Mentions
     local lowerText = strlower(processed.original)
     for _, trigger in ipairs(SMART_FEATURES.MENTION_TRIGGERS) do
         if lowerText:find(trigger, 1, true) then
@@ -121,16 +117,11 @@ function MessageProcessor:ParseMessage(text, sender, channel)
             break
         end
     end
-
     return processed
 end
 
-function MessageProcessor:ShouldNotify(msg)
-    return (#msg.mentions > 0) or (msg.priority >= 3)
-end
-
 ---------------------------------------------------------------------
--- ChatFrame methods
+-- ChatFrame core
 ---------------------------------------------------------------------
 function ChatFrame:HandleWhisper(sender, msg)
     local channelName = "WHISPER:"..sender
@@ -149,7 +140,6 @@ function ChatFrame:Initialize(addonObj)
 
     -- Main frame
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
-    self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint(
             self.db.profile.position.point,
             UIParent,
@@ -158,25 +148,15 @@ function ChatFrame:Initialize(addonObj)
             floor(self.db.profile.position.y)
     )
 
-    -- Resizable
-    self.chatFrame:SetResizable(true)
-    self.chatFrame:SetMinResize(200, 100)
-    local resizeButton = CreateFrame("Button", nil, self.chatFrame)
-    resizeButton:SetSize(16, 16)
-    resizeButton:SetPoint("BOTTOMRIGHT")
-    resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-    resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-    resizeButton:SetScript("OnMouseDown", function()
-        self.chatFrame:StartSizing("BOTTOMRIGHT")
-    end)
-    resizeButton:SetScript("OnMouseUp", function()
-        self.chatFrame:StopMovingOrSizing()
-        self.db.profile.width = floor(self.chatFrame:GetWidth())
-        self.db.profile.height = floor(self.chatFrame:GetHeight())
-        self:UpdateTabPositions()
-    end)
+    -- Fix: Use SetResizeBounds if available, otherwise use SetMinResize
+    if self.chatFrame.SetResizeBounds then
+        self.chatFrame:SetResizeBounds(200, 100)
+    elseif self.chatFrame.SetMinResize then
+        self.chatFrame:SetMinResize(200, 100)
+    end
 
-    -- Draggable
+    self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
+    self.chatFrame:SetResizable(true)
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -192,6 +172,22 @@ function ChatFrame:Initialize(addonObj)
         }
     end)
 
+    -- Resize button
+    local resizeButton = CreateFrame("Button", nil, self.chatFrame)
+    resizeButton:SetSize(16, 16)
+    resizeButton:SetPoint("BOTTOMRIGHT")
+    resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    resizeButton:SetScript("OnMouseDown", function()
+        self.chatFrame:StartSizing("BOTTOMRIGHT")
+    end)
+    resizeButton:SetScript("OnMouseUp", function()
+        self.chatFrame:StopMovingOrSizing()
+        self.db.profile.width = floor(self.chatFrame:GetWidth())
+        self.db.profile.height = floor(self.chatFrame:GetHeight())
+        self:UpdateTabPositions()
+    end)
+
     -- Backdrop
     self.chatFrame:SetBackdrop({
         bgFile = SM:Fetch("background", self.db.profile.background) or "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -202,12 +198,12 @@ function ChatFrame:Initialize(addonObj)
 
     -- ScrollingMessageFrame
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
-    self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
     self.messageFrame:SetPoint("BOTTOMRIGHT", -8, 40)
     self.messageFrame:SetJustifyH("LEFT")
     self.messageFrame:SetMaxLines(1000)
     self.messageFrame:EnableMouseWheel(true)
+    self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetScript("OnMouseWheel", function(_, delta)
         local scrollSpeed = self.db.profile.scrollSpeed or 3
         if IsShiftKeyDown() then
@@ -215,8 +211,6 @@ function ChatFrame:Initialize(addonObj)
         end
         self.messageFrame:ScrollByAmount(-delta * scrollSpeed)
     end)
-
-    -- Hyperlink clicks
     self.messageFrame:SetScript("OnHyperlinkClick", function(_, link, text, button)
         local linkType, value = strsplit(":", link, 2)
         if linkType == "player" then
@@ -228,7 +222,7 @@ function ChatFrame:Initialize(addonObj)
 
     self:UpdateFonts()
 
-    -- Edit box
+    -- EditBox
     self.editBox = CreateFrame("EditBox", "SleekChatInputBox", self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -247,18 +241,16 @@ function ChatFrame:Initialize(addonObj)
         f:SetText("")
         f:ClearFocus()
     end)
-
-    -- Auto-complete
     self.editBox:SetScript("OnTextChanged", function(f, userInput)
         if userInput and self.db.profile.enableAutoComplete then
             self:UpdateAutoComplete(f:GetText())
         end
     end)
 
-    -- Tabs
+    -- Tab system
     self:InitializeTabSystem()
 
-    -- Periodic cleanup (needs AceTimer-3.0)
+    -- Periodic cleanup
     addonObj:ScheduleRepeatingTimer(function()
         TabManager:CleanupOldTabs()
         self:ProcessMessageQueue()
@@ -266,7 +258,7 @@ function ChatFrame:Initialize(addonObj)
 
     self:RegisterSlashCommands()
 
-    addon:PrintDebug("SleekChat initialized with smart features")
+    addonObj:PrintDebug("SleekChat initialized with smart features")
     self:ApplyTheme()
 end
 
@@ -283,8 +275,6 @@ end
 
 function ChatFrame:SendSmartMessage(text)
     local processed = MessageProcessor:ParseMessage(text, PLAYER_NAME, self.activeChannel)
-
-    -- Check for slash
     if text:sub(1,1) == "/" then
         local command = strsplit(" ", text:sub(2)):lower()
         if command == "p" or command == "party" then
@@ -293,7 +283,6 @@ function ChatFrame:SendSmartMessage(text)
             self.activeChannel = "RAID"
         end
     end
-
     if processed.priority >= 3 then
         self:FlashTab(self.activeChannel)
         if self.db.profile.mentionSounds then
@@ -307,13 +296,11 @@ end
 function ChatFrame:AddMessage(text, eventType, sender)
     local processed = MessageProcessor:ParseMessage(text, sender, eventType)
     local formatted = self:FormatMessage(processed.original, sender, eventType)
-
     if processed.priority > 2 then
         table.insert(self.messageQueue, 1, { formatted, eventType })
     else
         table.insert(self.messageQueue, { formatted, eventType })
     end
-
     if #self.messageQueue > 50 then
         self:ProcessMessageQueue()
     end
@@ -332,36 +319,29 @@ function ChatFrame:ProcessMessageQueue()
 end
 
 function ChatFrame:FlashTab(channel)
-    -- Stub: highlight or flash the active channel's tab
+    -- Stub: highlight or flash this channel's tab
 end
 
 function ChatFrame:FormatMessage(text, sender, channel)
     local parts = {}
-
-    -- Timestamp
     if self.db.profile.timestamps then
         table.insert(parts, format("|cff798BDD%s|r", date(self.db.profile.timestampFormat)))
     end
-
-    -- Class-colored sender
     if sender then
         local class = classCache[sender]
         local color = class and RAID_CLASS_COLORS[class] or {r=0.8, g=0.8, b=0.8}
         sender = format("|cff%02x%02x%02x|Hplayer:%s|h%s|h|r",
                 color.r*255, color.g*255, color.b*255, sender, sender)
     end
-
     local channelIcon = ""
     if self.db.profile.channelIcons and addon.ChannelIcons then
         channelIcon = addon.ChannelIcons[channel] or ""
     end
-
     table.insert(parts, format("[%s%s]", channelIcon, channel))
     if sender then
         table.insert(parts, sender..":")
     end
     table.insert(parts, text)
-
     return table.concat(parts, " ")
 end
 
@@ -369,23 +349,19 @@ end
 -- Tabs
 ---------------------------------------------------------------------
 function ChatFrame:InitializeTabSystem()
-    -- A simple pool for reusing tab buttons
     self.tabPool = CreateFramePool("Button", self.chatFrame, function(pool, tab)
         tab:ClearAllPoints()
         tab:Hide()
     end)
-
     self.tabScrollFrame = CreateFrame("ScrollFrame", nil, self.chatFrame, "UIPanelScrollFrameTemplate")
     self.tabScrollFrame:SetPoint("TOPLEFT", self.chatFrame, "TOPLEFT", 5, -5)
     self.tabScrollFrame:SetSize(self.db.profile.width - 10, 30)
 
-    -- Removed the unused self:RegisterMessage("SLEEKCHAT_SETTINGS_CHANGED", "UpdateTabSystem")
     self:UpdateTabSystem()
 end
 
 function ChatFrame:UpdateTabSystem()
     self.tabPool:ReleaseAll()
-
     for channel, enabled in pairs(self.db.profile.channels) do
         if enabled then
             local tab = self.tabPool:Acquire()
@@ -393,7 +369,6 @@ function ChatFrame:UpdateTabSystem()
             tab:Show()
         end
     end
-
     self:UpdateTabPositions()
 end
 
@@ -434,7 +409,6 @@ function ChatFrame:UpdateTabPositions()
         tab:SetPoint("BOTTOMLEFT", self.tabScrollFrame, "BOTTOMLEFT", xOffset, 0)
         xOffset = xOffset + tab:GetWidth() + 2
     end
-
     local neededWidth = xOffset - self.tabScrollFrame:GetWidth()
     if neededWidth < 0 then
         neededWidth = 0
@@ -443,13 +417,12 @@ function ChatFrame:UpdateTabPositions()
 end
 
 function ChatFrame:ToggleChannel(channel)
-    -- Stub: e.g., close/detach channel
+    -- Stub for detachable pop-out
 end
 
 function ChatFrame:SwitchChannel(channel)
     self.activeChannel = channel
     self.messageFrame:Clear()
-
     if addon.History and addon.History.messages and addon.History.messages[channel] then
         for _, msg in ipairs(addon.History.messages[channel]) do
             self:AddMessage(msg.text, msg.channel, msg.sender)
@@ -464,7 +437,7 @@ function ChatFrame:SwitchChannel(channel)
 end
 
 ---------------------------------------------------------------------
--- Pinning messages
+-- Pinning
 ---------------------------------------------------------------------
 function ChatFrame:PinMessage(message)
     if not self.db.profile.enablePinning then return end
@@ -474,11 +447,9 @@ end
 
 function ChatFrame:UpdateAll()
     self.messageFrame:Clear()
-
     for _, msg in ipairs(self.pinnedMessages) do
         self.messageFrame:AddMessage("|cffFFD700[PINNED]|r "..msg)
     end
-
     if addon.History and addon.History.messages then
         for channel, messages in pairs(addon.History.messages) do
             for _, msg in ipairs(messages) do
@@ -486,7 +457,6 @@ function ChatFrame:UpdateAll()
             end
         end
     end
-
     self:ApplyTheme()
 end
 
@@ -520,7 +490,6 @@ end
 function ChatFrame:SearchMessages(term)
     if not term or term == "" then return end
     local results = {}
-
     if addon.History and addon.History.messages then
         for channel, messages in pairs(addon.History.messages) do
             for _, msg in ipairs(messages) do
@@ -530,7 +499,6 @@ function ChatFrame:SearchMessages(term)
             end
         end
     end
-
     self.messageFrame:Clear()
     for _, msg in ipairs(results) do
         self:AddMessage(msg.text, msg.channel, msg.sender)
@@ -538,11 +506,10 @@ function ChatFrame:SearchMessages(term)
 end
 
 ---------------------------------------------------------------------
--- Auto-complete
+-- AutoComplete
 ---------------------------------------------------------------------
 function ChatFrame:UpdateAutoComplete(input)
     self.editBox.autoComplete = {}
-
     if input:sub(1, 1) == "/" then
         for cmd, info in pairs(addon.SlashCommands) do
             local cmdCheck = "/"..cmd
@@ -557,14 +524,13 @@ function ChatFrame:UpdateAutoComplete(input)
             end
         end
     end
-
     if #self.editBox.autoComplete > 0 then
         ChatEdit_CompleteChat(self.editBox)
     end
 end
 
 ---------------------------------------------------------------------
--- Helper stubs
+-- Helpers
 ---------------------------------------------------------------------
 function ChatFrame:StartConversation(target)
     self.activeChannel = "WHISPER:"..target
@@ -572,7 +538,6 @@ function ChatFrame:StartConversation(target)
 end
 
 function ChatFrame:HandleURL(url)
-    -- Show our unified popup
     StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = url })
 end
 

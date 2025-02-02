@@ -1,4 +1,3 @@
-<!-- Embeds.xml -->
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
     <!-- Load libraries first -->
     <Script file="Libs\LibStub\LibStub.lua"/>
