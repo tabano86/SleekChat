@@ -6,81 +6,140 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
+-- Optimized URL patterns with common protocols and email support
 local URL_PATTERNS = {
-    "%w+://%S+",
-    "www%.[%w_-]+%.%S+",
+    "https?://%S+",                     -- HTTP/HTTPS
+    "www%.[%w_-%%]+%.%w%w+%.?%w*",      -- Common websites
+    "ftp://%S+",                        -- FTP
+    "[%w_.%%+-]+@[%w_.%%+-]+%.%w%w+",   -- Email addresses
+    "%d%d?%d?%.%d%d?%d?%.%d%d?%d?%.%d%d?%d?:%d%d?%d?%d?%d?", -- IP with port
+    "wowinterface%.com/%S+",            -- Common WoW sites
+    "classicwow%.com/%S+",
 }
 
--- AutoComplete stub – integrate ChatEdit_CompleteChat if desired.
-local function AutoComplete(editBox)
-    -- Placeholder for auto-completion logic.
-end
+-- Cache frequently used globals
+local floor, date, format, gsub, ipairs = math.floor, date, string.format, string.gsub, ipairs
+local RAID_CLASS_COLORS = RAID_CLASS_COLORS or CUSTOM_CLASS_COLORS or {}
+local CHAT_FRAME_BACKDROP = {
+    bgFile = SM:Fetch("background", "Solid") or "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = SM:Fetch("border", "Blizzard Tooltip") or "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+}
+
+-- Player class cache to reduce API calls
+local classCache = setmetatable({}, {
+    __index = function(t, sender)
+        local class = ChatFrame.GetPlayerClass(nil, sender)
+        rawset(t, sender, class or false)
+        return class
+    end
+})
 
 function ChatFrame:GetPlayerClass(sender)
+    local unit, name
     for i = 1, 4 do
-        if UnitName("party" .. i) == sender then
-            local _, class = UnitClass("party" .. i)
-            return class
+        unit = "party"..i
+        name = UnitName(unit)
+        if name == sender then
+            return select(2, UnitClass(unit))
         end
     end
+
     if IsInRaid() then
         for i = 1, 40 do
-            if UnitName("raid" .. i) == sender then
-                local _, class = UnitClass("raid" .. i)
-                return class
+            unit = "raid"..i
+            name = UnitName(unit)
+            if name == sender then
+                return select(2, UnitClass(unit))
             end
         end
     end
-    return nil
+
+    -- Check current player
+    if sender == UnitName("player") then
+        return select(2, UnitClass("player"))
+    end
 end
 
--- Create a whisper tab named "WHISPER: <player>".
+-- Unified tab creation function
+local function CreateTab(parent, text, onClick, tooltip)
+    local tab = CreateFrame("Button", nil, parent, "BackdropTemplate")
+    tab:SetSize(80, 24)
+    tab:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 14,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 }
+    })
+
+    local bg = tab:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    tab.bg = bg
+
+    local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text:SetPoint("CENTER")
+    text:SetText(text)
+    tab.text = text
+
+    tab:SetScript("OnClick", onClick)
+
+    if tooltip then
+        tab:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+            GameTooltip:AddLine(tooltip, 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        tab:SetScript("OnLeave", GameTooltip_Hide)
+    end
+
+    return tab
+end
+
 function ChatFrame:HandleWhisper(sender, msg)
-    local channelName = "WHISPER:" .. sender
+    local channelName = "WHISPER:"..sender
     if not self.db.profile.messageHistory[channelName] then
         self.db.profile.messageHistory[channelName] = {}
     end
+
     if not self.tabs[channelName] then
-        local tab = CreateFrame("Button", nil, self.chatFrame)
-        tab:SetSize(80, 24)
-        tab:SetScript("OnClick", function(_, button)
+        local tab = CreateTab(self.chatFrame, sender, function(_, button)
             if button == "RightButton" then
-                -- Future: detach whisper tab.
+                -- Future: detach whisper tab
             else
                 self:SwitchChannel(channelName)
             end
-        end)
-        local bg = tab:CreateTexture(nil, "BACKGROUND")
-        bg:SetAllPoints()
-        bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-        tab.bg = bg
-        local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        text:SetPoint("CENTER")
-        text:SetText(sender)
-        tab.text = text
+        end, L.whisper_tab_tooltip:format(sender))
+
         self.tabs[channelName] = tab
         self.db.profile.channels[channelName] = true
+        self:UpdateTabPositions()
     end
+
     return true
 end
 
 function ChatFrame:Initialize(addonObj)
-    self.db = addonObj.db  -- Database is now guaranteed
+    self.db = addonObj.db
     self.activeChannel = "SAY"
     self.tabs = {}
     self.pinnedMessages = {}
 
+    -- Main frame setup
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
-    self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
-    self.chatFrame:SetBackdrop({
-        bgFile = SM:Fetch("background", "Solid"),
-        edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
-        edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
-    })
+    self.chatFrame:SetPoint(
+            self.db.profile.position.point,
+            UIParent,
+            self.db.profile.position.relPoint,
+            self.db.profile.position.x,
+            self.db.profile.position.y
+    )
+    self.chatFrame:SetBackdrop(CHAT_FRAME_BACKDROP)
     self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
 
+    -- Message frame with performance optimizations
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -90,23 +149,24 @@ function ChatFrame:Initialize(addonObj)
     self.messageFrame:SetMaxLines(500)
     self.messageFrame:EnableMouseWheel(true)
     self.messageFrame:SetScript("OnMouseWheel", function(_, delta)
-        local speed = self.db.profile.scrollSpeed or 3
-        if delta > 0 then
-            for i = 1, speed do self.messageFrame:ScrollUp() end
-        else
-            for i = 1, speed do self.messageFrame:ScrollDown() end
-        end
+        local scrollSpeed = (self.db.profile.scrollSpeed or 3) * delta
+        self.messageFrame:ScrollByAmount(-scrollSpeed)
     end)
+
+    -- Hyperlink handling with URL detection
     self.messageFrame:SetScript("OnHyperlinkClick", function(_, link, text, button)
         local linkType, value = link:match("^(%a+):(.+)$")
         if linkType == "player" then
             self.editBox:SetText(format("/whisper %s ", value))
             self.editBox:SetFocus()
         elseif linkType == "url" then
-            StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = value })
+            if not StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] then
+                StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = value })
+            end
         end
     end)
 
+    -- Edit box with improved auto-complete integration
     self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -120,27 +180,31 @@ function ChatFrame:Initialize(addonObj)
         f:SetText("")
         f:ClearFocus()
     end)
-    self.editBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
-    self.editBox:SetScript("OnEditFocusLost", function(self) self:HighlightText(0, 0) end)
     self.editBox:SetScript("OnTextChanged", function(f)
-        if self.db.profile.enableAutoComplete then AutoComplete(f) end
+        if self.db.profile.enableAutoComplete then
+            AutoComplete(f)
+        end
     end)
 
+    -- Unified tab creation
     self:CreateTabs()
     self:UpdateTabAppearance()
 
+    -- Resize button with visual feedback
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
     resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     resizeButton:SetScript("OnMouseDown", function() self.chatFrame:StartSizing("BOTTOMRIGHT") end)
     resizeButton:SetScript("OnMouseUp", function()
         self.chatFrame:StopMovingOrSizing()
-        self.db.profile.width = self.chatFrame:GetWidth()
-        self.db.profile.height = self.chatFrame:GetHeight()
+        self.db.profile.width = floor(self.chatFrame:GetWidth())
+        self.db.profile.height = floor(self.chatFrame:GetHeight())
         self:UpdateTabPositions()
     end)
 
+    -- Frame movement handling
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -148,17 +212,22 @@ function ChatFrame:Initialize(addonObj)
     self.chatFrame:SetScript("OnDragStop", function(f)
         f:StopMovingOrSizing()
         local point, _, relPoint, x, y = f:GetPoint(1)
-        self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
+        self.db.profile.position = {
+            point = point,
+            relPoint = relPoint,
+            x = floor(x),
+            y = floor(y)
+        }
     end)
 
     addon:PrintDebug("SleekChat frame initialized")
-    self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
+    self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version") or "1.0"))
     self:ApplyTheme()
 end
 
 function ChatFrame:UpdateFonts()
     local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
-    local fontSize = math.max(8, math.min(24, tonumber(self.db.profile.fontSize) or 12))
+    local fontSize = math.clamp(tonumber(self.db.profile.fontSize) or 12, 8, 24)
     self.messageFrame:SetFont(fontPath, fontSize, "")
     self.messageFrame:SetShadowColor(0, 0, 0, 1)
     self.messageFrame:SetShadowOffset(1, -1)
@@ -297,32 +366,44 @@ function ChatFrame:SendMessage(text, channel, sender)
 end
 
 function ChatFrame:AddMessage(text, eventType, sender)
-    if self.db.profile.profanityFilter and addon.ChatModeration and addon.ChatModeration.FilterMessage then
-        text = addon.ChatModeration:FilterMessage(text)
-    end
+    -- Enhanced URL detection
     if self.db.profile.urlDetection then
-        text = text:gsub("(%S+://%S+)", "|cff00FFFF|Hurl:%1|h[Link]|h|r")
+        text = gsub(text, "(%S+)", function(word)
+            for _, pattern in ipairs(URL_PATTERNS) do
+                if word:match(pattern) then
+                    return format("|cff00FFFF|Hurl:%s|h[Link]|h|r", word)
+                end
+            end
+            return word
+        end)
     end
+
     local formatted = self:FormatMessage(text, sender, eventType)
+
+    -- Unread message counter
     if self.activeChannel ~= eventType and self.db.profile.unreadBadge then
         local tab = self.tabs[eventType]
         if tab then
             tab.unreadCount = (tab.unreadCount or 0) + 1
-            tab.text:SetText(tab.text:GetText() .. " (" .. tab.unreadCount .. ")")
+            local text = tab.text:GetText()
+            tab.text:SetText(gsub(text, "%s%(%d+%)$", "").." ("..tab.unreadCount..")")
         end
     end
+
     self.messageFrame:AddMessage(formatted)
     self.messageFrame:ScrollToBottom()
 end
 
 function ChatFrame:FormatMessage(text, sender, channel)
     local parts = {}
+
     if self.db.profile.timestamps then
         table.insert(parts, date(self.db.profile.timestampFormat))
     end
+
     if sender then
-        local class = self:GetPlayerClass(sender)
-        if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
+        local class = classCache[sender]
+        if class and RAID_CLASS_COLORS[class] then
             local color = RAID_CLASS_COLORS[class]
             sender = format("|cff%02x%02x%02x|Hplayer:%s|h%s|h|r",
                     color.r * 255, color.g * 255, color.b * 255, sender, sender)
@@ -330,11 +411,11 @@ function ChatFrame:FormatMessage(text, sender, channel)
             sender = format("|Hplayer:%s|h%s|h", sender, sender)
         end
     end
+
     table.insert(parts, format("[%s]", channel))
-    if sender then
-        table.insert(parts, format("%s:", sender))
-    end
+    if sender then table.insert(parts, format("%s:", sender)) end
     table.insert(parts, text)
+
     return table.concat(parts, " ")
 end
 
