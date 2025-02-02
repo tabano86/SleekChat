@@ -43,10 +43,23 @@ local function InitializeModulesSafely(addonObj)
     end)
 end
 
-function SleekChat:OnEnable()
-    InitializeModulesSafely(self)
-    if ChatFrame1 then
-        ChatFrame1:Hide()
+function SleekChat:HideDefaultChatFrames()
+    -- Hide all default chat frames
+    for i = 1, 10 do
+        local frame = _G["ChatFrame"..i]
+        if frame then
+            frame:Hide()
+            frame:SetUserPlaced(true)  -- Prevent Blizzard code from managing it
+        end
+    end
+    -- Ensure the default chat frame is explicitly hidden
+    if DEFAULT_CHAT_FRAME then
+        DEFAULT_CHAT_FRAME:Hide()
     end
 end
 
+function SleekChat:OnEnable()
+    InitializeModulesSafely(self)
+    -- Hide default frames after UI is loaded
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", "HideDefaultChatFrames")
+end

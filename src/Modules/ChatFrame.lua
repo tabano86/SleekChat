@@ -102,9 +102,10 @@ function ChatFrame:Initialize(addonObj)
     self:CreateTabs(addonObj)
     local firstChannel = next(addonObj.db.profile.channels or {})
     if firstChannel then self:SwitchChannel(firstChannel) end
+    -- Explicitly show the frame regardless of saved settings
     self.chatFrame:Show()
+    self.chatFrame:Raise()  -- Bring to front
 end
-
 
 function ChatFrame:UpdateFonts(addonObj)
     local font = LibStub("LibSharedMedia-3.0"):Fetch("font", addonObj.db.profile.font) or addonObj.db.profile.font
