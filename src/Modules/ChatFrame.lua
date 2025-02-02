@@ -92,6 +92,11 @@ local function AddFrameTitle(addonObj)
 end
 
 function ChatFrame:Initialize(addonObj)
+    if not addonObj.db then
+        addonObj:Print("|cFFFF0000ERROR: Database missing during chat frame init!|r")
+        return
+    end
+
     addonObj:PrintDebug("Creating main chat frame")
     -- Create main frame with explicit visibility controls
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")

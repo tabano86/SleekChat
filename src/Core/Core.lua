@@ -93,6 +93,10 @@ local function RegisterCommands(addonObj)
 end
 
 function Core:Initialize(addonObj)
+    if not addonObj.db then
+        geterrorhandler()("Critical error: Database not initialized!")
+        return
+    end
     SetupStaticPopup()
     ApplyMigrations(addonObj)
     RegisterCommands(addonObj)
