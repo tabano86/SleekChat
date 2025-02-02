@@ -29,7 +29,8 @@ local function EnforceMaxSize(db, channel, maxSize)
     end
 end
 
-function History:Initialize()
+function History:Initialize(addonObj)
+    self.db = addonObj.db
     self.messages = self.db.profile.messageHistory or {}
     self.maxSize = self.db.profile.historySize or 1000
     MigrateOldData(self.db, self.messages)

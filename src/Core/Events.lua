@@ -2,8 +2,7 @@ local _, addon = ...
 local AceLocale = LibStub("AceLocale-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
-addon.Events = {}
-local Events = addon.Events
+local Events = {}
 
 local eventMap = {
     CHAT_MSG_SAY    = "SAY",
@@ -14,30 +13,26 @@ local eventMap = {
     CHAT_MSG_WHISPER = "WHISPER",
 }
 
-local function RegisterRelevantEvents(self)
-    for eventName in pairs(eventMap) do
-        self:RegisterEvent(eventName, "HandleChatEvent")
-    end
-end
-
-local function ProcessChatEvent(self, eventName, text, sender, ...)
+local function ProcessChatEvent(addonObj, eventName, text, sender, ...)
     local channel = eventMap[eventName]
-    if not (self.db.profile.channels and self.db.profile.channels[channel]) then
+    if not (addonObj.db.profile.channels and addonObj.db.profile.channels[channel]) then
         return
     end
-    self.History:AddMessage(text, sender, channel)
-    self.ChatFrame:AddMessage(text, sender, channel)
-    if eventName == "CHAT_MSG_WHISPER" then
-        self.Notifications:ShowWhisperAlert(sender, text)
+    if addonObj.History and addonObj.History.AddMessage then
+        addonObj.History:AddMessage(text, sender, channel)
+    end
+    if addonObj.ChatFrame and addonObj.ChatFrame.AddMessage then
+        addonObj.ChatFrame:AddMessage(text, sender, channel)
+    end
+    if eventName == "CHAT_MSG_WHISPER" and addonObj.Notifications and addonObj.Notifications.ShowWhisperAlert then
+        addonObj.Notifications:ShowWhisperAlert(sender, text)
     end
 end
 
-function Events:Initialize(addonObject)
-    RegisterRelevantEvents(addonObject)
-end
-
-function Events:HandleChatEvent(event, text, sender, ...)
-    ProcessChatEvent(self, event, text, sender, ...)
+function Events:Initialize(addonObj)
+    for eventName in pairs(eventMap) do
+        addonObj:RegisterEvent(eventName, function(...) ProcessChatEvent(addonObj, ...) end)
+    end
 end
 
 return Events

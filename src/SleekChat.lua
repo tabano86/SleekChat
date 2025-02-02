@@ -6,21 +6,20 @@ local AceLocale = LibStub("AceLocale-3.0")
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
--- Initialize saved variables with defaults from Core.GetDefaults()
-local function InitializeDatabase(self)
-    self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
+local function InitializeDatabase(addonObj)
+    addonObj.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
 end
 
-local function InitializeCore(self)
-    addon.Core:Initialize(self)
+local function InitializeCore(addonObj)
+    addon.Core:Initialize(addonObj)
 end
 
-local function InitializeConfig(self)
-    addon.Config:Initialize(self)
+local function InitializeConfig(addonObj)
+    addon.Config:Initialize(addonObj)
 end
 
-local function PrintLoadedMessage(self)
-    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version") or ""))
+local function PrintLoadedMessage(addonObj)
+    addonObj:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version") or ""))
 end
 
 function SleekChat:OnInitialize()
@@ -30,13 +29,13 @@ function SleekChat:OnInitialize()
     PrintLoadedMessage(self)
 end
 
-local function InitializeModulesSafely(self)
+local function InitializeModulesSafely(addonObj)
     xpcall(function()
-        if addon.Events then addon.Events:Initialize(self) end
-        if addon.ChatFrame then addon.ChatFrame:Initialize(self) end
-        if addon.History then addon.History:Initialize(self) end
+        if addon.Events then addon.Events:Initialize(addonObj) end
+        if addon.ChatFrame then addon.ChatFrame:Initialize(addonObj) end
+        if addon.History then addon.History:Initialize(addonObj) end
         if addon.Notifications and addon.Notifications.Initialize then
-            addon.Notifications:Initialize(self)
+            addon.Notifications:Initialize(addonObj)
         end
     end, function(err)
         self:Print("|cFFFF0000Initialization Error:|r " .. tostring(err))

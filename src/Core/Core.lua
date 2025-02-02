@@ -6,7 +6,6 @@ local L = AceLocale:GetLocale("SleekChat", true)
 addon.Core = {}
 local Core = addon.Core
 
--- Provide default settings (used later in the DB initialization)
 function Core.GetDefaults()
     return {
         profile = {
@@ -61,29 +60,29 @@ local function SetupStaticPopup()
     }
 end
 
-local function ApplyMigrations(self)
-    if self.db.profile.version < 2 then
-        self.db.profile.background = self.db.profile.background or {
+local function ApplyMigrations(addonObj)
+    if addonObj.db.profile.version < 2 then
+        addonObj.db.profile.background = addonObj.db.profile.background or {
             texture = "SleekChat Default",
             opacity = 0.8,
         }
-        self.db.profile.border = self.db.profile.border or {
+        addonObj.db.profile.border = addonObj.db.profile.border or {
             texture = "SleekChat Simple",
             size = 16,
         }
-        self.db.profile.version = 2
+        addonObj.db.profile.version = 2
     end
 end
 
-local function RegisterCommands(core)
-    core:RegisterChatCommand("sleekchat", "ShowConfig")
-    core:RegisterChatCommand("sc", "ShowConfig")
+local function RegisterCommands(addonObj)
+    addonObj:RegisterChatCommand("sleekchat", "ShowConfig")
+    addonObj:RegisterChatCommand("sc", "ShowConfig")
 end
 
-function Core:Initialize()
+function Core:Initialize(addonObj)
     SetupStaticPopup()
-    ApplyMigrations(self)
-    RegisterCommands(self)
+    ApplyMigrations(addonObj)
+    RegisterCommands(addonObj)
 end
 
 function Core:ShowConfig()

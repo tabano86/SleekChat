@@ -11,63 +11,63 @@ local URL_PATTERNS = {
     "[a-zA-Z0-9]+://[^%s]*",
 }
 
-local function ConfigureChatFrameAppearance(self)
+local function ConfigureChatFrameAppearance(addonObj)
     local frame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
-    frame:SetSize(self.db.profile.width, self.db.profile.height)
+    frame:SetSize(addonObj.db.profile.width, addonObj.db.profile.height)
     frame:SetPoint("CENTER")
     frame:SetResizable(true)
     frame:SetResizeBounds(300, 200, 800, 600)
     frame:SetBackdrop({
-        bgFile = SM:Fetch("background", (self.db.profile.background and self.db.profile.background.texture) or "Solid") or "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = SM:Fetch("border", (self.db.profile.border and self.db.profile.border.texture) or "Blizzard Tooltip") or "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = (self.db.profile.border and self.db.profile.border.size) or 16,
+        bgFile = SM:Fetch("background", (addonObj.db.profile.background and addonObj.db.profile.background.texture) or "Solid") or "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = SM:Fetch("border", (addonObj.db.profile.border and addonObj.db.profile.border.texture) or "Blizzard Tooltip") or "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = (addonObj.db.profile.border and addonObj.db.profile.border.size) or 16,
         insets = { left = 4, right = 4, top = 4, bottom = 4 },
     })
-    frame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity or 0.8)
+    frame:SetBackdropColor(0, 0, 0, addonObj.db.profile.backgroundOpacity or 0.8)
     return frame
 end
 
-local function CreateResizeButton(self)
-    local resizeButton = CreateFrame("Button", nil, self.chatFrame)
+local function CreateResizeButton(addonObj)
+    local resizeButton = CreateFrame("Button", nil, ChatFrame.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
     resizeButton:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     resizeButton:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-    resizeButton:SetScript("OnMouseDown", function() self.chatFrame:StartSizing("BOTTOMRIGHT") end)
+    resizeButton:SetScript("OnMouseDown", function() ChatFrame.chatFrame:StartSizing("BOTTOMRIGHT") end)
     resizeButton:SetScript("OnMouseUp", function()
-        self.chatFrame:StopMovingOrSizing()
-        self.db.profile.width = self.chatFrame:GetWidth()
-        self.db.profile.height = self.chatFrame:GetHeight()
+        ChatFrame.chatFrame:StopMovingOrSizing()
+        addon.db.profile.width = ChatFrame.chatFrame:GetWidth()
+        addon.db.profile.height = ChatFrame.chatFrame:GetHeight()
     end)
 end
 
-local function ConfigureFrameMover(self)
-    local frame = self.chatFrame
+local function ConfigureFrameMover(addonObj)
+    local frame = ChatFrame.chatFrame
     frame:SetMovable(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", function(f) f:StartMoving() end)
     frame:SetScript("OnDragStop", function(f)
         f:StopMovingOrSizing()
         local point, _, relPoint, xOfs, yOfs = f:GetPoint()
-        self.db.profile.position = { point = point, relPoint = relPoint, x = xOfs, y = yOfs }
+        addon.db.profile.position = { point = point, relPoint = relPoint, x = xOfs, y = yOfs }
     end)
 end
 
-local function RestoreSavedPosition(self)
-    if self.db.profile.position then
-        self.chatFrame:ClearAllPoints()
-        self.chatFrame:SetPoint(
-                self.db.profile.position.point,
+local function RestoreSavedPosition(addonObj)
+    if addon.db.profile.position then
+        ChatFrame.chatFrame:ClearAllPoints()
+        ChatFrame.chatFrame:SetPoint(
+                addon.db.profile.position.point,
                 UIParent,
-                self.db.profile.position.relPoint,
-                self.db.profile.position.x,
-                self.db.profile.position.y
+                addon.db.profile.position.relPoint,
+                addon.db.profile.position.x,
+                addon.db.profile.position.y
         )
     end
 end
 
-local function CreateMessageFrame(self)
-    local msgFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
+local function CreateMessageFrame(addonObj)
+    local msgFrame = CreateFrame("ScrollingMessageFrame", nil, ChatFrame.chatFrame)
     msgFrame:SetPoint("TOPLEFT", 8, -24)
     msgFrame:SetPoint("BOTTOMRIGHT", -8, 8)
     msgFrame:SetFontObject(ChatFontNormal)
@@ -84,28 +84,28 @@ local function CreateMessageFrame(self)
     return msgFrame
 end
 
-local function AddFrameTitle(self)
-    local title = self.chatFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+local function AddFrameTitle(addonObj)
+    local title = ChatFrame.chatFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", 0, -5)
     title:SetText("SleekChat")
 end
 
-function ChatFrame:Initialize()
-    self.chatFrame = ConfigureChatFrameAppearance(self)
-    CreateResizeButton(self)
-    ConfigureFrameMover(self)
-    RestoreSavedPosition(self)
-    self.messageFrame = CreateMessageFrame(self)
-    AddFrameTitle(self)
-    self:UpdateFonts()
-    self:CreateTabs()
-    local firstChannel = next(self.db.profile.channels or {})
+function ChatFrame:Initialize(addonObj)
+    self.chatFrame = ConfigureChatFrameAppearance(addonObj)
+    CreateResizeButton(addonObj)
+    ConfigureFrameMover(addonObj)
+    RestoreSavedPosition(addonObj)
+    self.messageFrame = CreateMessageFrame(addonObj)
+    AddFrameTitle(addonObj)
+    self:UpdateFonts(addonObj)
+    self:CreateTabs(addonObj)
+    local firstChannel = next(addonObj.db.profile.channels or {})
     if firstChannel then self:SwitchChannel(firstChannel) end
 end
 
-function ChatFrame:UpdateFonts()
-    local font = LibStub("LibSharedMedia-3.0"):Fetch("font", self.db.profile.font) or self.db.profile.font
-    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, self.db.profile.fontSize or 12)
+function ChatFrame:UpdateFonts(addonObj)
+    local font = LibStub("LibSharedMedia-3.0"):Fetch("font", addonObj.db.profile.font) or addonObj.db.profile.font
+    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, addonObj.db.profile.fontSize or 12)
 end
 
 local function UpdateURLDetection(text)
@@ -118,12 +118,12 @@ local function UpdateURLDetection(text)
 end
 
 function ChatFrame:AddMessage(text, sender, channel, ...)
-    if self.db.profile.urlDetection then
+    if addon.db.profile.urlDetection then
         text = UpdateURLDetection(text)
     end
     local msg = self:FormatMessage(text, sender, channel, ...)
     self.messageFrame:AddMessage(msg)
-    if channel ~= self.currentChannel and self.db.profile.tabUnreadHighlight then
+    if channel ~= addon.db.profile.currentChannel and addon.db.profile.tabUnreadHighlight then
         if self.tabs and self.tabs[channel] then
             self.tabs[channel]:SetText(format("|cFF00FF00%s|r", channel))
         end
@@ -132,10 +132,10 @@ end
 
 function ChatFrame:FormatMessage(text, sender, channel, ...)
     local parts = {}
-    if self.db.profile.timestamps then
-        table.insert(parts, date(self.db.profile.timestampFormat or "[%H:%M]"))
+    if addon.db.profile.timestamps then
+        table.insert(parts, date(addon.db.profile.timestampFormat or "[%H:%M]"))
     end
-    if sender and self.db.profile.classColors then
+    if sender and addon.db.profile.classColors then
         local class = self:GetPlayerClass(sender)
         if class and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
             local color = RAID_CLASS_COLORS[class]
@@ -150,8 +150,8 @@ end
 
 function ChatFrame:UpdateAll()
     self.messageFrame:Clear()
-    if self.History and self.History.messages then
-        for channel, messages in pairs(self.History.messages) do
+    if addon.History and addon.History.messages then
+        for channel, messages in pairs(addon.History.messages) do
             for _, msg in ipairs(messages) do
                 self:AddMessage(msg.text, msg.sender, msg.channel)
             end
@@ -189,13 +189,13 @@ function ChatFrame:GetUnitIDFromName(name)
 end
 
 function ChatFrame:UpdateBackground()
-    self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity or 0.8)
+    self.chatFrame:SetBackdropColor(0, 0, 0, addon.db.profile.backgroundOpacity or 0.8)
 end
 
-function ChatFrame:CreateTabs()
+function ChatFrame:CreateTabs(addonObj)
     self.tabs = {}
     local xOffset = 0
-    for channel in pairs(self.db.profile.channels or {}) do
+    for channel in pairs(addonObj.db.profile.channels or {}) do
         local tab = CreateFrame("Button", nil, self.chatFrame, "CharacterFrameTabButtonTemplate")
         tab:SetPoint("BOTTOMLEFT", self.chatFrame, "TOPLEFT", xOffset, -4)
         tab:SetText(channel)
@@ -207,10 +207,10 @@ function ChatFrame:CreateTabs()
 end
 
 function ChatFrame:SwitchChannel(channel)
-    self.currentChannel = channel
+    addon.db.profile.currentChannel = channel
     self.messageFrame:Clear()
-    if self.History and self.History.messages and self.History.messages[channel] then
-        for _, msg in ipairs(self.History.messages[channel]) do
+    if addon.History and addon.History.messages and addon.History.messages[channel] then
+        for _, msg in ipairs(addon.History.messages[channel]) do
             self:AddMessage(msg.text, msg.sender, msg.channel)
         end
     end
@@ -232,7 +232,7 @@ function ChatFrame:CopyToClipboard()
         text = text .. (self.messageFrame:GetMessageInfo(i) or "") .. "\n"
     end
     EditBox_CopyTextToClipboard(text)
-    self:Print(L.history_copied)
+    addon:Print(L.history_copied)
 end
 
 return ChatFrame
