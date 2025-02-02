@@ -15,8 +15,13 @@ function SleekChat:OnInitialize()
 end
 
 function SleekChat:OnEnable()
-    self.Events.Initialize(self)
-    self.ChatFrame.Initialize(self)
-    self.History.Initialize(self)
-    self.Notifications.Initialize(self)
+    xpcall(function()
+        self.Events.Initialize(self)
+        self.ChatFrame.Initialize(self)
+        self.History.Initialize(self)
+        self.Notifications.Initialize(self)
+    end, function(err)
+        self:Print("|cFFFF0000Initialization Error:|r "..tostring(err))
+        geterrorhandler()(err)
+    end)
 end

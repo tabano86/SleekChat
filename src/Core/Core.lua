@@ -6,6 +6,17 @@ addon.Core = {}
 local Core = addon.Core
 
 StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
+    OnAccept = function(self, data)
+        if data.url then
+            if ChatFrame_OpenBrowser then
+                ChatFrame_OpenBrowser(data.url)
+            else
+                -- Fallback for Classic
+                EditBox_CopyTextToClipboard(data.url)
+                self:GetParent():Print("URL copied to clipboard: "..data.url)
+            end
+        end
+    end,
     text = "Open URL:",
     button1 = "Open",
     button2 = "Cancel",
@@ -23,6 +34,13 @@ function Core.GetDefaults()
     return {
         profile = {
             enable = true,
+            position = {
+                point = "CENTER",
+                relPoint = "CENTER",
+                x = 0,
+                y = 0
+            },
+            messageHistory = {},
             classColors = true,
             timestamps = true,
             timestampFormat = "[%H:%M]",

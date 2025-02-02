@@ -8,6 +8,13 @@ function ChatFrame.Initialize(self)
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint("CENTER")
+
+    self.chatFrame:SetMovable(true)
+    self.chatFrame:RegisterForDrag("LeftButton")
+    self.chatFrame:SetScript("OnDragStart", function(frame)
+        frame:StartMoving()
+    end)
+
     self.chatFrame:SetScript("OnDragStop", function(frame)
         frame:StopMovingOrSizing()
         local point, _, relPoint, xOfs, yOfs = frame:GetPoint()
@@ -46,13 +53,21 @@ function ChatFrame.Initialize(self)
         end
     end)
 
+    local title = self.chatFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", 0, -5)
+    title:SetText("SleekChat")
+
     self:UpdateFonts()
     self:CreateTabs()
 end
 
 function ChatFrame.UpdateFonts(self)
-    local font = LSM:Fetch("font", self.db.profile.font) or STANDARD_TEXT_FONT
-    self.messageFrame:SetFont(font, self.db.profile.fontSize)
+    if LibStub("LibSharedMedia-3.0", true) then
+        local font = LibStub("LibSharedMedia-3.0"):Fetch("font", self.db.profile.font)
+    else
+        local font = self.db.profile.font
+    end
+    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, self.db.profile.fontSize)
 end
 
 function ChatFrame.AddMessage(self, text, ...)
@@ -88,6 +103,7 @@ function ChatFrame.FormatMessage(self, text, sender, channel, ...)
     return table.concat(parts, " ")
 end
 
+
 function ChatFrame.UpdateAll(self)
     self.messageFrame:Clear()
     for channel, messages in pairs(self.History.messages) do
@@ -98,12 +114,43 @@ function ChatFrame.UpdateAll(self)
 end
 
 function ChatFrame.GetPlayerClass(self, sender)
-    if sender == UnitName("player") then
-        local _, class = UnitClass("player")
+    -- Check party/raid members first
+    local unit = self:GetUnitIDFromName(sender)
+    if unit then
+        local _, class = UnitClass(unit)
         return class
     end
-    -- For other players, you'd need to implement roster scanning
-    -- This is a simplified version
+
+    -- Fallback to guild roster
+    if IsInGuild() then
+        for i = 1, GetNumGuildMembers() do
+            local name, _, _, _, _, _, _, _, _, _, class = GetGuildRosterInfo(i)
+            if name == sender then
+                return class
+            end
+        end
+    end
+
+    return nil
+end
+
+function ChatFrame.GetUnitIDFromName(self, name)
+    -- Check party
+    for i = 1, 4 do
+        if UnitName("party"..i) == name then
+            return "party"..i
+        end
+    end
+
+    -- Check raid
+    if IsInRaid() then
+        for i = 1, 40 do
+            if UnitName("raid"..i) == name then
+                return "raid"..i
+            end
+        end
+    end
+
     return nil
 end
 
@@ -120,5 +167,23 @@ function ChatFrame.CreateTabs(self)
             self:SwitchChannel(channel)
         end)
         self.tabs[channel] = tab
+    end
+end
+
+function ChatFrame.SwitchChannel(self, channel)
+    self.currentChannel = channel
+    self.messageFrame:Clear()
+    if self.History.messages[channel] then
+        for _, msg in ipairs(self.History.messages[channel]) do
+            self:AddMessage(msg.text, msg.sender, msg.channel)
+        end
+    end
+    -- Update tab states
+    for ch, tab in pairs(self.tabs) do
+        if ch == channel then
+            tab:LockHighlight()
+        else
+            tab:UnlockHighlight()
+        end
     end
 end

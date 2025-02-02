@@ -1,6 +1,6 @@
 ## Interface: 11403 (WoW Classic)
 ## Title: SleekChat
-## Author: Your Name
+## Author: Anthony T
 ## Version: 1.0
 ## Notes: Enhanced chat interface
 ## SavedVariables: SleekChatDB
