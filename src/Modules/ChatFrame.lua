@@ -65,7 +65,7 @@ function ChatFrame:HandleWhisper(sender, msg)
 end
 
 function ChatFrame:Initialize(addonObj)
-    self.db = addonObj.db  -- Ensure db is assigned
+    self.db = addonObj.db  -- Database is now guaranteed
     self.activeChannel = "SAY"
     self.tabs = {}
     self.pinnedMessages = {}
@@ -151,7 +151,7 @@ function ChatFrame:Initialize(addonObj)
         self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
     end)
 
-    addonObj:PrintDebug("SleekChat frame initialized")
+    addon:PrintDebug("SleekChat frame initialized")
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
     self:ApplyTheme()
 end
@@ -195,7 +195,7 @@ function ChatFrame:CreateTabs()
                 tab:SetScript("OnDragStart", function(self) self:StartMoving() end)
                 tab:SetScript("OnDragStop", function(self)
                     self:StopMovingOrSizing()
-                    -- (Persist new order if needed)
+                    -- (Persist new order here as needed.)
                 end)
             end
             if self.db.profile.tabTooltips then

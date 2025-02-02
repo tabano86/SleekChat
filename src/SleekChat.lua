@@ -25,12 +25,8 @@ function SleekChat:HookDefaultChat()
             tab.Show = function() end
         end
     end
-    if DEFAULT_CHAT_FRAME then
-        DEFAULT_CHAT_FRAME:Hide()
-    end
-    if CombatText then
-        CombatText:SetScript("OnEvent", function() end)
-    end
+    if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:Hide() end
+    if CombatText then CombatText:SetScript("OnEvent", function() end) end
 end
 
 function SleekChat:PrintDebug(message)

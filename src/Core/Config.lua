@@ -6,7 +6,7 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.Config = {}
 local Config = addon.Config
 
--- General settings
+-- General options
 local function CreateGeneralOptions(addonObj)
     return {
         name = L.general,
@@ -121,13 +121,11 @@ local function CreateGeneralOptions(addonObj)
             },
             enablePinning = {
                 name = "Enable Pinning",
-                desc = "Allow pinning of important messages",
+                desc = "Allow pinning of important channels",
                 type = "toggle",
                 order = 10,
                 get = function() return addonObj.db.profile.enablePinning end,
-                set = function(_, val)
-                    addonObj.db.profile.enablePinning = val
-                end,
+                set = function(_, val) addonObj.db.profile.enablePinning = val end,
             },
             enableAutoComplete = {
                 name = "Enable Auto-Complete",
@@ -135,9 +133,7 @@ local function CreateGeneralOptions(addonObj)
                 type = "toggle",
                 order = 11,
                 get = function() return addonObj.db.profile.enableAutoComplete end,
-                set = function(_, val)
-                    addonObj.db.profile.enableAutoComplete = val
-                end,
+                set = function(_, val) addonObj.db.profile.enableAutoComplete = val end,
             },
             scrollSpeed = {
                 name = "Scroll Speed",
@@ -148,9 +144,7 @@ local function CreateGeneralOptions(addonObj)
                 max = 10,
                 step = 1,
                 get = function() return addonObj.db.profile.scrollSpeed or 3 end,
-                set = function(_, val)
-                    addonObj.db.profile.scrollSpeed = val
-                end,
+                set = function(_, val) addonObj.db.profile.scrollSpeed = val end,
             },
             customFontColor = {
                 name = "Custom Font Color",
@@ -169,9 +163,7 @@ local function CreateGeneralOptions(addonObj)
                 type = "toggle",
                 order = 14,
                 get = function() return addonObj.db.profile.enableEmotes end,
-                set = function(_, val)
-                    addonObj.db.profile.enableEmotes = val
-                end,
+                set = function(_, val) addonObj.db.profile.enableEmotes = val end,
             },
             hideTimestamp = {
                 name = "Hide Timestamps",
@@ -186,46 +178,38 @@ local function CreateGeneralOptions(addonObj)
             },
             sidebarEnabled = {
                 name = "Enable Sidebar",
-                desc = "Show a collapsible sidebar with recent conversations and friends",
+                desc = "Show a collapsible sidebar for conversations",
                 type = "toggle",
                 order = 16,
                 get = function() return addonObj.db.profile.sidebarEnabled end,
-                set = function(_, val)
-                    addonObj.db.profile.sidebarEnabled = val
-                end,
+                set = function(_, val) addonObj.db.profile.sidebarEnabled = val end,
             },
             threadedReplies = {
                 name = "Threaded Replies",
-                desc = "Enable message replies to form threads (stub for future)",
+                desc = "Enable threaded message replies (stub for future)",
                 type = "toggle",
                 order = 17,
                 get = function() return addonObj.db.profile.threadedReplies end,
-                set = function(_, val)
-                    addonObj.db.profile.threadedReplies = val
-                end,
+                set = function(_, val) addonObj.db.profile.threadedReplies = val end,
             },
             darkMode = {
                 name = "Dark Mode",
-                desc = "Toggle a dark color theme for the chat window",
+                desc = "Toggle a dark theme for the chat window",
                 type = "toggle",
                 order = 18,
                 get = function() return addonObj.db.profile.darkMode end,
                 set = function(_, val)
                     addonObj.db.profile.darkMode = val
-                    if addonObj.ChatFrame and addonObj.ChatFrame.ApplyTheme then
-                        addonObj.ChatFrame:ApplyTheme()
-                    end
+                    if addonObj.ChatFrame then addonObj.ChatFrame:ApplyTheme() end
                 end,
             },
             profanityFilter = {
                 name = "Profanity Filter",
-                desc = "Filter out offensive words",
+                desc = "Filter offensive words",
                 type = "toggle",
                 order = 19,
                 get = function() return addonObj.db.profile.profanityFilter end,
-                set = function(_, val)
-                    addonObj.db.profile.profanityFilter = val
-                end,
+                set = function(_, val) addonObj.db.profile.profanityFilter = val end,
             },
             muteList = {
                 name = "Mute List",
@@ -352,7 +336,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             autoCollapseTabs = {
                 name = "Auto-Collapse Inactive Tabs",
-                desc = "Automatically collapse tabs inactive for a set time",
+                desc = "Automatically collapse tabs after inactivity",
                 type = "toggle",
                 order = 3,
                 get = function() return addonObj.db.profile.autoCollapseTabs end,
@@ -360,7 +344,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabColorCustomization = {
                 name = "Tab Color Customization",
-                desc = "Customize background/text colors for tabs",
+                desc = "Customize tab background/text colors",
                 type = "color",
                 order = 4,
                 get = function() return unpack(addonObj.db.profile.tabColor or {0.2, 0.2, 0.2, 0.8}) end,
@@ -368,7 +352,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             unreadBadge = {
                 name = "Unread Message Badge",
-                desc = "Display unread count on tabs",
+                desc = "Show unread count on tabs",
                 type = "toggle",
                 order = 5,
                 get = function() return addonObj.db.profile.unreadBadge end,
@@ -376,7 +360,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabTooltips = {
                 name = "Tab Tooltips",
-                desc = "Show tooltips with last message preview and unread count",
+                desc = "Display tooltips with a message preview",
                 type = "toggle",
                 order = 6,
                 get = function() return addonObj.db.profile.tabTooltips end,
@@ -384,7 +368,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabLocking = {
                 name = "Tab Locking/Pinning",
-                desc = "Allow users to lock or pin important tabs",
+                desc = "Allow locking/pinning important tabs",
                 type = "toggle",
                 order = 7,
                 get = function() return addonObj.db.profile.tabLocking end,
@@ -392,7 +376,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             smartTabGrouping = {
                 name = "Smart Tab Grouping",
-                desc = "Group similar tabs (e.g., whispers) together",
+                desc = "Group similar tabs (e.g. whispers) together",
                 type = "toggle",
                 order = 8,
                 get = function() return addonObj.db.profile.smartTabGrouping end,
@@ -400,7 +384,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             dynamicTabScrolling = {
                 name = "Dynamic Tab Scrolling",
-                desc = "Enable horizontal scrolling when many tabs exist",
+                desc = "Enable horizontal scrolling when too many tabs exist",
                 type = "toggle",
                 order = 9,
                 get = function() return addonObj.db.profile.dynamicTabScrolling end,
@@ -408,7 +392,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabNotificationSound = {
                 name = "Tab Notification Sound",
-                desc = "Custom sound for notifications on a tab",
+                desc = "Sound to play for tab notifications",
                 type = "select",
                 order = 10,
                 values = SM:HashTable("sound"),
@@ -417,7 +401,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabHistoryPreview = {
                 name = "Tab History Preview",
-                desc = "Show a preview of recent messages on hover",
+                desc = "Show recent message preview on hover",
                 type = "toggle",
                 order = 11,
                 get = function() return addonObj.db.profile.tabHistoryPreview end,
@@ -425,7 +409,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabFlashing = {
                 name = "Tab Flashing for Mentions",
-                desc = "Flash the tab when a new message mentions you",
+                desc = "Flash tab when a message mentions you",
                 type = "toggle",
                 order = 12,
                 get = function() return addonObj.db.profile.tabFlashing end,
@@ -459,7 +443,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             autoSwitchTab = {
                 name = "Auto-Switch on New Message",
-                desc = "Automatically switch to a tab when a new message arrives",
+                desc = "Switch to a tab when a new message arrives",
                 type = "toggle",
                 order = 14,
                 get = function() return addonObj.db.profile.autoSwitchTab end,
@@ -467,7 +451,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             clearUnreadOnDoubleClick = {
                 name = "Clear Unread on Double-Click",
-                desc = "Double-click a tab to mark all messages as read",
+                desc = "Double-click a tab to mark messages as read",
                 type = "toggle",
                 order = 15,
                 get = function() return addonObj.db.profile.clearUnreadOnDoubleClick end,
@@ -475,7 +459,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             tabLockIcon = {
                 name = "Tab Lock Icon",
-                desc = "Display a lock icon on pinned tabs",
+                desc = "Show a lock icon on pinned tabs",
                 type = "toggle",
                 order = 16,
                 get = function() return addonObj.db.profile.tabLockIcon end,
@@ -483,7 +467,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             dragDropFileSupport = {
                 name = "Drag & Drop File Support",
-                desc = "Enable dragging files/images onto tabs",
+                desc = "Allow dragging files/images onto tabs",
                 type = "toggle",
                 order = 17,
                 get = function() return addonObj.db.profile.dragDropFileSupport end,
@@ -491,7 +475,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             customHotkeys = {
                 name = "Custom Hotkeys for Tab Switching",
-                desc = "Define custom hotkeys for quickly switching tabs",
+                desc = "Define custom hotkeys to switch tabs",
                 type = "input",
                 order = 18,
                 get = function() return addonObj.db.profile.customHotkeys or "" end,
@@ -533,9 +517,7 @@ local function CreateNotificationOptions(addonObj)
                 type = "toggle",
                 order = 2,
                 get = function() return addonObj.db.profile.enableNotifications end,
-                set = function(_, val)
-                    addonObj.db.profile.enableNotifications = val
-                end,
+                set = function(_, val) addonObj.db.profile.enableNotifications = val end,
             },
             notificationSound = {
                 name = L.notification_sound,
@@ -574,9 +556,7 @@ local function CreateNotificationOptions(addonObj)
                 type = "toggle",
                 order = 5,
                 get = function() return addonObj.db.profile.flashTaskbar end,
-                set = function(_, val)
-                    addonObj.db.profile.flashTaskbar = val
-                end,
+                set = function(_, val) addonObj.db.profile.flashTaskbar = val end,
             },
         },
     }

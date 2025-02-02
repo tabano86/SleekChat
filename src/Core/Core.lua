@@ -66,7 +66,7 @@ function Core.GetDefaults()
             darkMode = false,
             profanityFilter = false,
             muteList = {},
-            -- New defaults for tab management:
+            -- New tab management defaults:
             customTabOrder = false,
             tabRenaming = false,
             autoCollapseTabs = false,

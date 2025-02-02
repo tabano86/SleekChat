@@ -3,11 +3,11 @@ addon.Integration = {}
 local Integration = addon.Integration
 
 function Integration:SendToDiscord(text, channel, sender)
-    -- Stub: Implement HTTP POST to Discord webhook.
+    -- Stub: implement HTTP POST to Discord webhook if desired.
 end
 
 function Integration:SyncMessage(text, channel, sender)
-    -- Stub: Implement cross-character syncing.
+    -- Stub: implement cross-character syncing using Blizzard APIs.
 end
 
 return Integration
