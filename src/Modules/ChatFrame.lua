@@ -56,7 +56,7 @@ local function ConfigureFrameMover(addonObj)
 end
 
 local function RestoreSavedPosition(addonObj)
-    if addon.db.profile.position then
+    if addonObj.db.profile.position then
         ChatFrame.chatFrame:ClearAllPoints()
         ChatFrame.chatFrame:SetPoint(
                 addon.db.profile.position.point,
@@ -93,6 +93,7 @@ local function AddFrameTitle(addonObj)
 end
 
 function ChatFrame:Initialize(addonObj)
+    self.db = addonObj.db  -- store the db reference locally
     -- Main Container Frame
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent)
     self.chatFrame:SetSize(addonObj.db.profile.width or 600, addonObj.db.profile.height or 400)
@@ -105,7 +106,7 @@ function ChatFrame:Initialize(addonObj)
     self.chatFrame:SetScript("OnDragStop", function(f)
         f:StopMovingOrSizing()
         local point, _, relPoint, x, y = f:GetPoint()
-        addonObj.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
+        self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
     end)
 
     -- Message Display Area
@@ -137,12 +138,8 @@ function ChatFrame:Initialize(addonObj)
         f:ClearFocus()
     end)
 
-    -- Tabs (create with a unique name to avoid nil tabName issues)
     self:CreateTabs(addonObj)
-
-    -- Hook into Blizzard's chat system (use a local eventMap for filtering)
     self:HookBlizzardChat()
-
     ConfigureFrameMover(addonObj)
     RestoreSavedPosition(addonObj)
     CreateResizeButton(addonObj)
@@ -152,8 +149,8 @@ function ChatFrame:Initialize(addonObj)
 end
 
 function ChatFrame:UpdateFonts()
-    local font = SM:Fetch("font", addon.db.profile.font) or addon.db.profile.font
-    self.messageFrame:SetFont(font, addon.db.profile.fontSize or 12)
+    local font = SM:Fetch("font", self.db.profile.font) or self.db.profile.font
+    self.messageFrame:SetFont(font, self.db.profile.fontSize or 12)
 end
 
 local function UpdateURLDetection(text)
@@ -304,7 +301,7 @@ function ChatFrame:CreateTabs(addonObj)
 end
 
 function ChatFrame:SwitchChannel(channel)
-    addon.db.profile.currentChannel = channel
+    self.db.profile.currentChannel = channel
     self.messageFrame:Clear()
     if addon.History and addon.History.messages and addon.History.messages[channel] then
         for _, msg in ipairs(addon.History.messages[channel]) do
@@ -322,6 +319,7 @@ function ChatFrame:SwitchChannel(channel)
         end
     end
 end
+
 
 function ChatFrame:CopyToClipboard()
     local text = ""

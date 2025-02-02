@@ -8,15 +8,10 @@ local L = AceLocale:GetLocale("SleekChat", true)
 
 -- Initialize database FIRST before any other operations
 function SleekChat:OnInitialize()
-    -- Database initialization
     self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
-
-    -- Core systems
     addon.Core:Initialize(self)
     addon.Config:Initialize(self)
     addon.ChatFrame:Initialize(self)
-
-    -- Complete default chat replacement
     self:HookDefaultChat()
     self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
@@ -64,10 +59,13 @@ function SleekChat:HideDefaultChatFrames()
 end
 
 function SleekChat:OnEnable()
-    addon.Events:Initialize(self)
+    if addon.Events then
+        addon.Events:Initialize(self)
+    else
+        self:Print("Warning: Events module not loaded!")
+    end
     addon.History:Initialize(self)
     addon.Notifications:Initialize(self)
-
     -- Force UI update
     addon.ChatFrame.chatFrame:Show()
     addon.ChatFrame.messageFrame:Show()
