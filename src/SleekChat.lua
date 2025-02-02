@@ -13,7 +13,6 @@ function SleekChat:OnInitialize()
     addon.Config:Initialize(self)
     addon.ChatFrame:Initialize(self)
     self:HookDefaultChat()
-    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
 function SleekChat:HookDefaultChat()
@@ -59,28 +58,13 @@ function SleekChat:HideDefaultChatFrames()
 end
 
 function SleekChat:OnEnable()
-    -- Initialize critical components first
-    addon.ChatFrame:Initialize(self)  -- Ensure ChatFrame is fully initialized
-
-    -- Then initialize other modules
-    if addon.Events then
-        addon.Events:Initialize(self)
-    else
-        self:Print("Warning: Events module not loaded!")
-    end
+    addon.Events:Initialize(self)
     addon.History:Initialize(self)
     addon.Notifications:Initialize(self)
 
-    -- Show UI components after initialization
-    if addon.ChatFrame.chatFrame then
-        addon.ChatFrame.chatFrame:Show()
-    end
-    if addon.ChatFrame.messageFrame then
-        addon.ChatFrame.messageFrame:Show()
-    end
-    if addon.ChatFrame.editBox then
-        addon.ChatFrame.editBox:Show()
-    end
+    -- Initial visibility
+    self:UpdateChatVisibility()
+    addon.ChatFrame.chatFrame:Show()
 end
 
 function SleekChat:UpdateChatVisibility()

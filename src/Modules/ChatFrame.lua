@@ -19,7 +19,7 @@ function ChatFrame:Initialize(addonObj)
     -- Main Frame
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
-    self.chatFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 50, 50)
+    self.chatFrame:SetPoint(unpack(self.db.profile.position))
     self.chatFrame:SetBackdrop({
         bgFile = SM:Fetch("background", "Solid"),
         edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
@@ -30,11 +30,10 @@ function ChatFrame:Initialize(addonObj)
 
     -- Message Frame
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
+    self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
     self.messageFrame:SetPoint("BOTTOMRIGHT", -8, 40)
-    local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
-    local fontSize = tonumber(self.db.profile.fontSize) or 12
-    self.messageFrame:SetFont(fontPath, fontSize, "")  -- Explicit empty flags
+    self:UpdateFonts()
     self.messageFrame:SetJustifyH("LEFT")
     self.messageFrame:SetMaxLines(500)
     self.messageFrame:EnableMouseWheel(true)
@@ -64,17 +63,7 @@ function ChatFrame:Initialize(addonObj)
     self.editBox:SetScript("OnEnterPressed", function(f)
         local text = f:GetText()
         if text ~= "" then
-            local commands = {
-                SAY = "/s ",
-                YELL = "/y ",
-                PARTY = "/p ",
-                GUILD = "/g ",
-                RAID = "/ra ",
-                WHISPER = "/w ",
-            }
-            local cmd = commands[self.activeChannel] or "/s "
-            ChatFrame_SendText(cmd .. text)
-
+            ChatFrame_SendMessage(text, self.activeChannel)
         end
         f:SetText("")
         f:ClearFocus()
@@ -108,6 +97,18 @@ function ChatFrame:Initialize(addonObj)
     end)
 
     addonObj:PrintDebug("ChatFrame initialized")
+    -- Initial messages
+    self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
+    self:CreateTabs()
+    self:UpdateTabAppearance()
+end
+
+function ChatFrame:UpdateFonts()
+    local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
+    local fontSize = math.max(8, math.min(24, tonumber(self.db.profile.fontSize) or 12))
+    self.messageFrame:SetFont(fontPath, fontSize, "")
+    self.messageFrame:SetShadowColor(0, 0, 0, 1)
+    self.messageFrame:SetShadowOffset(1, -1)
 end
 
 function ChatFrame:CreateTabs()
@@ -116,28 +117,38 @@ function ChatFrame:CreateTabs()
     end
     self.tabs = {}
 
-    local index = 1
-    for channel in pairs(self.db.profile.channels) do
-        if self.db.profile.channels[channel] then
-            local tab = CreateFrame("Button", nil, self.chatFrame)
-            tab:SetSize(80, 24)
-            tab:SetScript("OnClick", function() self:SwitchChannel(channel) end)
+    -- Create tabs for all channels regardless of state
+    for channel, enabled in pairs(self.db.profile.channels) do
+        local tab = CreateFrame("Button", nil, self.chatFrame)
+        tab:SetSize(80, 24)
+        tab:SetScript("OnClick", function()
+            if enabled then self:SwitchChannel(channel) end
+        end)
 
-            -- Background
-            local bg = tab:CreateTexture(nil, "BACKGROUND")
-            bg:SetAllPoints()
-            bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-            tab.bg = bg
+        -- Visual elements
+        local bg = tab:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+        tab.bg = bg
 
-            -- Text
-            local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            text:SetPoint("CENTER")
-            text:SetText(channel)
-            tab.text = text
+        local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        text:SetPoint("CENTER")
+        text:SetText(channel)
+        text:SetTextColor(0.8, 0.8, 0.8)
+        tab.text = text
 
-            self.tabs[channel] = tab
-            index = index + 1
+        -- Disabled state
+        if not enabled then
+            text:SetAlpha(0.5)
+            tab:SetScript("OnEnter", function()
+                GameTooltip:SetOwner(tab, "ANCHOR_TOP")
+                GameTooltip:AddLine("Channel disabled", 1, 0, 0)
+                GameTooltip:Show()
+            end)
+            tab:SetScript("OnLeave", GameTooltip_Hide)
         end
+
+        self.tabs[channel] = tab
     end
     self:UpdateTabPositions()
 end
