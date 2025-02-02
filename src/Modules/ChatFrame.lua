@@ -24,6 +24,7 @@ local function ConfigureChatFrameAppearance(addonObj)
         insets = { left = 4, right = 4, top = 4, bottom = 4 },
     })
     frame:SetBackdropColor(0, 0, 0, addonObj.db.profile.backgroundOpacity or 0.8)
+    frame:SetFrameStrata("HIGH")
     return frame
 end
 
@@ -101,7 +102,9 @@ function ChatFrame:Initialize(addonObj)
     self:CreateTabs(addonObj)
     local firstChannel = next(addonObj.db.profile.channels or {})
     if firstChannel then self:SwitchChannel(firstChannel) end
+    self.chatFrame:Show()
 end
+
 
 function ChatFrame:UpdateFonts(addonObj)
     local font = LibStub("LibSharedMedia-3.0"):Fetch("font", addonObj.db.profile.font) or addonObj.db.profile.font

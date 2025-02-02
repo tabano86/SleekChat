@@ -45,4 +45,8 @@ end
 
 function SleekChat:OnEnable()
     InitializeModulesSafely(self)
+    if ChatFrame1 then
+        ChatFrame1:Hide()
+    end
 end
+
