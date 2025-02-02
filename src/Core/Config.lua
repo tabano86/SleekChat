@@ -6,7 +6,6 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.Config = {}
 local Config = addon.Config
 
--- CreateGeneralOptions: Core settings for chat behavior and filters.
 local function CreateGeneralOptions(addonObj)
     return {
         name = L.general,
@@ -141,7 +140,7 @@ local function CreateGeneralOptions(addonObj)
             },
             enableAutoComplete = {
                 name = "Enable Auto-Complete",
-                desc = "Provides auto-completion suggestions for slash commands",
+                desc = "Provides auto-completion for slash commands",
                 type = "toggle",
                 order = 11,
                 get = function() return addonObj.db.profile.enableAutoComplete end,
@@ -151,7 +150,7 @@ local function CreateGeneralOptions(addonObj)
             },
             scrollSpeed = {
                 name = "Scroll Speed",
-                desc = "Adjust the speed of mouse wheel scrolling",
+                desc = "Adjust message frame scroll speed",
                 type = "range",
                 order = 12,
                 min = 1,
@@ -177,7 +176,7 @@ local function CreateGeneralOptions(addonObj)
             },
             enableEmotes = {
                 name = "Enable Emotes",
-                desc = "Convert emote shorthand to icons",
+                desc = "Convert emote shorthand into icons",
                 type = "toggle",
                 order = 14,
                 get = function() return addonObj.db.profile.enableEmotes end,
@@ -187,7 +186,7 @@ local function CreateGeneralOptions(addonObj)
             },
             hideTimestamp = {
                 name = "Hide Timestamps",
-                desc = "Disable timestamps in chat messages",
+                desc = "Disable timestamps in messages",
                 type = "toggle",
                 order = 15,
                 get = function() return not addonObj.db.profile.timestamps end,
@@ -196,6 +195,28 @@ local function CreateGeneralOptions(addonObj)
                     if addonObj.ChatFrame and addonObj.ChatFrame.UpdateAll then
                         addonObj.ChatFrame:UpdateAll()
                     end
+                end,
+            },
+            sidebarEnabled = {
+                name = "Enable Sidebar",
+                desc = "Show a collapsible sidebar with recent conversations and friends",
+                type = "toggle",
+                order = 16,
+                get = function() return addonObj.db.profile.sidebarEnabled end,
+                set = function(_, val)
+                    addonObj.db.profile.sidebarEnabled = val
+                    -- Future: trigger sidebar refresh.
+                end,
+            },
+            threadedReplies = {
+                name = "Threaded Replies",
+                desc = "Enable message replies to form threads (stub for future)",
+                type = "toggle",
+                order = 17,
+                get = function() return addonObj.db.profile.threadedReplies end,
+                set = function(_, val)
+                    addonObj.db.profile.threadedReplies = val
+                    -- Future: implement threaded conversation display.
                 end,
             },
         },

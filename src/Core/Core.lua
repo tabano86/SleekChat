@@ -58,6 +58,8 @@ function Core.GetDefaults()
             soundVolume = 1.0,
             flashTaskbar = false,
             messageHistory = {},
+            sidebarEnabled = false,
+            threadedReplies = false,
         },
     }
 end
