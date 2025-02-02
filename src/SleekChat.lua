@@ -23,17 +23,29 @@ local function PrintLoadedMessage(addonObj)
 end
 
 function SleekChat:OnInitialize()
+    self:PrintDebug("Initializing database")
     InitializeDatabase(self)
+
+    self:PrintDebug("Loading core modules")
     InitializeCore(self)
+
+    self:PrintDebug("Setting up configuration")
     InitializeConfig(self)
+
     PrintLoadedMessage(self)
 end
 
 local function InitializeModulesSafely(addonObj)
     xpcall(function()
-        if addon.Events then addon.Events:Initialize(self) end
-        if addon.ChatFrame then addon.ChatFrame:Initialize(self) end
-        if addon.History then addon.History:Initialize(self) end
+        if addon.Events then
+            addon.Events:Initialize(self)
+        end
+        if addon.ChatFrame then
+            addon.ChatFrame:Initialize(self)
+        end
+        if addon.History then
+            addon.History:Initialize(self)
+        end
         if addon.Notifications and addon.Notifications.Initialize then
             addon.Notifications:Initialize(self)
         end
@@ -43,23 +55,74 @@ local function InitializeModulesSafely(addonObj)
     end)
 end
 
-function SleekChat:HideDefaultChatFrames()
-    -- Hide all default chat frames
-    for i = 1, 10 do
-        local frame = _G["ChatFrame"..i]
-        if frame then
-            frame:Hide()
-            frame:SetUserPlaced(true)  -- Prevent Blizzard code from managing it
+function SleekChat:UpdateChatVisibility()
+    if self.db.profile.showDefaultChat then
+        self:PrintDebug("Showing default chat frames")
+        for i = 1, 10 do
+            local frame = _G["ChatFrame" .. i]
+            if frame then
+                frame:Show()
+            end
         end
+    else
+        self:HideDefaultChatFrames()
     end
-    -- Ensure the default chat frame is explicitly hidden
-    if DEFAULT_CHAT_FRAME then
-        DEFAULT_CHAT_FRAME:Hide()
+end
+
+function SleekChat:PrintDebug(message)
+    if self.db.profile.debug then
+        self:Print("|cFF00FFFF[DEBUG]|r " .. message)
+    end
+end
+
+function SleekChat:HideDefaultChatFrames()
+    if not self.db.profile.showDefaultChat then
+        self:PrintDebug("Hiding default chat frames")
+
+        -- Hide all default chat frames
+        for i = 1, 10 do
+            local frame = _G["ChatFrame" .. i]
+            if frame then
+                frame:Hide()
+                frame:SetUserPlaced(true)  -- Prevent Blizzard code from managing it
+            end
+        end
+        -- Ensure the default chat frame is explicitly hidden
+        if DEFAULT_CHAT_FRAME then
+            DEFAULT_CHAT_FRAME:Hide()
+        end
     end
 end
 
 function SleekChat:OnEnable()
+    -- Delay initialization until after default UI loads
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("VARIABLES_LOADED")
+end
+
+function SleekChat:VARIABLES_LOADED()
+    -- Initialize core components first
     InitializeModulesSafely(self)
-    -- Hide default frames after UI is loaded
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", "HideDefaultChatFrames")
+
+    -- Create chat frame immediately
+    if not addon.ChatFrame.chatFrame then
+        addon.ChatFrame:Initialize(self)
+    end
+
+    -- Force visibility
+    addon.ChatFrame.chatFrame:Show()
+    addon.ChatFrame.chatFrame:Raise()
+end
+
+function SleekChat:PLAYER_ENTERING_WORLD()
+    -- Hide default frames last
+    self:HideDefaultChatFrames()
+
+    -- Final visibility check
+    if addon.ChatFrame.chatFrame then
+        addon.ChatFrame.chatFrame:Show()
+        addon.ChatFrame.chatFrame:Raise()
+    else
+        self:Print("|cFFFF0000ERROR: Chat frame failed to initialize!|r")
+    end
 end

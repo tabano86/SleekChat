@@ -92,22 +92,58 @@ local function AddFrameTitle(addonObj)
 end
 
 function ChatFrame:Initialize(addonObj)
-    self.chatFrame = ConfigureChatFrameAppearance(addonObj)
-    CreateResizeButton(addonObj)
-    ConfigureFrameMover(addonObj)
-    RestoreSavedPosition(addonObj)
-    self.messageFrame = CreateMessageFrame(addonObj)
-    AddFrameTitle(addonObj)
-    self:UpdateFonts(addonObj)
-    self:CreateTabs(addonObj)
-    local firstChannel = next(addonObj.db.profile.channels or {})
-    if firstChannel then self:SwitchChannel(firstChannel) end
-    -- Explicitly show the frame regardless of saved settings
+    addonObj:PrintDebug("Creating main chat frame")
+    -- Create main frame with explicit visibility controls
+    self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
+    self.chatFrame:SetSize(addonObj.db.profile.width or 600, addonObj.db.profile.height or 400)
+    self.chatFrame:SetFrameStrata("FULLSCREEN_DIALOG")
+    self.chatFrame:SetToplevel(true)
+    self.chatFrame:SetClampedToScreen(true)
+    self.chatFrame:EnableMouse(true)
+    self.chatFrame:SetMovable(true)
+    self.chatFrame:SetUserPlaced(true)
+
+    -- Force visible state
     self.chatFrame:Show()
-    self.chatFrame:Raise()  -- Bring to front
+    self.chatFrame:Raise()
+
+    -- Position handling with failsafe
+    if addonObj.db.profile.position then
+        self.chatFrame:ClearAllPoints()
+        self.chatFrame:SetPoint(
+                addonObj.db.profile.position.point,
+                UIParent,
+                addonObj.db.profile.position.relPoint,
+                addonObj.db.profile.position.x,
+                addonObj.db.profile.position.y
+        )
+    else
+        -- Default position if none exists
+        self.chatFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
+
+    -- Create message display area
+    self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
+    self.messageFrame:SetAllPoints(true)
+    self.messageFrame:SetFontObject(ChatFontNormal)
+    self.messageFrame:SetJustifyH("LEFT")
+    self.messageFrame:SetFading(false)
+    self.messageFrame:SetMaxLines(500)
+    self.messageFrame:EnableMouseWheel(true)
+    self.messageFrame:SetHyperlinksEnabled(true)
+    self.messageFrame:Show()
+
+    -- Initial test message
+    self.messageFrame:AddMessage("|cFF00FF00SleekChat initialized successfully!|r")
+    addonObj:PrintDebug(string.format("Chat frame created at %dx%d",
+            self.chatFrame:GetWidth(),
+            self.chatFrame:GetHeight()))
 end
 
 function ChatFrame:UpdateFonts(addonObj)
+    addonObj:PrintDebug(string.format("Updating fonts to %s (%dpt)",
+            addonObj.db.profile.font,
+            addonObj.db.profile.fontSize))
     local font = LibStub("LibSharedMedia-3.0"):Fetch("font", addonObj.db.profile.font) or addonObj.db.profile.font
     self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, addonObj.db.profile.fontSize or 12)
 end

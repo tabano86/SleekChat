@@ -159,6 +159,29 @@ local function CreateAppearanceOptions(addonObj)
                     addonObj.db.profile.tabUnreadHighlight = val
                 end,
             },
+            debugMode = {
+                name = L.debug_mode,
+                desc = L.debug_mode_desc,
+                type = "toggle",
+                order = 7,
+                get = function() return addonObj.db.profile.debug end,
+                set = function(_, val)
+                    addonObj.db.profile.debug = val
+                    addonObj:Print(val and L.debug_enabled or L.debug_disabled)
+                end,
+            },
+            showDefaultChat = {
+                name = L.show_default_chat,
+                desc = L.show_default_chat_desc,
+                type = "toggle",
+                order = 8,
+                get = function() return addonObj.db.profile.showDefaultChat end,
+                set = function(_, val)
+                    addonObj.db.profile.showDefaultChat = val
+                    addonObj:UpdateChatVisibility()
+                    addonObj:Print(val and L.default_chat_visible or L.default_chat_hidden)
+                end,
+            },
         },
     }
 end

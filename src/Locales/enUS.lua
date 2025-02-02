@@ -42,4 +42,16 @@ L.history_copied = "Chat history copied to clipboard"
 L.settings_saved = "Settings saved"
 L.settings_reset = "Settings reset to defaults"
 
+-- Debug
+L.debug_mode = "Debug Mode"
+L.debug_mode_desc = "Show detailed debug information in chat"
+L.show_default_chat = "Show Default Chat"
+L.show_default_chat_desc = "Keep the original Blizzard chat frame visible"
+
+-- System Messages
+L.debug_enabled = "Debug mode enabled"
+L.debug_disabled = "Debug mode disabled"
+L.default_chat_visible = "Default chat frames are now visible"
+L.default_chat_hidden = "Default chat frames are now hidden"
+
 return L
