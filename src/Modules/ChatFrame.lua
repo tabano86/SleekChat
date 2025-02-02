@@ -1,9 +1,14 @@
 local _, addon = ...
 local L = LibStub("AceLocale-3.0"):GetLocale("SleekChat")
+local SM = LibStub("LibSharedMedia-3.0")
 
 addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
+local URL_PATTERNS = {
+    "w+%.?[^%s/]*%.%a%a+[^%s]*",
+    "[a-zA-Z0-9]+://[^%s]*"
+}
 -- Helper: Set up basic chat frame properties
 local function ConfigureChatFrameAppearance(self)
     local frame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
@@ -11,13 +16,13 @@ local function ConfigureChatFrameAppearance(self)
     frame:SetPoint("CENTER")
     frame:SetResizable(true)
     frame:SetResizeBounds(300, 200, 800, 600)
-    frame:SetBackdropColor(0, 0, 0, 0.8)
     frame:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        bgFile = SM:Fetch("background", "Solid"),
+        edgeFile = SM:Fetch("border", "Blizzard Tooltip"),
         edgeSize = 16,
         insets = { left = 4, right = 4, top = 4, bottom = 4 }
     })
+    frame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
     return frame
 end
 
@@ -133,14 +138,29 @@ function ChatFrame.UpdateFonts(self)
     self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, self.db.profile.fontSize)
 end
 
-function ChatFrame.AddMessage(self, text, ...)
+local function UpdateURLDetection(text)
+    for _, pattern in ipairs(URL_PATTERNS) do
+        text = text:gsub(pattern, function(url)
+            return format("|cff00ffff|Hurl:%s|h[%s]|h|r", url, url:sub(1, 40))
+        end)
+    end
+    return text
+end
+
+function ChatFrame.AddMessage(self, text, sender, channel, ...)
     if self.db.profile.urlDetection then
-        text = text:gsub("([wW][wW][wW]%.[%w-_%.]+%.%S+)", "|cff00ffff|Hurl:%1|h[%1]|h|r")
-        text = text:gsub("(%S+://%S+)", "|cff00ffff|Hurl:%1|h[%1]|h|r")
+        text = UpdateURLDetection(text)
     end
 
-    local msg = self:FormatMessage(text, ...)
+    local msg = self:FormatMessage(text, sender, channel)
     self.messageFrame:AddMessage(msg)
+
+    if channel ~= self.currentChannel and self.db.profile.tabUnreadHighlight then
+        local tab = self.tabs[channel]
+        if tab then
+            tab:SetText(format("|cFF00FF00%s|r", channel))
+        end
+    end
 end
 
 function ChatFrame.FormatMessage(self, text, sender, channel, ...)
@@ -211,6 +231,10 @@ function ChatFrame.GetUnitIDFromName(self, name)
     return nil
 end
 
+function ChatFrame.UpdateBackground(self)
+    self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
+end
+
 function ChatFrame.CreateTabs(self)
     self.tabs = {}
     local xOffset = 0
@@ -242,8 +266,18 @@ function ChatFrame.SwitchChannel(self, channel)
     for ch, tab in pairs(self.tabs) do
         if ch == channel then
             tab:LockHighlight()
+            tab:SetText(ch)
         else
             tab:UnlockHighlight()
         end
     end
+end
+
+function ChatFrame.CopyToClipboard(self)
+    local text = ""
+    for i = 1, self.messageFrame:GetNumMessages() do
+        text = text .. self.messageFrame:GetMessageInfo(i) .. "\n"
+    end
+    EditBox_CopyTextToClipboard(text)
+    self:Print(L.history_copied)
 end

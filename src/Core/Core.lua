@@ -5,7 +5,6 @@ local L = LibStub("AceLocale-3.0"):GetLocale("SleekChat")
 addon.Core = {}
 local Core = addon.Core
 
--- Separate function to set up static popups
 local function SetupStaticPopup()
     StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
         text = "Open URL:",
@@ -27,12 +26,11 @@ local function SetupStaticPopup()
     }
 end
 
--- Separate function for default settings
 function Core.GetDefaults()
     return {
         profile = {
             enable = true,
-            version = 1,
+            version = 2,
             position = {
                 point = "CENTER",
                 relPoint = "CENTER",
@@ -45,45 +43,61 @@ function Core.GetDefaults()
             timestampFormat = "[%H:%M]",
             urlDetection = true,
             enableNotifications = true,
-            font = "Fonts\\FRIZQT__.TTF",
+            font = "Friz Quadrata",
             fontSize = 12,
             width = 600,
             height = 400,
-            historySize = 500,
+            historySize = 1000,
             channels = {
                 SAY = true,
                 YELL = true,
                 PARTY = true,
                 GUILD = true,
                 RAID = true,
-                WHISPER = true
-            }
+                WHISPER = true,
+                RAID_WARNING = true,
+                INSTANCE_CHAT = true
+            },
+            background = {
+                texture = "SleekChat Default",
+                opacity = 0.8
+            },
+            border = {
+                texture = "SleekChat Simple",
+                size = 16
+            },
+            notificationSound = "None",
+            soundVolume = 1.0,
+            flashTaskbar = true
         }
     }
 end
 
--- Helper function to handle version-specific migrations
 local function ApplyMigrations(self)
-    if self.db.profile.version < 1 then
-        self.db.profile.messageHistory = self.db.profile.messageHistory or {}
-        self.db.profile.version = 1
+    if self.db.profile.version < 2 then
+        self.db.profile.background = self.db.profile.background or {
+            texture = "SleekChat Default",
+            opacity = 0.8
+        }
+        self.db.profile.border = self.db.profile.border or {
+            texture = "SleekChat Simple",
+            size = 16
+        }
+        self.db.profile.version = 2
     end
 end
 
--- Helper function to register chat commands
 local function RegisterCommands(core)
     core:RegisterChatCommand("sleekchat", "ShowConfig")
     core:RegisterChatCommand("sc", "ShowConfig")
 end
 
--- Main initialization
 function Core.Initialize(self)
     SetupStaticPopup()
     ApplyMigrations(self)
     RegisterCommands(self)
 end
 
--- Show configuration interface
 function Core.ShowConfig(input)
     LibStub("AceConfigDialog-3.0"):Open("SleekChat")
 end
