@@ -11,7 +11,7 @@ local URL_PATTERNS = {
     "www%.[%w_-]+%.%S+",
 }
 
--- AutoComplete stub – you can integrate ChatEdit_CompleteChat here.
+-- AutoComplete stub – integrate ChatEdit_CompleteChat if desired.
 local function AutoComplete(editBox)
     -- Placeholder for auto-completion logic.
 end
@@ -35,7 +35,7 @@ function ChatFrame:GetPlayerClass(sender)
     return nil
 end
 
--- Create a whisper tab named "WHISPER: <player>" if one does not already exist.
+-- Create a whisper tab named "WHISPER: <player>".
 function ChatFrame:HandleWhisper(sender, msg)
     local channelName = "WHISPER:" .. sender
     if not self.db.profile.messageHistory[channelName] then
@@ -46,7 +46,7 @@ function ChatFrame:HandleWhisper(sender, msg)
         tab:SetSize(80, 24)
         tab:SetScript("OnClick", function(_, button)
             if button == "RightButton" then
-                -- Future: detach the whisper tab.
+                -- Future: detach whisper tab.
             else
                 self:SwitchChannel(channelName)
             end
@@ -57,7 +57,7 @@ function ChatFrame:HandleWhisper(sender, msg)
         tab.bg = bg
         local text = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         text:SetPoint("CENTER")
-        text:SetText(sender)  -- Use the whisperee’s name
+        text:SetText(sender)
         tab.text = text
         self.tabs[channelName] = tab
         self.db.profile.channels[channelName] = true
@@ -65,14 +65,13 @@ function ChatFrame:HandleWhisper(sender, msg)
     return true
 end
 
--- Initialize the main chat window (embedded container).
+-- Initialize the main chat container.
 function ChatFrame:Initialize(addonObj)
-    self.db = addonObj.db
-    self.activeChannel = "SAY"  -- default persistent channel
+    self.db = addonObj.db  -- Ensure db is set here
+    self.activeChannel = "SAY"
     self.tabs = {}
     self.pinnedMessages = {}
 
-    -- Create the main container.
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
     self.chatFrame:SetSize(self.db.profile.width, self.db.profile.height)
     self.chatFrame:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, self.db.profile.position.x, self.db.profile.position.y)
@@ -84,7 +83,6 @@ function ChatFrame:Initialize(addonObj)
     })
     self.chatFrame:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity)
 
-    -- Create the embedded ScrollingMessageFrame.
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -111,7 +109,6 @@ function ChatFrame:Initialize(addonObj)
         end
     end)
 
-    -- Create the interactive input box.
     self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
     self.editBox:SetPoint("BOTTOMLEFT", 8, 8)
     self.editBox:SetPoint("BOTTOMRIGHT", -8, 8)
@@ -135,11 +132,9 @@ function ChatFrame:Initialize(addonObj)
         if self.db.profile.enableAutoComplete then AutoComplete(f) end
     end)
 
-    -- Create persistent channel tabs.
     self:CreateTabs()
     self:UpdateTabAppearance()
 
-    -- Enable resizing and dragging.
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
     resizeButton:SetSize(16, 16)
     resizeButton:SetPoint("BOTTOMRIGHT")
@@ -200,10 +195,43 @@ function ChatFrame:CreateTabs()
             text:SetPoint("CENTER")
             text:SetText(channel)
             tab.text = text
+            -- New: Enable drag-drop reordering if customTabOrder is enabled.
+            if self.db.profile.customTabOrder then
+                tab:SetMovable(true)
+                tab:EnableMouse(true)
+                tab:RegisterForDrag("LeftButton")
+                tab:SetScript("OnDragStart", function(self)
+                    self:StartMoving()
+                end)
+                tab:SetScript("OnDragStop", function(self)
+                    self:StopMovingOrSizing()
+                    -- (Persist new order here as needed.)
+                end)
+            end
+            -- New: Add tooltip support if enabled.
+            if self.db.profile.tabTooltips then
+                tab:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+                    local preview = self.lastMessage or "No recent messages"
+                    GameTooltip:AddLine("Preview: " .. preview)
+                    if self.unreadCount and self.unreadCount > 0 then
+                        GameTooltip:AddLine("Unread: " .. self.unreadCount)
+                    end
+                    GameTooltip:Show()
+                end)
+                tab:SetScript("OnLeave", GameTooltip_Hide)
+            end
+            -- New: Double-click to clear unread count.
+            tab:SetScript("OnDoubleClick", function(self)
+                if self.db and self.db.profile.clearUnreadOnDoubleClick then
+                    self.unreadCount = 0
+                    self.text:SetText(self.text:GetText():gsub(" %(%d+%)", ""))
+                end
+            end)
             self.tabs[channel] = tab
         end
     end
-    -- Create a default "Whispers" tab for general whisper notifications.
+    -- Create a default "Whispers" tab.
     if self.db.profile.channels.WHISPER then
         local tab = CreateFrame("Button", nil, self.chatFrame)
         tab:SetSize(80, 24)
@@ -224,41 +252,6 @@ function ChatFrame:CreateTabs()
         tab.text = text
         self.tabs["WHISPER"] = tab
     end
-    if addon.db.profile.customTabOrder then
-        tab:SetMovable(true)
-        tab:EnableMouse(true)
-        tab:RegisterForDrag("LeftButton")
-        tab:SetScript("OnDragStart", function(self)
-            self:StartMoving()
-        end)
-        tab:SetScript("OnDragStop", function(self)
-            self:StopMovingOrSizing()
-            -- (Optionally update and persist the new order in addon.db.profile.)
-        end)
-    end
-
-    -- If tab tooltips are enabled, show a tooltip on hover.
-    if addon.db.profile.tabTooltips then
-        tab:SetScript("OnEnter", function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-            local preview = self.lastMessage or "No recent messages"
-            GameTooltip:AddLine("Preview: " .. preview)
-            if addon.db.profile.unreadBadge and self.unreadCount and self.unreadCount > 0 then
-                GameTooltip:AddLine("Unread: " .. self.unreadCount)
-            end
-            GameTooltip:Show()
-        end)
-        tab:SetScript("OnLeave", GameTooltip_Hide)
-    end
-
-    -- If double-click clears unread count, set a double-click handler.
-    tab:SetScript("OnDoubleClick", function(self)
-        if addon.db.profile.clearUnreadOnDoubleClick then
-            self.unreadCount = 0
-            -- Update the tab text to remove unread indicator.
-            self.text:SetText(self.text:GetText():gsub(" %(%d+%)", ""))
-        end
-    end)
     self:UpdateTabPositions()
 end
 
@@ -278,9 +271,6 @@ function ChatFrame:UpdateTabPositions()
 end
 
 function ChatFrame:SwitchChannel(channel)
-    if addon.db.profile.autoSwitchTab then
-        -- Optionally trigger a sound or flash for the new active tab.
-    end
     self.activeChannel = channel
     self.messageFrame:Clear()
     if addon.History and addon.History.messages and addon.History.messages[channel] then
@@ -327,7 +317,7 @@ function ChatFrame:AddMessage(text, eventType, sender)
         text = text:gsub("(%S+://%S+)", "|cff00FFFF|Hurl:%1|h[Link]|h|r")
     end
     local formatted = self:FormatMessage(text, sender, eventType)
-    if self.activeChannel ~= eventType and addon.db.profile.unreadBadge then
+    if self.activeChannel ~= eventType and self.db.profile.unreadBadge then
         local tab = self.tabs[eventType]
         if tab then
             tab.unreadCount = (tab.unreadCount or 0) + 1

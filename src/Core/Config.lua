@@ -405,7 +405,7 @@ local function CreateTabManagementOptions(addonObj)
             },
             smartTabGrouping = {
                 name = "Smart Tab Grouping",
-                desc = "Group similar tabs (eg, whispers) together",
+                desc = "Group similar tabs (e.g., whispers) together",
                 type = "toggle",
                 order = 8,
                 get = function() return addonObj.db.profile.smartTabGrouping end,
@@ -619,7 +619,5 @@ function Config:Initialize(addonObj)
         addonObj:Print(L.settings_reset)
     end)
 end
-
-
 
 return Config
