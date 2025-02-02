@@ -59,6 +59,10 @@ function SleekChat:HideDefaultChatFrames()
 end
 
 function SleekChat:OnEnable()
+    -- Initialize critical components first
+    addon.ChatFrame:Initialize(self)  -- Ensure ChatFrame is fully initialized
+
+    -- Then initialize other modules
     if addon.Events then
         addon.Events:Initialize(self)
     else
@@ -66,10 +70,17 @@ function SleekChat:OnEnable()
     end
     addon.History:Initialize(self)
     addon.Notifications:Initialize(self)
-    -- Force UI update
-    addon.ChatFrame.chatFrame:Show()
-    addon.ChatFrame.messageFrame:Show()
-    addon.ChatFrame.editBox:Show()
+
+    -- Show UI components after initialization
+    if addon.ChatFrame.chatFrame then
+        addon.ChatFrame.chatFrame:Show()
+    end
+    if addon.ChatFrame.messageFrame then
+        addon.ChatFrame.messageFrame:Show()
+    end
+    if addon.ChatFrame.editBox then
+        addon.ChatFrame.editBox:Show()
+    end
 end
 
 function SleekChat:UpdateChatVisibility()

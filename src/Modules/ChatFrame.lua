@@ -32,7 +32,9 @@ function ChatFrame:Initialize(addonObj)
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
     self.messageFrame:SetPoint("BOTTOMRIGHT", -8, 40)
-    self.messageFrame:SetFont(SM:Fetch("font", self.db.profile.font), self.db.profile.fontSize)
+    local fontPath = SM:Fetch("font", self.db.profile.font) or "Fonts\\FRIZQT__.TTF"
+    local fontSize = tonumber(self.db.profile.fontSize) or 12
+    self.messageFrame:SetFont(fontPath, fontSize, "")  -- Explicit empty flags
     self.messageFrame:SetJustifyH("LEFT")
     self.messageFrame:SetMaxLines(500)
     self.messageFrame:EnableMouseWheel(true)
