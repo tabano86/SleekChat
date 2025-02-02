@@ -5,35 +5,34 @@ local L = LibStub("AceLocale-3.0"):GetLocale("SleekChat")
 addon.Core = {}
 local Core = addon.Core
 
-StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
-    OnAccept = function(self, data)
-        if data.url then
-            if ChatFrame_OpenBrowser then
-                ChatFrame_OpenBrowser(data.url)
-            else
-                -- Fallback for Classic
-                EditBox_CopyTextToClipboard(data.url)
-                self:GetParent():Print("URL copied to clipboard: "..data.url)
+-- Separate function to set up static popups
+local function SetupStaticPopup()
+    StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
+        text = "Open URL:",
+        button1 = "Open",
+        button2 = "Cancel",
+        OnAccept = function(self, data)
+            if data.url then
+                if ChatFrame_OpenBrowser then
+                    ChatFrame_OpenBrowser(data.url)
+                else
+                    EditBox_CopyTextToClipboard(data.url)
+                    self:GetParent():Print("URL copied to clipboard: " .. data.url)
+                end
             end
-        end
-    end,
-    text = "Open URL:",
-    button1 = "Open",
-    button2 = "Cancel",
-    OnAccept = function(self, data)
-        if data.url then
-            ChatFrame_OpenBrowser(data.url)
-        end
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true
-}
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true
+    }
+end
 
+-- Separate function for default settings
 function Core.GetDefaults()
     return {
         profile = {
             enable = true,
+            version = 1,
             position = {
                 point = "CENTER",
                 relPoint = "CENTER",
@@ -63,11 +62,28 @@ function Core.GetDefaults()
     }
 end
 
-function Core.Initialize(self)
-    self:RegisterChatCommand("sleekchat", "ShowConfig")
-    self:RegisterChatCommand("sc", "ShowConfig")
+-- Helper function to handle version-specific migrations
+local function ApplyMigrations(self)
+    if self.db.profile.version < 1 then
+        self.db.profile.messageHistory = self.db.profile.messageHistory or {}
+        self.db.profile.version = 1
+    end
 end
 
+-- Helper function to register chat commands
+local function RegisterCommands(core)
+    core:RegisterChatCommand("sleekchat", "ShowConfig")
+    core:RegisterChatCommand("sc", "ShowConfig")
+end
+
+-- Main initialization
+function Core.Initialize(self)
+    SetupStaticPopup()
+    ApplyMigrations(self)
+    RegisterCommands(self)
+end
+
+-- Show configuration interface
 function Core.ShowConfig(input)
     LibStub("AceConfigDialog-3.0"):Open("SleekChat")
 end

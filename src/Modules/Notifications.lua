@@ -12,6 +12,8 @@ function Notifications.ShowWhisperAlert(self, sender, message)
     if not self.db.profile.enableNotifications then return end
 
     local f = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    f:SetFrameStrata("HIGH")
+    f:SetFrameLevel(100)
     f:SetSize(300, 40)
     f:SetPoint("TOP", 0, -150)
     f:SetBackdrop({
