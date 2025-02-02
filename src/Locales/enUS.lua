@@ -41,17 +41,26 @@ L.whisper_notification = "New whisper from %s"
 L.history_copied = "Chat history copied to clipboard"
 L.settings_saved = "Settings saved"
 L.settings_reset = "Settings reset to defaults"
+L.invalid_format = "Invalid timestamp format"
+L.open_url_dialog = "Open URL:"
+L.open = "Open"
+L.cancel = "Cancel"
+L.url_copied = "URL copied to clipboard"
 
 -- Debug
 L.debug_mode = "Debug Mode"
 L.debug_mode_desc = "Show detailed debug information in chat"
 L.show_default_chat = "Show Default Chat"
 L.show_default_chat_desc = "Keep the original Blizzard chat frame visible"
-
--- System Messages
 L.debug_enabled = "Debug mode enabled"
 L.debug_disabled = "Debug mode disabled"
 L.default_chat_visible = "Default chat frames are now visible"
 L.default_chat_hidden = "Default chat frames are now hidden"
+
+-- Layout options
+L.layout = "Layout"
+L.layout_desc = "Select the chat layout"
+L.layout_classic = "Classic (Tabs on top)"
+L.layout_transposed = "Transposed (Titles left, messages right)"
 
 return L

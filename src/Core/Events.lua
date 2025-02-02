@@ -13,26 +13,32 @@ local eventMap = {
     CHAT_MSG_WHISPER = "WHISPER",
 }
 
-local function ProcessChatEvent(addonObj, eventName, text, sender, ...)
-    local channel = eventMap[eventName]
-    if not (addonObj.db.profile.channels and addonObj.db.profile.channels[channel]) then
-        return
-    end
-    if addonObj.History and addonObj.History.AddMessage then
-        addonObj.History:AddMessage(text, sender, channel)
-    end
-    if addonObj.ChatFrame and addonObj.ChatFrame.AddMessage then
-        addonObj.ChatFrame:AddMessage(text, sender, channel)
-    end
-    if eventName == "CHAT_MSG_WHISPER" and addonObj.Notifications and addonObj.Notifications.ShowWhisperAlert then
-        addonObj.Notifications:ShowWhisperAlert(sender, text)
-    end
-end
-
 function Events:Initialize(addonObj)
-    for eventName in pairs(eventMap) do
-        addonObj:RegisterEvent(eventName, function(...) ProcessChatEvent(addonObj, ...) end)
+    -- Register all chat events
+    local frame = CreateFrame("Frame")
+    for event in pairs(eventMap) do
+        frame:RegisterEvent(event)
     end
+
+    frame:SetScript("OnEvent", function(_, event, ...)
+        local channel = eventMap[event]
+        if channel and addonObj.db.profile.channels[channel] then
+            local text, sender = ...
+            if addon.ChatFrame and addon.ChatFrame.AddMessage then
+                addon.ChatFrame:AddMessage(text, channel, sender)
+            end
+        end
+    end)
+
+    -- System message handling
+    frame:RegisterEvent("CHAT_MSG_SYSTEM")
+    frame:SetScript("OnEvent", function(_, event, text)
+        if event == "CHAT_MSG_SYSTEM" then
+            if addon.ChatFrame and addon.ChatFrame.AddMessage then
+                addon.ChatFrame:AddMessage(text, "SYSTEM")
+            end
+        end
+    end)
 end
 
 return Events

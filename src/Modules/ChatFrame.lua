@@ -6,6 +6,7 @@ local SM = LibStub("LibSharedMedia-3.0")
 addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
+-- Simple URL patterns
 local URL_PATTERNS = {
     "%w+%.?[^%s/]*%.%a%a+[^%s]*",
     "[a-zA-Z0-9]+://[^%s]*",
@@ -92,65 +93,67 @@ local function AddFrameTitle(addonObj)
 end
 
 function ChatFrame:Initialize(addonObj)
-    if not addonObj.db then
-        addonObj:Print("|cFFFF0000ERROR: Database missing during chat frame init!|r")
-        return
-    end
-
-    addonObj:PrintDebug("Creating main chat frame")
-    -- Create main frame with explicit visibility controls
-    self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BasicFrameTemplate")
+    -- Main Container Frame
+    self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent)
     self.chatFrame:SetSize(addonObj.db.profile.width or 600, addonObj.db.profile.height or 400)
-    self.chatFrame:SetFrameStrata("FULLSCREEN_DIALOG")
-    self.chatFrame:SetToplevel(true)
-    self.chatFrame:SetClampedToScreen(true)
+    self.chatFrame:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", 50, 50)
+    self.chatFrame:SetFrameStrata("DIALOG")
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
-    self.chatFrame:SetUserPlaced(true)
+    self.chatFrame:RegisterForDrag("LeftButton")
+    self.chatFrame:SetScript("OnDragStart", self.chatFrame.StartMoving)
+    self.chatFrame:SetScript("OnDragStop", function(f)
+        f:StopMovingOrSizing()
+        local point, _, relPoint, x, y = f:GetPoint()
+        addonObj.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end)
 
-    -- Force visible state
-    self.chatFrame:Show()
-    self.chatFrame:Raise()
-
-    -- Position handling with failsafe
-    if addonObj.db.profile.position then
-        self.chatFrame:ClearAllPoints()
-        self.chatFrame:SetPoint(
-                addonObj.db.profile.position.point,
-                UIParent,
-                addonObj.db.profile.position.relPoint,
-                addonObj.db.profile.position.x,
-                addonObj.db.profile.position.y
-        )
-    else
-        -- Default position if none exists
-        self.chatFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-    end
-
-    -- Create message display area
+    -- Message Display Area
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
-    self.messageFrame:SetAllPoints(true)
+    self.messageFrame:SetPoint("TOPLEFT", 10, -30)
+    self.messageFrame:SetPoint("BOTTOMRIGHT", -10, 40)
     self.messageFrame:SetFontObject(ChatFontNormal)
     self.messageFrame:SetJustifyH("LEFT")
     self.messageFrame:SetFading(false)
     self.messageFrame:SetMaxLines(500)
     self.messageFrame:EnableMouseWheel(true)
-    self.messageFrame:SetHyperlinksEnabled(true)
-    self.messageFrame:Show()
+    self.messageFrame:SetScript("OnMouseWheel", function(_, delta)
+        if delta > 0 then
+            self.messageFrame:ScrollUp()
+        else
+            self.messageFrame:ScrollDown()
+        end
+    end)
 
-    -- Initial test message
-    self.messageFrame:AddMessage("|cFF00FF00SleekChat initialized successfully!|r")
-    addonObj:PrintDebug(string.format("Chat frame created at %dx%d",
-            self.chatFrame:GetWidth(),
-            self.chatFrame:GetHeight()))
+    -- Input Box
+    self.editBox = CreateFrame("EditBox", nil, self.chatFrame, "InputBoxTemplate")
+    self.editBox:SetPoint("BOTTOMLEFT", 10, 10)
+    self.editBox:SetPoint("BOTTOMRIGHT", -10, 10)
+    self.editBox:SetHeight(20)
+    self.editBox:SetAutoFocus(false)
+    self.editBox:SetScript("OnEnterPressed", function(f)
+        ChatFrame_SendText(f:GetText())
+        f:SetText("")
+        f:ClearFocus()
+    end)
+
+    -- Tabs (create with a unique name to avoid nil tabName issues)
+    self:CreateTabs(addonObj)
+
+    -- Hook into Blizzard's chat system (use a local eventMap for filtering)
+    self:HookBlizzardChat()
+
+    ConfigureFrameMover(addonObj)
+    RestoreSavedPosition(addonObj)
+    CreateResizeButton(addonObj)
+    AddFrameTitle(addonObj)
+
+    addonObj:PrintDebug("Chat system initialized")
 end
 
-function ChatFrame:UpdateFonts(addonObj)
-    addonObj:PrintDebug(string.format("Updating fonts to %s (%dpt)",
-            addonObj.db.profile.font,
-            addonObj.db.profile.fontSize))
-    local font = LibStub("LibSharedMedia-3.0"):Fetch("font", addonObj.db.profile.font) or addonObj.db.profile.font
-    self.messageFrame:SetFont(font or STANDARD_TEXT_FONT, addonObj.db.profile.fontSize or 12)
+function ChatFrame:UpdateFonts()
+    local font = SM:Fetch("font", addon.db.profile.font) or addon.db.profile.font
+    self.messageFrame:SetFont(font, addon.db.profile.fontSize or 12)
 end
 
 local function UpdateURLDetection(text)
@@ -162,20 +165,50 @@ local function UpdateURLDetection(text)
     return text
 end
 
-function ChatFrame:AddMessage(text, sender, channel, ...)
-    if addon.db.profile.urlDetection then
-        text = UpdateURLDetection(text)
-    end
-    local msg = self:FormatMessage(text, sender, channel, ...)
-    self.messageFrame:AddMessage(msg)
-    if channel ~= addon.db.profile.currentChannel and addon.db.profile.tabUnreadHighlight then
-        if self.tabs and self.tabs[channel] then
-            self.tabs[channel]:SetText(format("|cFF00FF00%s|r", channel))
+function ChatFrame:HookBlizzardChat()
+    -- Disable default chat windows
+    for i = 1, NUM_CHAT_WINDOWS do
+        local frame = _G["ChatFrame"..i]
+        if frame then
+            frame.AddMessage = function() end
+            frame:Hide()
         end
+    end
+
+    local eventMap = {
+        CHAT_MSG_SAY    = true,
+        CHAT_MSG_YELL   = true,
+        CHAT_MSG_PARTY  = true,
+        CHAT_MSG_GUILD  = true,
+        CHAT_MSG_RAID   = true,
+        CHAT_MSG_WHISPER = true,
+    }
+    local function MessageHandler(_, event, text, ...)
+        self:AddMessage(text, event, ...)
+        return true
+    end
+    for event in pairs(eventMap) do
+        ChatFrame_AddMessageEventFilter(event, MessageHandler)
+    end
+
+    -- Slash command override example
+    SLASH_SLEEKCHAT1 = "/s"
+    SLASH_SLEEKCHAT2 = "/say"
+    SlashCmdList.SLEEKCHAT = function(msg)
+        self.editBox:SetText("/s "..msg)
+        self.editBox:SetFocus()
     end
 end
 
-function ChatFrame:FormatMessage(text, sender, channel, ...)
+function ChatFrame:AddMessage(text, eventType, sender)
+    if addon.db.profile.urlDetection then
+        text = UpdateURLDetection(text)
+    end
+    local formatted = self:FormatMessage(text, sender, eventType)
+    self.messageFrame:AddMessage(formatted)
+end
+
+function ChatFrame:FormatMessage(text, sender, channel)
     local parts = {}
     if addon.db.profile.timestamps then
         table.insert(parts, date(addon.db.profile.timestampFormat or "[%H:%M]"))
@@ -198,7 +231,7 @@ function ChatFrame:UpdateAll()
     if addon.History and addon.History.messages then
         for channel, messages in pairs(addon.History.messages) do
             for _, msg in ipairs(messages) do
-                self:AddMessage(msg.text, msg.sender, msg.channel)
+                self:AddMessage(msg.text, msg.channel, msg.sender)
             end
         end
     end
@@ -238,16 +271,35 @@ function ChatFrame:UpdateBackground()
 end
 
 function ChatFrame:CreateTabs(addonObj)
+    -- Clear any existing tabs
+    if self.tabs then
+        for _, tab in pairs(self.tabs) do
+            tab:Hide()
+        end
+    end
     self.tabs = {}
-    local xOffset = 0
-    for channel in pairs(addonObj.db.profile.channels or {}) do
-        local tab = CreateFrame("Button", nil, self.chatFrame, "CharacterFrameTabButtonTemplate")
-        tab:SetPoint("BOTTOMLEFT", self.chatFrame, "TOPLEFT", xOffset, -4)
-        tab:SetText(channel)
-        tab:SetWidth(80)
-        xOffset = xOffset + 85
-        tab:SetScript("OnClick", function() self:SwitchChannel(channel) end)
-        self.tabs[channel] = tab
+    if addonObj.db.profile.layout == "TRANSPOSED" then
+        local yOffset = 0
+        for channel in pairs(addonObj.db.profile.channels or {}) do
+            local tab = CreateFrame("Button", "SleekChatTab_"..channel, self.chatFrame, "CharacterFrameTabButtonTemplate")
+            tab:SetPoint("TOPLEFT", self.chatFrame, "TOPLEFT", 0, -yOffset)
+            tab:SetText(channel)
+            tab:SetWidth(80)
+            yOffset = yOffset + 25
+            tab:SetScript("OnClick", function() self:SwitchChannel(channel) end)
+            self.tabs[channel] = tab
+        end
+    else
+        local xOffset = 0
+        for channel in pairs(addonObj.db.profile.channels or {}) do
+            local tab = CreateFrame("Button", "SleekChatTab_"..channel, self.chatFrame, "CharacterFrameTabButtonTemplate")
+            tab:SetPoint("BOTTOMLEFT", self.chatFrame, "TOPLEFT", xOffset, -4)
+            tab:SetText(channel)
+            tab:SetWidth(80)
+            xOffset = xOffset + 85
+            tab:SetScript("OnClick", function() self:SwitchChannel(channel) end)
+            self.tabs[channel] = tab
+        end
     end
 end
 
@@ -256,7 +308,7 @@ function ChatFrame:SwitchChannel(channel)
     self.messageFrame:Clear()
     if addon.History and addon.History.messages and addon.History.messages[channel] then
         for _, msg in ipairs(addon.History.messages[channel]) do
-            self:AddMessage(msg.text, msg.sender, msg.channel)
+            self:AddMessage(msg.text, msg.channel, msg.sender)
         end
     end
     if self.tabs then
@@ -278,6 +330,18 @@ function ChatFrame:CopyToClipboard()
     end
     EditBox_CopyTextToClipboard(text)
     addon:Print(L.history_copied)
+end
+
+function ChatFrame:ApplyLayout()
+    -- Reposition the main frame if a saved position exists
+    if addon.db.profile.position then
+        self.chatFrame:ClearAllPoints()
+        self.chatFrame:SetPoint(addon.db.profile.position.point, UIParent, addon.db.profile.position.relPoint, addon.db.profile.position.x, addon.db.profile.position.y)
+    else
+        self.chatFrame:SetPoint("CENTER")
+    end
+    -- Recreate tabs based on the selected layout
+    self:CreateTabs(addon)
 end
 
 return ChatFrame

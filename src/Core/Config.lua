@@ -89,6 +89,23 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
+            layout = {
+                name = L.layout,
+                desc = L.layout_desc,
+                type = "select",
+                order = 7,
+                values = {
+                    CLASSIC = L.layout_classic,
+                    TRANSPOSED = L.layout_transposed,
+                },
+                get = function() return addonObj.db.profile.layout end,
+                set = function(_, val)
+                    addonObj.db.profile.layout = val
+                    if addonObj.ChatFrame and addonObj.ChatFrame.ApplyLayout then
+                        addonObj.ChatFrame:ApplyLayout()
+                    end
+                end,
+            },
         },
     }
 end
@@ -163,7 +180,7 @@ local function CreateAppearanceOptions(addonObj)
                 name = L.debug_mode,
                 desc = L.debug_mode_desc,
                 type = "toggle",
-                order = 7,
+                order = 6,
                 get = function() return addonObj.db.profile.debug end,
                 set = function(_, val)
                     addonObj.db.profile.debug = val

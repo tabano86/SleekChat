@@ -8,27 +8,43 @@ local L = AceLocale:GetLocale("SleekChat", true)
 
 -- Initialize database FIRST before any other operations
 function SleekChat:OnInitialize()
-    -- Database must be initialized before anything else
+    -- Database initialization
     self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
 
-    -- Now initialize other components
+    -- Core systems
     addon.Core:Initialize(self)
     addon.Config:Initialize(self)
+    addon.ChatFrame:Initialize(self)
 
-    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version") or ""))
-
-    -- Debug initial state
-    self:PrintDebug("Addon initialized successfully")
+    -- Complete default chat replacement
+    self:HookDefaultChat()
+    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
--- Modified PrintDebug with nil check
+function SleekChat:HookDefaultChat()
+    -- Disable Blizzard chat elements
+    ChatFrameMenuButton:Hide()
+    QuickJoinToastButton:Hide()
+
+    -- Replace chat tabs
+    for i = 1, 10 do
+        local tab = _G["ChatFrame"..i.."Tab"]
+        if tab then
+            tab:Hide()
+            tab.Show = function() end
+        end
+    end
+
+    -- Redirect combat text
+    CombatText:SetScript("OnEvent", function() end)
+end
+
 function SleekChat:PrintDebug(message)
     if self.db and self.db.profile and self.db.profile.debug then
         self:Print("|cFF00FFFF[DEBUG]|r "..message)
     end
 end
 
--- Updated HideDefaultChatFrames with safety checks
 function SleekChat:HideDefaultChatFrames()
     if not self.db or not self.db.profile then return end
 
@@ -47,33 +63,17 @@ function SleekChat:HideDefaultChatFrames()
     end
 end
 
--- Revised event handling
 function SleekChat:OnEnable()
-    self:PrintDebug("Addon enabling")
+    addon.Events:Initialize(self)
+    addon.History:Initialize(self)
+    addon.Notifications:Initialize(self)
 
-    -- Safe module initialization
-    xpcall(function()
-        if addon.Events then addon.Events:Initialize(self) end
-        if addon.ChatFrame then addon.ChatFrame:Initialize(self) end
-        if addon.History then addon.History:Initialize(self) end
-        if addon.Notifications then addon.Notifications:Initialize(self) end
-    end, function(err)
-        self:Print("|cFFFF0000Initialization Error:|r "..tostring(err))
-        geterrorhandler()(err)
-    end)
-
-    -- Register events after full initialization
-    self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
-        self:PrintDebug("Player entering world")
-        self:HideDefaultChatFrames()
-        if addon.ChatFrame.chatFrame then
-            addon.ChatFrame.chatFrame:Show()
-            addon.ChatFrame.chatFrame:Raise()
-        end
-    end)
+    -- Force UI update
+    addon.ChatFrame.chatFrame:Show()
+    addon.ChatFrame.messageFrame:Show()
+    addon.ChatFrame.editBox:Show()
 end
 
--- Modified UpdateChatVisibility with nil protection
 function SleekChat:UpdateChatVisibility()
     if not self.db or not self.db.profile then return end
 
