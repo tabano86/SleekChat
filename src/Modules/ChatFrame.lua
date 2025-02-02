@@ -120,9 +120,11 @@ function ChatFrame:Initialize(addonObj)
     end)
 
     -- A button to focus this input, so we can bind it in KeyBindings or override
-    local focusBtn = CreateFrame("Button", "SleekChatFocusButton", UIParent, "UIPanelButtonTemplate")
-    focusBtn:SetScript("OnClick", function() edit:SetFocus() end)
-    focusBtn:Hide() -- no reason to show
+    --local focusBtn = CreateFrame("Button", "SleekChatFocusButton", UIParent, "UIPanelButtonTemplate")
+    --focusBtn:SetScript("OnClick", function()
+    --    SleekChat_InputBox:SetFocus()
+    --end)
+    --focusBtn:Hide()
 
     -- Channels known
     self.channelButtons = {}

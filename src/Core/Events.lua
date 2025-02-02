@@ -29,16 +29,16 @@ function Events:Initialize(addonObj)
 
     frame:SetScript("OnEvent", function(_, event, ...)
         if event == "CHAT_MSG_SYSTEM" then
-            addon.ChatFrame:AddMessage(..., "SYSTEM")
+            addonObj.ChatFrame:AddMessage(..., "SYSTEM")
             return
         elseif event == "PLAYER_REGEN_DISABLED" then
             if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.chatFrame then
-                addon.ChatFrame.chatFrame:SetAlpha(0) -- fade out
+                addonObj.ChatFrame.chatFrame:SetAlpha(0) -- fade out
             end
             return
         elseif event == "PLAYER_REGEN_ENABLED" then
             if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.chatFrame then
-                addon.ChatFrame.chatFrame:SetAlpha(1) -- restore
+                addonObj.ChatFrame.chatFrame:SetAlpha(1) -- restore
             end
             return
         end
@@ -49,14 +49,14 @@ function Events:Initialize(addonObj)
             if event == data.event then
                 if data.channel then
                     if addonObj.db.profile.channels[data.channel:upper()] then
-                        addon.ChatFrame:AddMessage(msg, data.channel, sender)
+                        addonObj.ChatFrame:AddMessage(msg, data.channel, sender)
                     end
                 else
                     if addonObj.db.profile.channels[channel] then
-                        addon.ChatFrame:AddMessage(msg, channel, sender)
+                        addonObj.ChatFrame:AddMessage(msg, channel, sender)
                         if channel == "WHISPER" then
-                            addon.Notifications:ShowWhisperAlert(sender, msg)
-                            addon.ChatFrame:HandleWhisper(sender, msg)
+                            addonObj.Notifications:ShowWhisperAlert(sender, msg)
+                            addonObj.ChatFrame:HandleWhisper(sender, msg)
                         end
                     end
                 end

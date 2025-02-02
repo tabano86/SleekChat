@@ -41,10 +41,6 @@ function SleekChat:OnEnable()
     if addon.ChatFrame and addon.ChatFrame.mainFrame then
         addon.ChatFrame.mainFrame:Show()
     end
-
-    -- Optionally, forcibly override Enter key to focus SleekChat
-    -- (If you want a default binding w/o user going to the binding UI)
-    SetOverrideBindingClick(self, false, "ENTER", "SleekChatFocusButton")
 end
 
 --------------------------------------------------------------------------------

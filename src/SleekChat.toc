@@ -5,6 +5,5 @@
 ## Version: 1.0.0
 ## SavedVariables: SleekChatDB
 
-Bindings.xml
 Embeds.xml
 SleekChat.lua
