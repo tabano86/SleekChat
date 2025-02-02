@@ -3,7 +3,8 @@ local AceAddon = LibStub("AceAddon-3.0")
 local AceDB = LibStub("AceDB-3.0")
 local AceLocale = LibStub("AceLocale-3.0")
 
-SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0")
+-- IMPORTANT: Added "AceTimer-3.0" so we can call self:ScheduleRepeatingTimer
+SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
 function SleekChat:OnInitialize()
@@ -12,7 +13,7 @@ function SleekChat:OnInitialize()
     addon.Config:Initialize(self)
     addon.ChatFrame:Initialize(self)
     self:HookDefaultChat()
-    self:Print(format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
+    self:Print(string.format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
 function SleekChat:HookDefaultChat()
@@ -26,7 +27,9 @@ function SleekChat:HookDefaultChat()
         end
     end
     if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:Hide() end
-    if CombatText then CombatText:SetScript("OnEvent", function() end) end
+    if CombatText then
+        CombatText:SetScript("OnEvent", function() end)
+    end
 end
 
 function SleekChat:PrintDebug(message)

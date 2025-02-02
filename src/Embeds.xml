@@ -7,16 +7,17 @@
     <Script file="Libs\AceConfig-3.0\AceConfig-3.0.lua"/>
     <Script file="Libs\AceConsole-3.0\AceConsole-3.0.lua"/>
     <Script file="Libs\AceEvent-3.0\AceEvent-3.0.lua"/>
+    <Script file="Libs\AceTimer-3.0\AceTimer-3.0.lua"/>
     <Script file="Libs\AceLocale-3.0\AceLocale-3.0.lua"/>
     <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 
-    <!-- Load localization and core modules early -->
+    <!-- Localization and core modules -->
     <Include file="Locales\enUS.lua"/>
     <Include file="Core\Core.lua"/>
     <Include file="Core\Config.lua"/>
     <Include file="Core\Events.lua"/>
 
-    <!-- Load addon modules -->
+    <!-- Addon modules -->
     <Include file="Modules\ChatFrame.lua"/>
     <Include file="Modules\History.lua"/>
     <Include file="Modules\Notifications.lua"/>

@@ -66,7 +66,7 @@ function Core.GetDefaults()
             darkMode = false,
             profanityFilter = false,
             muteList = {},
-            -- New tab management defaults:
+            -- Tab management
             customTabOrder = false,
             tabRenaming = false,
             autoCollapseTabs = false,
@@ -93,23 +93,26 @@ function Core.GetDefaults()
 end
 
 local function SetupStaticPopup()
+    -- Unified definition for opening URLs (used by ChatFrame:HandleURL)
     StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
         text = L.open_url_dialog or "Open URL:",
         button1 = L.open or "Open",
         button2 = L.cancel or "Cancel",
         OnAccept = function(self, data)
-            if data.url then
+            if data and data.url then
                 if ChatFrame_OpenBrowser then
                     ChatFrame_OpenBrowser(data.url)
                 else
                     EditBox_CopyTextToClipboard(data.url)
-                    self:GetParent():Print(L.url_copied or ("URL copied to clipboard: " .. data.url))
+                    addon:PrintDebug(L.url_copied or ("URL copied to clipboard: " .. data.url))
                 end
             end
         end,
         timeout = 0,
         whileDead = true,
         hideOnEscape = true,
+        hasEditBox = false,
+        preferIndex = 3,
     }
 end
 

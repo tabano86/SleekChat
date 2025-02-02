@@ -23,6 +23,7 @@ function Events:Initialize(addonObj)
         frame:RegisterEvent(data.event)
     end
     frame:RegisterEvent("CHAT_MSG_SYSTEM")
+
     frame:SetScript("OnEvent", function(_, event, ...)
         if event == "CHAT_MSG_SYSTEM" then
             addon.ChatFrame:AddMessage(..., "SYSTEM")

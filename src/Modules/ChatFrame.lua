@@ -3,15 +3,13 @@ local AceLocale = LibStub("AceLocale-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
--- Cache frequently used functions and values
+-- Cache frequently used
 local floor, date, format, gsub, ipairs, pairs, select, strlower, strsplit, tinsert =
 math.floor, date, string.format, string.gsub, ipairs, pairs, select, string.lower, strsplit, table.insert
 
--- Some WoW globals used below
 local UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip =
 UnitName, UnitClass, IsShiftKeyDown, PlaySound, GameTooltip
 
--- Class color fallback
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS or CUSTOM_CLASS_COLORS or {}
 local DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
 local PLAYER_NAME = UnitName("player")
@@ -20,10 +18,9 @@ addon.ChatFrame = {}
 local ChatFrame = addon.ChatFrame
 
 ---------------------------------------------------------------------
--- URL patterns, priority rules, and “smart” features
+-- URL patterns, priority rules, mention triggers
 ---------------------------------------------------------------------
 local URL_PATTERNS = {
-    -- Enhanced URL patterns with TLD validation and special chars
     "https?://[%w-_%%%.%?%.:/%+=&]+",
     "www%.[%w-_%%]+%.%w%w%w?%w?%.?%w*",
     "ftp://[%w-_%%%.%?%.:/%+=&]+",
@@ -32,23 +29,23 @@ local URL_PATTERNS = {
 }
 
 local MESSAGE_PRIORITY = {
-    ["WHISPER"] = 3,
-    ["PARTY"]   = 2,
-    ["RAID"]    = 2,
-    ["GUILD"]   = 1.5,
-    ["YELL"]    = 1,
-    ["SAY"]     = 1,
+    WHISPER = 3,
+    PARTY   = 2,
+    RAID    = 2,
+    GUILD   = 1.5,
+    YELL    = 1,
+    SAY     = 1,
 }
 
 local SMART_FEATURES = {
-    MENTION_TRIGGERS      = { strlower(PLAYER_NAME), "@", "!" },
-    INACTIVE_TAB_TIMEOUT  = 1800, -- 30 minutes
-    MAX_WHISPER_TABS      = 5,
-    TAB_WIDTH_RANGE       = { 60, 150 },
+    MENTION_TRIGGERS     = { strlower(PLAYER_NAME), "@", "!" },
+    INACTIVE_TAB_TIMEOUT = 1800, -- 30 min
+    MAX_WHISPER_TABS     = 5,
+    TAB_WIDTH_RANGE      = { 60, 150 },
 }
 
 ---------------------------------------------------------------------
--- Player class cache, with fallback for group scanning
+-- Simple class cache
 ---------------------------------------------------------------------
 local classCache = setmetatable({}, {
     __index = function(t, sender)
@@ -62,8 +59,7 @@ function ChatFrame:GetPlayerClass(sender)
     if sender == PLAYER_NAME then
         return select(2, UnitClass("player"))
     end
-
-    -- Check party and raid
+    -- Check party/raid for that name
     for prefix, maxMembers in pairs({ party = 4, raid = 40 }) do
         for i = 1, maxMembers do
             local unit = prefix..i
@@ -76,91 +72,80 @@ function ChatFrame:GetPlayerClass(sender)
 end
 
 ---------------------------------------------------------------------
--- TabManager: stubs for advanced tab behavior (fading, cleanup, etc.)
+-- TabManager stubs
 ---------------------------------------------------------------------
 local TabManager = {
-    activeTabs   = {},
-    whisperTabs  = {},
-
-    AddTab = function(self, tabType, identifier)
-        -- Implementation placeholder: track whisper tabs, etc.
-        -- If you want to handle special whisper-only logic, do it here.
-        self.whisperTabs[identifier] = {
-            lastActivity = time(),
-        }
-    end,
-
-    CleanupOldTabs = function(self)
-        -- Example: remove tabs that haven't been active for a while
-        -- or keep the total whisper tabs below SMART_FEATURES.MAX_WHISPER_TABS
-    end,
-
-    UpdateTabVisuals = function(self)
-        -- Example: highlight active channel tab, fade inactive, etc.
-    end,
+    activeTabs  = {},
+    whisperTabs = {},
 }
 
+function TabManager:AddTab(tabType, identifier)
+    self.whisperTabs[identifier] = { lastActivity = time() }
+end
+
+function TabManager:CleanupOldTabs()
+    -- Example: remove or hide old whisper tabs
+end
+
+function TabManager:UpdateTabVisuals()
+    -- Example: highlight or fade tabs
+end
+
 ---------------------------------------------------------------------
--- MessageProcessor: parses message for URLs, mentions, priority
+-- MessageProcessor
 ---------------------------------------------------------------------
-local MessageProcessor = {
-    ParseMessage = function(text, sender, channel)
-        local processed = {
-            original = text,
-            links    = {},
-            mentions = {},
-            priority = MESSAGE_PRIORITY[channel] or 1
-        }
+local MessageProcessor = {}
 
-        -- URL detection
-        for _, pattern in ipairs(URL_PATTERNS) do
-            processed.original = gsub(processed.original, pattern, function(url)
-                tinsert(processed.links, url)
-                return format("|cff00FFFF|Hurl:%s|h[Link]|h|r", url)
-            end)
-        end
+function MessageProcessor:ParseMessage(text, sender, channel)
+    local processed = {
+        original = text,
+        links    = {},
+        mentions = {},
+        priority = MESSAGE_PRIORITY[channel] or 1
+    }
 
-        -- Mention detection
-        local lowerText = strlower(processed.original)
-        for _, trigger in ipairs(SMART_FEATURES.MENTION_TRIGGERS) do
-            if lowerText:find(trigger, 1, true) then
-                processed.priority = math.max(processed.priority, 4)
-                tinsert(processed.mentions, trigger)
-                break
-            end
-        end
-
-        return processed
-    end,
-
-    ShouldNotify = function(processedMessage)
-        -- Example rule: notify if we have mentions or high priority
-        return (#processedMessage.mentions > 0) or (processedMessage.priority >= 3)
+    -- Detect URLs
+    for _, pattern in ipairs(URL_PATTERNS) do
+        processed.original = gsub(processed.original, pattern, function(url)
+            tinsert(processed.links, url)
+            return format("|cff00FFFF|Hurl:%s|h[Link]|h|r", url)
+        end)
     end
-}
+
+    -- Mention detection
+    local lowerText = strlower(processed.original)
+    for _, trigger in ipairs(SMART_FEATURES.MENTION_TRIGGERS) do
+        if lowerText:find(trigger, 1, true) then
+            processed.priority = math.max(processed.priority, 4)
+            tinsert(processed.mentions, trigger)
+            break
+        end
+    end
+
+    return processed
+end
+
+function MessageProcessor:ShouldNotify(msg)
+    return (#msg.mentions > 0) or (msg.priority >= 3)
+end
 
 ---------------------------------------------------------------------
 -- ChatFrame methods
 ---------------------------------------------------------------------
-
--- Handle incoming whispers, create a dedicated tab if needed
 function ChatFrame:HandleWhisper(sender, msg)
     local channelName = "WHISPER:"..sender
     if not self.db.profile.messageHistory[channelName] then
         self.db.profile.messageHistory[channelName] = {}
     end
-
-    -- Create or register a whisper tab in TabManager
     TabManager:AddTab("WHISPER", sender)
     return true
 end
 
--- Initialize the main chat frame, hooking up everything
 function ChatFrame:Initialize(addonObj)
-    self.db           = addonObj.db
+    self.db = addonObj.db
     self.activeChannel = "SAY"
-    self.messageQueue  = {}
-    self.pinnedMessages = {} -- from old code, if you want pinning
+    self.messageQueue = {}
+    self.pinnedMessages = {}
 
     -- Main frame
     self.chatFrame = CreateFrame("Frame", "SleekChatMainFrame", UIParent, "BackdropTemplate")
@@ -173,7 +158,7 @@ function ChatFrame:Initialize(addonObj)
             floor(self.db.profile.position.y)
     )
 
-    -- Allow resizing
+    -- Resizable
     self.chatFrame:SetResizable(true)
     self.chatFrame:SetMinResize(200, 100)
     local resizeButton = CreateFrame("Button", nil, self.chatFrame)
@@ -186,12 +171,12 @@ function ChatFrame:Initialize(addonObj)
     end)
     resizeButton:SetScript("OnMouseUp", function()
         self.chatFrame:StopMovingOrSizing()
-        self.db.profile.width  = floor(self.chatFrame:GetWidth())
+        self.db.profile.width = floor(self.chatFrame:GetWidth())
         self.db.profile.height = floor(self.chatFrame:GetHeight())
-        self:UpdateTabPositions() -- in case you want to re-layout tabs
+        self:UpdateTabPositions()
     end)
 
-    -- Allow dragging
+    -- Draggable
     self.chatFrame:EnableMouse(true)
     self.chatFrame:SetMovable(true)
     self.chatFrame:RegisterForDrag("LeftButton")
@@ -200,22 +185,22 @@ function ChatFrame:Initialize(addonObj)
         f:StopMovingOrSizing()
         local point, _, relPoint, x, y = f:GetPoint(1)
         self.db.profile.position = {
-            point   = point,
-            relPoint= relPoint,
-            x       = floor(x),
-            y       = floor(y),
+            point = point,
+            relPoint = relPoint,
+            x = floor(x),
+            y = floor(y),
         }
     end)
 
-    -- Use SharedMedia for backdrop
+    -- Backdrop
     self.chatFrame:SetBackdrop({
-        bgFile   = SM:Fetch("background", self.db.profile.background) or "Interface\\Tooltips\\UI-Tooltip-Background",
+        bgFile = SM:Fetch("background", self.db.profile.background) or "Interface\\Tooltips\\UI-Tooltip-Background",
         edgeFile = SM:Fetch("border", self.db.profile.border) or "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 16,
-        insets   = { left = 4, right = 4, top = 4, bottom = 4 }
+        insets = { left=4, right=4, top=4, bottom=4 },
     })
 
-    -- ScrollingMessageFrame for chat messages
+    -- ScrollingMessageFrame
     self.messageFrame = CreateFrame("ScrollingMessageFrame", nil, self.chatFrame)
     self.messageFrame:SetHyperlinksEnabled(true)
     self.messageFrame:SetPoint("TOPLEFT", 8, -30)
@@ -223,8 +208,6 @@ function ChatFrame:Initialize(addonObj)
     self.messageFrame:SetJustifyH("LEFT")
     self.messageFrame:SetMaxLines(1000)
     self.messageFrame:EnableMouseWheel(true)
-
-    -- Adaptive scrolling with shift speed
     self.messageFrame:SetScript("OnMouseWheel", function(_, delta)
         local scrollSpeed = self.db.profile.scrollSpeed or 3
         if IsShiftKeyDown() then
@@ -233,11 +216,10 @@ function ChatFrame:Initialize(addonObj)
         self.messageFrame:ScrollByAmount(-delta * scrollSpeed)
     end)
 
-    -- Hyperlink handling (URL + player links)
+    -- Hyperlink clicks
     self.messageFrame:SetScript("OnHyperlinkClick", function(_, link, text, button)
         local linkType, value = strsplit(":", link, 2)
         if linkType == "player" then
-            -- Start a whisper
             self:StartConversation(value)
         elseif linkType == "url" then
             self:HandleURL(value)
@@ -254,11 +236,10 @@ function ChatFrame:Initialize(addonObj)
     self.editBox:SetAutoFocus(false)
     self.editBox.autoComplete = {}
 
-    -- Send message on Enter
     self.editBox:SetScript("OnEnterPressed", function(f)
         local text = f:GetText() and f:GetText():trim()
         if text and text ~= "" then
-            self:SendSmartMessage(text)  -- new approach
+            self:SendSmartMessage(text)
             if addon.History then
                 addon.History:AddMessage(text, PLAYER_NAME, self.activeChannel)
             end
@@ -274,27 +255,24 @@ function ChatFrame:Initialize(addonObj)
         end
     end)
 
-    -- Initialize tab system (replaces old CreateTabs)
+    -- Tabs
     self:InitializeTabSystem()
 
-    -- Periodic cleanup for tabs and messages
-    self:ScheduleRepeatingTimer(function()
+    -- Periodic cleanup (needs AceTimer-3.0)
+    addonObj:ScheduleRepeatingTimer(function()
         TabManager:CleanupOldTabs()
         self:ProcessMessageQueue()
     end, 5)
 
-    -- Register slash commands
     self:RegisterSlashCommands()
 
-    -- Final styling
     addon:PrintDebug("SleekChat initialized with smart features")
     self:ApplyTheme()
 end
 
--- Updates font based on user settings
 function ChatFrame:UpdateFonts()
-    local fontPath  = SM:Fetch("font", self.db.profile.font) or DEFAULT_FONT
-    local fontSize  = tonumber(self.db.profile.fontSize) or 12
+    local fontPath = SM:Fetch("font", self.db.profile.font) or DEFAULT_FONT
+    local fontSize = tonumber(self.db.profile.fontSize) or 12
     if fontSize < 8 then fontSize = 8 end
     if fontSize > 24 then fontSize = 24 end
 
@@ -303,36 +281,29 @@ function ChatFrame:UpdateFonts()
     self.messageFrame:SetShadowOffset(1, -1)
 end
 
----------------------------------------------------------------------
--- Smart message sending/processing
----------------------------------------------------------------------
 function ChatFrame:SendSmartMessage(text)
     local processed = MessageProcessor:ParseMessage(text, PLAYER_NAME, self.activeChannel)
 
-    -- Simple slash-detection for channels
-    local targetChannel = self.activeChannel
-    if text:sub(1, 1) == "/" then
+    -- Check for slash
+    if text:sub(1,1) == "/" then
         local command = strsplit(" ", text:sub(2)):lower()
         if command == "p" or command == "party" then
-            targetChannel = "PARTY"
+            self.activeChannel = "PARTY"
         elseif command == "raid" then
-            targetChannel = "RAID"
+            self.activeChannel = "RAID"
         end
     end
 
-    -- High-priority messages get a sound or tab flash
     if processed.priority >= 3 then
         self:FlashTab(self.activeChannel)
         if self.db.profile.mentionSounds then
-            -- SOUNDKIT.IG_PLAYER_INVITE is a common "ping" sound
             PlaySound(SOUNDKIT.IG_PLAYER_INVITE)
         end
     end
 
-    self:AddMessage(processed.original, targetChannel, PLAYER_NAME)
+    self:AddMessage(processed.original, self.activeChannel, PLAYER_NAME)
 end
 
--- Add a message to queue; high priority goes to front
 function ChatFrame:AddMessage(text, eventType, sender)
     local processed = MessageProcessor:ParseMessage(text, sender, eventType)
     local formatted = self:FormatMessage(processed.original, sender, eventType)
@@ -343,17 +314,15 @@ function ChatFrame:AddMessage(text, eventType, sender)
         table.insert(self.messageQueue, { formatted, eventType })
     end
 
-    -- Throttle if queue is large
     if #self.messageQueue > 50 then
         self:ProcessMessageQueue()
     end
 end
 
--- Process queued messages, display those matching activeChannel
 function ChatFrame:ProcessMessageQueue()
     for i, msgData in ipairs(self.messageQueue) do
-        local text  = msgData[1]
-        local chan  = msgData[2]
+        local text = msgData[1]
+        local chan = msgData[2]
         if chan == self.activeChannel then
             self.messageFrame:AddMessage(text)
         end
@@ -362,16 +331,14 @@ function ChatFrame:ProcessMessageQueue()
     self.messageFrame:ScrollToBottom()
 end
 
--- Basic mention of a tab flash
 function ChatFrame:FlashTab(channel)
-    -- Stub: highlight the channel tab visually or do something fancy
+    -- Stub: highlight or flash the active channel's tab
 end
 
--- Format message (timestamp, channel tags, class-colored sender)
 function ChatFrame:FormatMessage(text, sender, channel)
     local parts = {}
 
-    -- Timestamps
+    -- Timestamp
     if self.db.profile.timestamps then
         table.insert(parts, format("|cff798BDD%s|r", date(self.db.profile.timestampFormat)))
     end
@@ -384,7 +351,6 @@ function ChatFrame:FormatMessage(text, sender, channel)
                 color.r*255, color.g*255, color.b*255, sender, sender)
     end
 
-    -- Channel with optional icon
     local channelIcon = ""
     if self.db.profile.channelIcons and addon.ChannelIcons then
         channelIcon = addon.ChannelIcons[channel] or ""
@@ -392,7 +358,7 @@ function ChatFrame:FormatMessage(text, sender, channel)
 
     table.insert(parts, format("[%s%s]", channelIcon, channel))
     if sender then
-        table.insert(parts, format("%s:", sender))
+        table.insert(parts, sender..":")
     end
     table.insert(parts, text)
 
@@ -400,7 +366,7 @@ function ChatFrame:FormatMessage(text, sender, channel)
 end
 
 ---------------------------------------------------------------------
--- Tab system: replaces old CreateTabs/UpdateTabs
+-- Tabs
 ---------------------------------------------------------------------
 function ChatFrame:InitializeTabSystem()
     -- A simple pool for reusing tab buttons
@@ -409,20 +375,17 @@ function ChatFrame:InitializeTabSystem()
         tab:Hide()
     end)
 
-    -- A scroll frame for tabs if there are too many
     self.tabScrollFrame = CreateFrame("ScrollFrame", nil, self.chatFrame, "UIPanelScrollFrameTemplate")
     self.tabScrollFrame:SetPoint("TOPLEFT", self.chatFrame, "TOPLEFT", 5, -5)
     self.tabScrollFrame:SetSize(self.db.profile.width - 10, 30)
 
-    self:RegisterMessage("SLEEKCHAT_SETTINGS_CHANGED", "UpdateTabSystem")
-
+    -- Removed the unused self:RegisterMessage("SLEEKCHAT_SETTINGS_CHANGED", "UpdateTabSystem")
     self:UpdateTabSystem()
 end
 
 function ChatFrame:UpdateTabSystem()
     self.tabPool:ReleaseAll()
 
-    -- Create a tab for each channel in the user’s config
     for channel, enabled in pairs(self.db.profile.channels) do
         if enabled then
             local tab = self.tabPool:Acquire()
@@ -436,8 +399,6 @@ end
 
 function ChatFrame:ConfigureTab(tab, channel)
     tab:SetSize(self.db.profile.tabWidth, 24)
-
-    -- Blizz template doesn't have :SetText(), so create a fontstring or use mixture:
     if not tab.textFS then
         tab.textFS = tab:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         tab.textFS:SetPoint("CENTER")
@@ -452,14 +413,13 @@ function ChatFrame:ConfigureTab(tab, channel)
         end
     end)
 
-    -- Simple tooltips
     tab:SetScript("OnEnter", function()
         GameTooltip:SetOwner(tab, "ANCHOR_BOTTOM")
         GameTooltip:AddLine(channel)
         if channel:find("WHISPER:") and TabManager.whisperTabs[channel:gsub("WHISPER:", "")] then
             local info = TabManager.whisperTabs[channel:gsub("WHISPER:", "")]
             if info.lastActivity then
-                GameTooltip:AddLine(L["last_activity"]..date("%X", info.lastActivity))
+                GameTooltip:AddLine("Last activity: "..date("%X", info.lastActivity))
             end
         end
         GameTooltip:Show()
@@ -474,7 +434,7 @@ function ChatFrame:UpdateTabPositions()
         tab:SetPoint("BOTTOMLEFT", self.tabScrollFrame, "BOTTOMLEFT", xOffset, 0)
         xOffset = xOffset + tab:GetWidth() + 2
     end
-    -- If tabs exceed width, horizontally scroll
+
     local neededWidth = xOffset - self.tabScrollFrame:GetWidth()
     if neededWidth < 0 then
         neededWidth = 0
@@ -482,38 +442,29 @@ function ChatFrame:UpdateTabPositions()
     self.tabScrollFrame:SetHorizontalScroll(neededWidth)
 end
 
--- Right-click channel toggles or advanced logic
 function ChatFrame:ToggleChannel(channel)
-    -- Stub if you want to detach/close channels, etc.
+    -- Stub: e.g., close/detach channel
 end
 
----------------------------------------------------------------------
--- Switching channels: partially from old code (needed for new tabs)
----------------------------------------------------------------------
 function ChatFrame:SwitchChannel(channel)
     self.activeChannel = channel
     self.messageFrame:Clear()
 
-    -- Reload channel history if present
     if addon.History and addon.History.messages and addon.History.messages[channel] then
         for _, msg in ipairs(addon.History.messages[channel]) do
             self:AddMessage(msg.text, msg.channel, msg.sender)
         end
     end
-
-    -- Update tab visuals (highlight active, etc.)
     TabManager:UpdateTabVisuals()
-
     self.messageFrame:ScrollToBottom()
 
-    -- If there's advanced messaging logic
     if addon.AdvancedMessaging and addon.AdvancedMessaging.SwitchChannel then
         addon.AdvancedMessaging:SwitchChannel(channel)
     end
 end
 
 ---------------------------------------------------------------------
--- Pinning messages (from old code)
+-- Pinning messages
 ---------------------------------------------------------------------
 function ChatFrame:PinMessage(message)
     if not self.db.profile.enablePinning then return end
@@ -522,7 +473,6 @@ function ChatFrame:PinMessage(message)
 end
 
 function ChatFrame:UpdateAll()
-    -- Rebuild chat from pinned + history
     self.messageFrame:Clear()
 
     for _, msg in ipairs(self.pinnedMessages) do
@@ -558,7 +508,7 @@ function ChatFrame:RegisterSlashCommands()
                 self:SearchMessages(strtrim(msg))
             end,
             usage   = "/sleekchat find <text> - Search chat history"
-        }
+        },
     }
 
     for cmd, info in pairs(addon.SlashCommands) do
@@ -567,11 +517,10 @@ function ChatFrame:RegisterSlashCommands()
     end
 end
 
--- Example search functionality
 function ChatFrame:SearchMessages(term)
     if not term or term == "" then return end
-
     local results = {}
+
     if addon.History and addon.History.messages then
         for channel, messages in pairs(addon.History.messages) do
             for _, msg in ipairs(messages) do
@@ -595,7 +544,6 @@ function ChatFrame:UpdateAutoComplete(input)
     self.editBox.autoComplete = {}
 
     if input:sub(1, 1) == "/" then
-        -- Command completion
         for cmd, info in pairs(addon.SlashCommands) do
             local cmdCheck = "/"..cmd
             if cmdCheck:find(input, 1, true) then
@@ -603,7 +551,6 @@ function ChatFrame:UpdateAutoComplete(input)
             end
         end
     else
-        -- Player name completion
         for name in pairs(classCache) do
             if strlower(name):find(strlower(input), 1, true) then
                 tinsert(self.editBox.autoComplete, name)
@@ -617,57 +564,27 @@ function ChatFrame:UpdateAutoComplete(input)
 end
 
 ---------------------------------------------------------------------
--- Helper stubs for hyperlink clicks
+-- Helper stubs
 ---------------------------------------------------------------------
 function ChatFrame:StartConversation(target)
-    -- If you want a quick way to jump to whisper mode
     self.activeChannel = "WHISPER:"..target
     self.messageFrame:AddMessage(format("|cffffff00Starting whisper to %s...|r", target))
 end
 
 function ChatFrame:HandleURL(url)
-    -- Example: show a popup or copy box
-    StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
-        text         = L["url_dialog"] or "Copy URL:",
-        button1      = OKAY,
-        OnShow       = function(self) self.editBox:SetText(url) self.editBox:HighlightText() end,
-        hasEditBox   = true,
-        timeout      = 0,
-        whileDead    = true,
-        hideOnEscape = true,
-        preferredIndex = 3,
-    }
-    StaticPopup_Show("SLEEKCHAT_URL_DIALOG")
+    -- Show our unified popup
+    StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = url })
 end
 
----------------------------------------------------------------------
--- Theming
----------------------------------------------------------------------
 function ChatFrame:ApplyTheme()
     local theme = self.db.profile.theme or {
         background = {r = 0, g = 0, b = 0, a = 0.6},
         border     = {r = 1, g = 1, b = 1, a = 1},
         shadowAlpha= 1,
     }
-
-    self.chatFrame:SetBackdropColor(
-            theme.background.r,
-            theme.background.g,
-            theme.background.b,
-            theme.background.a
-    )
-
-    self.chatFrame:SetBackdropBorderColor(
-            theme.border.r,
-            theme.border.g,
-            theme.border.b,
-            theme.border.a
-    )
-
+    self.chatFrame:SetBackdropColor(theme.background.r, theme.background.g, theme.background.b, theme.background.a)
+    self.chatFrame:SetBackdropBorderColor(theme.border.r, theme.border.g, theme.border.b, theme.border.a)
     self.messageFrame:SetShadowColor(0, 0, 0, theme.shadowAlpha or 1)
 end
 
----------------------------------------------------------------------
--- Return the ChatFrame module
----------------------------------------------------------------------
 return ChatFrame

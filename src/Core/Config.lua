@@ -47,6 +47,7 @@ local function CreateGeneralOptions(addonObj)
                 order = 4,
                 get = function() return addonObj.db.profile.timestampFormat end,
                 set = function(_, val)
+                    -- Validate Lua date format
                     if pcall(date, val) then
                         addonObj.db.profile.timestampFormat = val
                         if addonObj.ChatFrame then addonObj.ChatFrame:UpdateAll() end
@@ -216,7 +217,9 @@ local function CreateGeneralOptions(addonObj)
                 desc = "Comma-separated list of players to mute",
                 type = "input",
                 order = 20,
-                get = function() return table.concat(addonObj.db.profile.muteList or {}, ", ") end,
+                get = function()
+                    return table.concat(addonObj.db.profile.muteList or {}, ", ")
+                end,
                 set = function(_, val)
                     local t = {}
                     for word in val:gmatch("([^,]+)") do
@@ -348,7 +351,9 @@ local function CreateTabManagementOptions(addonObj)
                 type = "color",
                 order = 4,
                 get = function() return unpack(addonObj.db.profile.tabColor or {0.2, 0.2, 0.2, 0.8}) end,
-                set = function(_, r, g, b, a) addonObj.db.profile.tabColor = { r, g, b, a } end,
+                set = function(_, r, g, b, a)
+                    addonObj.db.profile.tabColor = { r, g, b, a }
+                end,
             },
             unreadBadge = {
                 name = "Unread Message Badge",
@@ -581,6 +586,7 @@ function Config:Initialize(addonObj)
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
     AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
     AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
+
     addonObj:RegisterChatCommand("screset", function()
         addonObj.db:ResetProfile()
         addonObj:Print(L.settings_reset)

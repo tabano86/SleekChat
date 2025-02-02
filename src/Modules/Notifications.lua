@@ -30,18 +30,15 @@ function Notifications:ShowWhisperAlert(sender, message)
     f:SetBackdropColor(0, 0, 0, 0.8)
     local text = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("CENTER")
-    text:SetText(format(L.whisper_notification, sender))
+    text:SetText(string.format(L.whisper_notification, sender))
     f:SetScript("OnClick", function()
         if addon.ChatFrame and addon.ChatFrame.SwitchChannel then
-            addon.ChatFrame:SwitchChannel("WHISPER")
+            addon.ChatFrame:SwitchChannel("WHISPER:"..sender)
         end
         f:Hide()
     end)
     UIFrameFadeOut(f, 5, 1, 0)
     f:SetScript("OnFadeComplete", function() f:Hide() end)
-    if addon.ChatFrame.activeChannel ~= "WHISPER" and addon.ChatFrame.tabs and addon.ChatFrame.tabs.WHISPER then
-        addon.ChatFrame.tabs.WHISPER.text:SetTextColor(1, 0.2, 0.2)
-    end
 end
 
 return Notifications
