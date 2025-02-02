@@ -151,7 +151,7 @@ function ChatFrame:Initialize(addonObj)
         self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
     end)
 
-    addon:PrintDebug("SleekChat frame initialized")
+    addonObj:PrintDebug("SleekChat frame initialized")
     self.messageFrame:AddMessage(L.addon_loaded:format(GetAddOnMetadata("SleekChat", "Version")))
     self:ApplyTheme()
 end
