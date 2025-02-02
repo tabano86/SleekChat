@@ -10,7 +10,7 @@ function Core.GetDefaults()
     return {
         profile = {
             enable = true,
-            version = 4,  -- bumped version to include new fields
+            version = 4,  -- version 4 includes advanced settings
             layout = "CLASSIC", -- or "TRANSPOSED"
             messageFormat = "[{time}] {channel} {sender}: {message}",
             position = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 50, y = 50 },
@@ -104,7 +104,6 @@ local function ApplyMigrations(addonObj)
         addonObj.db.profile.version = 2
     end
     if addonObj.db.profile.version < 4 then
-        -- Migrate new advanced settings
         addonObj.db.profile.darkMode = addonObj.db.profile.darkMode or false
         addonObj.db.profile.profanityFilter = addonObj.db.profile.profanityFilter or false
         addonObj.db.profile.muteList = addonObj.db.profile.muteList or {}

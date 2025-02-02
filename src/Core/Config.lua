@@ -244,7 +244,7 @@ local function CreateGeneralOptions(addonObj)
             },
             muteList = {
                 name = "Mute List",
-                desc = "List of players to mute",
+                desc = "Comma-separated list of players to mute",
                 type = "input",
                 order = 20,
                 get = function() return table.concat(addonObj.db.profile.muteList or {}, ", ") end,

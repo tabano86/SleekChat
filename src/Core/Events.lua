@@ -21,6 +21,7 @@ function Events:Initialize(addonObj)
     frame:RegisterEvent("CHAT_MSG_SYSTEM")
     frame:SetScript("OnEvent", function(_, event, ...)
         if event == "CHAT_MSG_SYSTEM" then
+            -- Redirect system messages to SleekChat
             addon.ChatFrame:AddMessage(..., "SYSTEM")
             return
         end
@@ -28,7 +29,6 @@ function Events:Initialize(addonObj)
             if event == data.event then
                 local msg, sender = ...
                 if data.channel then
-                    -- For channels like Trade, LocalDefense, etc.
                     if addonObj.db.profile.channels[data.channel:upper()] then
                         addon.ChatFrame:AddMessage(msg, data.channel, sender)
                     end
@@ -37,6 +37,10 @@ function Events:Initialize(addonObj)
                         addon.ChatFrame:AddMessage(msg, channel, sender)
                         if channel == "WHISPER" then
                             addon.Notifications:ShowWhisperAlert(sender, msg)
+                            -- Auto-create or switch to whisper tab (stub)
+                            if addon.ChatFrame:HandleWhisper(sender, msg) then
+                                -- New whisper tab created
+                            end
                         end
                     end
                 end

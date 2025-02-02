@@ -2,7 +2,7 @@ local _, addon = ...
 addon.ChatModeration = {}
 local ChatModeration = addon.ChatModeration
 
--- List of blocked keywords (extend as needed)
+-- Blocked keywords for filtering.
 ChatModeration.blockedKeywords = { "badword1", "badword2" }
 
 function ChatModeration:FilterMessage(text)
@@ -12,7 +12,7 @@ function ChatModeration:FilterMessage(text)
     return text
 end
 
--- Check if a sender is muted.
+-- Check if sender is muted.
 function ChatModeration:IsMuted(sender)
     local muteList = addon.db.profile.muteList or {}
     for _, muted in ipairs(muteList) do
