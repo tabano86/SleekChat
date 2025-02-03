@@ -1,22 +1,20 @@
 -- ===========================================================================
 -- SleekChat v2.0 - QoL.lua
--- In-chat search, extended scrollback, channel rejoin, inactivity timers, etc.
+-- Provides in-chat search, extended scrollback, channel auto-rejoin,
+-- inactivity timers, chat transcript export, and clear chat functionality.
 -- ===========================================================================
-
 local QoL = {}
 SleekChat_QoL = QoL
 
 local frame = CreateFrame("Frame", "SleekChatQoLFrame", UIParent)
 frame:RegisterEvent("PLAYER_LOGIN")
 
--- Inactivity / auto-scroll lock
+-- Inactivity timer / auto-lock chat frames
 local function OnUpdate(self, elapsed)
-    self.lastUpdate = (self.lastUpdate or 0) + elapsed
-    local idleThreshold = SleekChat_Config.Get("qol", "inactivityThreshold") or 300
-
-    if self.lastUpdate > 5 then
-        if (GetTime() - (self.lastAction or 0)) > idleThreshold then
-            -- Example: auto-lock chat frames so they don't keep scrolling
+    self.elapsed = (self.elapsed or 0) + elapsed
+    if self.elapsed >= 5 then
+        local idleThreshold = SleekChat_Config.Get("qol", "inactivityThreshold") or 300
+        if (GetTime() - (self.lastInput or GetTime())) > idleThreshold then
             for i = 1, NUM_CHAT_WINDOWS do
                 local cf = _G["ChatFrame"..i]
                 if cf and not cf.isLocked then
@@ -24,16 +22,15 @@ local function OnUpdate(self, elapsed)
                 end
             end
         end
-        self.lastUpdate = 0
+        self.elapsed = 0
     end
 end
 
 frame:SetScript("OnUpdate", OnUpdate)
 
--- Listen for user input to reset inactivity timer
-local function OnUserInput(self, event, key)
-    self.lastAction = GetTime()
-    -- Unlock all chat frames if locked
+-- Reset inactivity timer on user input and unlock chat frames if needed
+local function OnUserInput(self, event)
+    self.lastInput = GetTime()
     for i = 1, NUM_CHAT_WINDOWS do
         local cf = _G["ChatFrame"..i]
         if cf and cf.isLocked then
@@ -42,24 +39,17 @@ local function OnUserInput(self, event, key)
     end
 end
 
-frame:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_LOGIN" then
-        self:SetPropagateKeyboardInput(true)
-        self:SetScript("OnKeyDown", OnUserInput)
+frame:EnableKeyboard(true)
+frame:SetScript("OnKeyDown", OnUserInput)
 
-        -- Auto rejoin channels
-        QoL:AutoRejoinChannels()
-    end
-end)
-
+-- Auto rejoin channels on login
 function QoL:AutoRejoinChannels()
     local channels = SleekChat_Config.Get("qol", "autoRejoinChannels") or {}
     for _, ch in ipairs(channels) do
-        local idTable = { GetChannelList() }
-        for i = 1, #idTable, 2 do
-            local index = idTable[i]
-            local name  = idTable[i+1]
-            if type(name) == "string" and name:lower() == ch:lower() then
+        local alreadyJoined = false
+        local channelList = { GetChannelList() }
+        for i = 1, #channelList, 2 do
+            if type(channelList[i+1]) == "string" and channelList[i+1]:lower() == ch:lower() then
                 alreadyJoined = true
                 break
             end
@@ -70,7 +60,7 @@ function QoL:AutoRejoinChannels()
     end
 end
 
--- Simple in-chat search example (bind to slash or a UI element)
+-- In-chat search command
 SLASH_SLEEKCHAT_SEARCH1 = "/chatsearch"
 SlashCmdList["SLEEKCHAT_SEARCH"] = function(query)
     if not query or query == "" then
@@ -83,21 +73,54 @@ end
 function QoL:SearchCurrentChat(query)
     local cf = SELECTED_CHAT_FRAME
     if not cf then return end
-
-    -- Each ChatFrame region might be a FontString or other UI elements
-    local lines = { cf:GetRegions() }
-    local foundSomething = false
-    for _, region in ipairs(lines) do
-        if region.GetText then
+    local found = false
+    for _, region in ipairs({ cf:GetRegions() }) do
+        if region:GetObjectType() == "FontString" then
             local text = region:GetText()
-            if text and string.find(string.lower(text), string.lower(query), 1, true) then
-                print("|cff00ff00[Match]|r: "..text)
-                foundSomething = true
+            if text and text:lower():find(query:lower(), 1, true) then
+                print("|cff00ff00[Match]|r: " .. text)
+                found = true
             end
         end
     end
-
-    if not foundSomething then
-        print("No matches found for '"..query.."' in current chat frame.")
+    if not found then
+        print("No matches found for '" .. query .. "' in the current chat frame.")
     end
 end
+
+-- Chat transcript export command
+SLASH_SLEEKCHAT_EXPORT1 = "/chatexport"
+SlashCmdList["SLEEKCHAT_EXPORT"] = function()
+    if not SleekChat_QoL.ExportTranscript then
+        print("Chat export feature is not available.")
+        return
+    end
+    SleekChat_QoL:ExportTranscript()
+end
+
+function QoL:ExportTranscript()
+    local cf = SELECTED_CHAT_FRAME
+    if not cf then return end
+    local transcript = {}
+    for i = 1, cf:GetNumMessages() do
+        local msg = cf:GetMessage(i)
+        if msg then
+            table.insert(transcript, msg)
+        end
+    end
+    -- In a real addon, you would write to a file or open an in-game UI window.
+    -- Here we simply print the transcript to the chat.
+    print("----- Chat Transcript -----")
+    for _, line in ipairs(transcript) do
+        print(line)
+    end
+    print("----- End Transcript -----")
+end
+
+-- Clear chat command is provided by CoreChat slash (/sleekchat clear)
+
+frame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_LOGIN" then
+        QoL:AutoRejoinChannels()
+    end
+end)

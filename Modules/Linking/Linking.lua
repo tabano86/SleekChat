@@ -1,8 +1,7 @@
 -- ===========================================================================
 -- SleekChat v2.0 - Linking.lua
--- In-chat linking commands, extended tooltips, slash commands, etc.
+-- In-chat linking commands for items and quests
 -- ===========================================================================
-
 local Linking = {}
 SleekChat_Linking = Linking
 
@@ -11,13 +10,12 @@ frame:RegisterEvent("PLAYER_LOGIN")
 
 function Linking:OnPlayerLogin()
     self:RegisterSlashCommands()
-    -- Additional initialization if needed
 end
 
 function Linking:RegisterSlashCommands()
     SLASH_SLEEKCHAT_LINKITEM1 = "/linkitem"
     SlashCmdList["SLEEKCHAT_LINKITEM"] = function(msg)
-        local itemName = msg
+        local itemName = msg and msg:trim()
         if not itemName or itemName == "" then
             print("Usage: /linkitem <item name>")
             return
@@ -28,20 +26,21 @@ function Linking:RegisterSlashCommands()
             if link then
                 ChatEdit_InsertLink(link)
             else
-                print("Item link not found in cache. You may need to see the item first.")
+                print("Item link not cached. Please view the item in-game first.")
             end
         else
-            print("Item not found or not cached.")
+            print("Item not found in cache.")
         end
     end
 
     SLASH_SLEEKCHAT_LINKQUEST1 = "/linkquest"
     SlashCmdList["SLEEKCHAT_LINKQUEST"] = function(msg)
-        if not msg or msg == "" then
+        local questName = msg and msg:trim()
+        if not questName or questName == "" then
             print("Usage: /linkquest <quest name>")
             return
         end
-        local questLink = self:GenerateQuestLink(msg)
+        local questLink = self:GenerateQuestLink(questName)
         if questLink then
             ChatEdit_InsertLink(questLink)
         else
@@ -50,12 +49,11 @@ function Linking:RegisterSlashCommands()
     end
 end
 
+-- NOTE: This is a simplified implementation. In production, use WoW’s item/quest APIs.
 function Linking:FindItemIDByName(name)
-    -- Simplified: in reality, you'd need a more robust approach or rely on in-game caches
-    -- This is a placeholder for demonstration only.
     for itemID = 1, 200000 do
-        local n = GetItemInfo(itemID)
-        if n and string.lower(n) == string.lower(name) then
+        local item = GetItemInfo(itemID)
+        if item and strlower(item) == strlower(name) then
             return itemID
         end
     end
@@ -63,10 +61,8 @@ function Linking:FindItemIDByName(name)
 end
 
 function Linking:GenerateQuestLink(questName)
-    -- Stub: The real logic would search the quest log or an internal DB
-    local questID = 12345 -- hypothetical
-    local questLink = "|cffffff00|Hquest:"..questID..":60|h["..questName.."]|h|r"
-    return questLink
+    local questID = 12345 -- Replace with a lookup from quest log or internal DB.
+    return "|cffffff00|Hquest:"..questID..":60|h["..questName.."]|h|r"
 end
 
 frame:SetScript("OnEvent", function(self, event)

@@ -1,61 +1,53 @@
 -- ===========================================================================
 -- SleekChat v2.0 - UIEnhancements.lua
--- Dynamic tab management, auto-hiding input bar, custom fonts/themes, etc.
+-- Handles dynamic tab management, auto-hiding the input bar, and custom fonts/themes.
 -- ===========================================================================
-
 local UIEnhancements = {}
 SleekChat_UIEnhancements = UIEnhancements
 
-local f = CreateFrame("Frame", "SleekChatEnhFrame", UIParent, "BackdropTemplate")
-f:SetBackdrop({
+local frame = CreateFrame("Frame", "SleekChatEnhFrame", UIParent, "BackdropTemplate")
+frame:SetBackdrop({
     bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
     tile     = true,
     tileSize = 32,
     edgeSize = 32,
-    insets   = { left=8, right=8, top=8, bottom=8 },
+    insets   = { left = 8, right = 8, top = 8, bottom = 8 },
 })
 frame:RegisterEvent("PLAYER_LOGIN")
 
--- For dynamic tab creation, we'll watch chat messages and possibly rearrange
+local chatTabs = {}
+
 local function OnChatMsg(self, event, message, sender, ...)
     if event == "CHAT_MSG_CHANNEL" then
         local channelName = select(9, ...)
-        if channelName and string.find(channelName, "Trade") then
-            -- If user has "splitTrade" enabled in config, move these messages to a dedicated frame
-            local separateTrade = SleekChat_Config.Get("ui", "splitTrade")
-            if separateTrade then
-                UIEnhancements:RedirectChatToCustomFrame("Trade", event, message, sender, ...)
+        if channelName and channelName:lower():find("trade") then
+            if SleekChat_Config.Get("ui", "splitTrade") then
+                UIEnhancements:RedirectChat("Trade", event, message, sender, ...)
                 return true
             end
         end
     end
-
-    return false  -- let normal chat process
+    return false
 end
 
-function UIEnhancements:RedirectChatToCustomFrame(frameName, event, message, sender, ...)
-    local chatFrame = self:GetOrCreateTab(frameName)
+function UIEnhancements:RedirectChat(tabName, event, message, sender, ...)
+    local chatFrame = self:GetOrCreateTab(tabName)
     if chatFrame then
-        local formattedMsg = string.format("[%s] %s", frameName, message)
+        local formattedMsg = string.format("[%s] %s", tabName, message)
         chatFrame:AddMessage(formattedMsg)
     end
 end
 
-local chatFrames = {}
-
 function UIEnhancements:GetOrCreateTab(tabName)
-    if chatFrames[tabName] then
-        return chatFrames[tabName]
+    if chatTabs[tabName] then
+        return chatTabs[tabName]
     end
-
-    -- Create a new ChatFrame dynamically
     local newFrame = FCF_OpenNewWindow(tabName)
-    chatFrames[tabName] = _G[newFrame:GetName()] or newFrame
-    return chatFrames[tabName]
+    chatTabs[tabName] = newFrame
+    return newFrame
 end
 
--- Auto-hiding input bar
 local function OnEditFocusGained(self)
     self:Show()
 end
@@ -66,7 +58,7 @@ local function OnEditFocusLost(self)
     end
 end
 
-function UIEnhancements:InitializeAutoHideInput()
+function UIEnhancements:InitializeInputBehavior()
     for i = 1, NUM_CHAT_WINDOWS do
         local cf = _G["ChatFrame"..i]
         if cf and cf.editBox then
@@ -81,27 +73,22 @@ end
 
 function UIEnhancements:ApplyCustomFonts()
     local fontPath = SleekChat_Config.Get("ui", "fontPath")
-    if not fontPath then return end
-
-    for i = 1, NUM_CHAT_WINDOWS do
-        local chatFrame = _G["ChatFrame"..i]
-        if chatFrame then
-            if type(fontPath) == "string" and fontPath ~= "" then
-                chatFrame:SetFont(fontPath, 14, "")
+    if fontPath and fontPath ~= "" then
+        for i = 1, NUM_CHAT_WINDOWS do
+            local cf = _G["ChatFrame"..i]
+            if cf then
+                cf:SetFont(fontPath, 14, "")
             end
         end
     end
 end
 
--- Player login initialization
 frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
-        UIEnhancements:InitializeAutoHideInput()
+        UIEnhancements:InitializeInputBehavior()
         UIEnhancements:ApplyCustomFonts()
-
         ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", OnChatMsg)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", OnChatMsg)
         ChatFrame_AddMessageEventFilter("CHAT_MSG_TRADE", OnChatMsg)
-        -- Add more filters if needed
     end
 end)

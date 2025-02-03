@@ -1,19 +1,24 @@
 # Feature Modules
 
 ## CoreChat
-Essential hooks and baseline modifications that allow SleekChat to integrate with the default chat system.
+Sets up essential hooks and baseline chat modifications. Merges saved variables and registers slash commands.
 
 ## UIEnhancements
-Handles UI adjustments like dynamic tabs, resizing, custom fonts/themes, auto-hiding input bar.
+Handles UI adjustments such as dynamic chat tabs, auto-hiding the input bar, and applying custom fonts/themes.
 
 ## Notifications
-Implements advanced alerting, ping sounds, keyword highlights, regex-based triggers, and integration with spam filters.
+Implements keyword alerts, regex-based triggers, and sound notifications with conditional logic based on player class/spec.
 
 ## Linking
-Extends chat linking capabilities: items, quests, achievements, slash commands for easy linking, and additional tooltip features.
+Extends in-game linking functionality for items and quests via slash commands.
 
 ## QoL
-Quality-of-life improvements such as in-chat search, extended scrollback, channel auto-rejoin, inactivity timers, and more.
+Quality-of-life improvements including:
+- In-chat search
+- Extended scrollback
+- Channel auto-rejoin
+- Inactivity timer with auto-lock
+- Chat transcript export and “clear chat” functionality
 
 ## FutureRoadmap
-Placeholder modules or advanced features planned for subsequent releases (e.g., advanced combat log grouping, loot spam management).
+Modules planned for future enhancements (e.g., advanced combat log grouping) are maintained in a disabled state until production-ready.

@@ -1,13 +1,12 @@
--- This file is typically empty or minimal. WoW uses the TOC to direct the "SleekChatDB" saved variable here.
--- The actual saved data will be stored in the WTF folder under <Account>/SavedVariables/SleekChat.lua.
---
--- Example structure if needed:
+-- SleekChat saved variables file.
+-- Actual settings are stored in the SleekChatDB table.
+-- Example structure:
 -- SleekChatDB = {
---     config = {
---         core = { ... },
---         ui = { ... },
---         notifications = { ... },
---         qol = { ... }
---     },
---     debug = false,
+--   config = {
+--     core = { historyLines = 5000, preserveDefault = true },
+--     ui = { autoHideInput = true, splitTrade = false, fontPath = "Fonts\\FRIZQT__.TTF" },
+--     notifications = { keywords = {...}, regexTriggers = {...}, playSound = true, conditionalAlerts = {...} },
+--     qol = { inactivityThreshold = 300, autoRejoinChannels = {"General", "Trade", "LocalDefense"}, enableChatExport = true }
+--   },
+--   debug = false,
 -- }
