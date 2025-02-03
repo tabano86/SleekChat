@@ -241,15 +241,36 @@ local function GetOptions(addonObj)
 end
 
 function Config:Initialize(addonObj)
-    local AceConfig       = LibStub("AceConfig-3.0")
+    local AceConfig = LibStub("AceConfig-3.0")
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
-    AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
-    AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
 
-    addonObj:RegisterChatCommand("screset", function()
-        addonObj.db:ResetProfile()
-        addonObj:Print(L.settings_reset)
-    end)
+    -- Create scrollable options container
+    local optionsFrame = CreateFrame("Frame", "SleekChatOptions", UIParent, "BasicFrameTemplateWithInset")
+    optionsFrame:SetSize(600, 500)
+    optionsFrame:SetPoint("CENTER")
+    optionsFrame:Hide()
+
+    local scrollFrame = CreateFrame("ScrollFrame", nil, optionsFrame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 4, -28)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 4)
+
+    local scrollChild = CreateFrame("Frame")
+    scrollFrame:SetScrollChild(scrollChild)
+    scrollChild:SetSize(550, 800)
+
+    AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
+    AceConfigDialog:SetDefaultSize("SleekChat", 600, 500)
+    AceConfigDialog:Open("SleekChat", scrollChild)
+
+    -- Custom close button
+    optionsFrame.closeBtn = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
+    optionsFrame.closeBtn:SetPoint("TOPRIGHT", -4, -4)
+    optionsFrame.closeBtn:SetScript("OnClick", function() optionsFrame:Hide() end)
+
+    addonObj.ShowConfig = function()
+        optionsFrame:Show()
+        scrollFrame:SetVerticalScroll(0)
+    end
 end
 
 return Config

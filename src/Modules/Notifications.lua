@@ -42,4 +42,23 @@ function Notifications:ShowWhisperAlert(sender, msg)
     end)
     UIFrameFadeOut(f,5,1,0)
     f:SetScript("OnFadeComplete", function() f:Hide() end)
+
+    -- Add clickable avatar
+    local avatar = CreateFrame("Button", nil, f)
+    avatar:SetSize(32, 32)
+    avatar:SetPoint("LEFT", 4, 0)
+
+    local texture = avatar:CreateTexture()
+    texture:SetAllPoints()
+    SetPortraitTexture(texture, sender)
+
+    -- Add notification queue system
+    if not self.notificationQueue then self.notificationQueue = {} end
+    tinsert(self.notificationQueue, f)
+
+    -- Position notifications vertically
+    for i, frame in ipairs(self.notificationQueue) do
+        frame:ClearAllPoints()
+        frame:SetPoint("TOP", UIParent, "TOP", 0, -150 - ((i-1) * 45))
+    end
 end

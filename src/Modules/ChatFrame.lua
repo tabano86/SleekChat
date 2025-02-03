@@ -146,6 +146,27 @@ function ChatFrame:Initialize(addonObj)
     -- Finally, build the channel list
     self:BuildChannelList()
 
+    -- Add message frame fade controls
+    local fadeControls = CreateFrame("Frame", nil, f)
+    fadeControls:SetSize(24, 24)
+    fadeControls:SetPoint("TOPRIGHT", -4, -4)
+
+    local fadeButton = CreateFrame("Button", nil, fadeControls)
+    fadeButton:SetSize(24, 24)
+    fadeButton:SetNormalTexture("Interface\\CHATFRAME\\UI-ChatIcon-ScrollDown-Up")
+    fadeButton:SetPushedTexture("Interface\\CHATFRAME\\UI-ChatIcon-ScrollDown-Down")
+    fadeButton:SetScript("OnClick", function()
+        self.messageFrame:ScrollToBottom()
+    end)
+
+    -- Add search box
+    self.searchBox = CreateFrame("EditBox", nil, f, "SearchBoxTemplate")
+    self.searchBox:SetSize(150, 20)
+    self.searchBox:SetPoint("TOPLEFT", self.sidebar, "TOPRIGHT", 8, -4)
+    self.searchBox:SetScript("OnTextChanged", function(box)
+        self:FilterMessages(box:GetText())
+    end)
+
     addonObj:PrintDebug("Teams-like chat UI initialized.")
 end
 
@@ -307,6 +328,9 @@ end
 -- Called by events for inbound messages
 --------------------------------------------------------------------------------
 function ChatFrame:AddIncoming(text, sender, channel)
+    if not self.messageFrame then return end
+    if not self.db then return end
+
     -- Chat moderation check
     if addon.ChatModeration and addon.ChatModeration:IsMuted(sender) then
         return
@@ -356,6 +380,39 @@ function ChatFrame:AddMessageToFrame(text, channel, sender)
 
     self.messageFrame:AddMessage(line)
     self.messageFrame:ScrollToBottom()
+
+    -- Add interactive message frame
+    local line = self.messageFrame:AddMessage(final)
+    local fontString = select(2, self.messageFrame:GetRegions())
+
+    -- Add right-click menu
+    fontString:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            self:ShowMessageMenu(text, sender)
+        end
+    end)
+end
+
+function ChatFrame:ShowMessageMenu(text, sender)
+    local menu = CreateFrame("Frame", "SleekChatMessageMenu", UIParent, "UIDropDownMenuTemplate")
+    menu.displayMode = "MENU"
+    menu.initialize = function(_, level)
+        local info = UIDropDownMenu_CreateInfo()
+        info.isTitle = 1
+        info.text = "Message Options"
+        UIDropDownMenu_AddButton(info, level)
+
+        info = UIDropDownMenu_CreateInfo()
+        info.text = "Pin Message"
+        info.func = function() self:PinMessage(text) end
+        UIDropDownMenu_AddButton(info, level)
+
+        info = UIDropDownMenu_CreateInfo()
+        info.text = "Report Message"
+        info.func = function() ReportPlayer("SPAM", sender, text) end
+        UIDropDownMenu_AddButton(info, level)
+    end
+    ToggleDropDownMenu(1, nil, menu, "cursor", 3, -3)
 end
 
 function ChatFrame:FormatMessage(text,sender,channel)

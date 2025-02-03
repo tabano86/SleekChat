@@ -128,33 +128,58 @@ function ChatTabs:CreateDefaultTabs()
 end
 
 function ChatTabs:CreateTab(tabName, filters)
-    local index= #self.tabs+1
-    local tabData= {
-        name= tabName,
-        filters= filters or {},
-        pinned= {}
+    local index = #self.tabs + 1
+    local tabData = {
+        name = tabName,
+        filters = filters or {},
+        pinned = {}
     }
-    self.tabs[index]= tabData
-    -- create a button at top
-    local b= CreateFrame("Button", nil, self.mainFrame, "UIPanelButtonTemplate")
-    self.tabButtons[index]= b
-    b:SetSize(80,24)
+    self.tabs[index] = tabData
+
+    -- Modern tab button with hover effects
+    local b = CreateFrame("Button", nil, self.mainFrame, "UIPanelButtonTemplate")
+    b:SetSize(100, 24)
     b:SetText(tabName)
-    b:SetScript("OnClick", function() self:SelectTab(index) end)
+    b:SetNormalFontObject("GameFontNormalSmall")
+    b:SetHighlightFontObject("GameFontHighlightSmall")
 
-    local gear= CreateFrame("Button", nil, b,"UIPanelButtonTemplate")
-    gear:SetSize(24,24)
-    gear:SetText("⚙")
-    gear:SetPoint("LEFT", b,"RIGHT",0,0)
-    gear:SetScript("OnClick", function() self:OpenFilterPanel(index) end)
+    -- Tab styling
+    local ntex = b:CreateTexture()
+    ntex:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+    ntex:SetTexCoord(0, 0.25, 0, 1)
+    ntex:SetAllPoints()
+    b:SetNormalTexture(ntex)
 
-    -- Layout horizontally across top
-    if index==1 then
-        b:SetPoint("TOPLEFT", self.mainFrame,"TOPLEFT", 8, -8)
-    else
-        local prev= self.tabButtons[index-1]
-        b:SetPoint("LEFT", prev,"RIGHT", 60,0)
-    end
+    local htex = b:CreateTexture()
+    htex:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+    htex:SetTexCoord(0.25, 0.5, 0, 1)
+    htex:SetAllPoints()
+    b:SetHighlightTexture(htex)
+
+    -- Active tab indicator
+    b:GetFontString():SetPoint("CENTER", 0, 2)
+    b:SetScript("OnClick", function()
+        self:SelectTab(index)
+        PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB)
+    end)
+
+    -- Unread counter
+    b.unread = b:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+    b.unread:SetPoint("RIGHT", -5, 0)
+    b.unread:SetTextColor(1, 0.82, 0)
+
+    -- Settings gear
+    local gear = CreateFrame("Button", nil, b, "UIPanelButtonTemplate")
+    gear:SetSize(20, 20)
+    gear:SetPoint("RIGHT", b, "LEFT", -2, 0)
+    gear:SetNormalTexture("Interface\\GossipFrame\\BinderGossipIcon")
+    gear:SetScript("OnClick", function()
+        self:OpenFilterPanel(index)
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+    end)
+
+    self.tabButtons[index] = b
+    self:UpdateTabLayout()
 end
 
 function ChatTabs:SelectTab(index)

@@ -38,5 +38,9 @@ L.sound_volume_desc="Volume for notifications"
 L.flash_taskbar="Flash Taskbar"
 
 L.whisper_notification="New whisper from %s"
-
+L.tab_layout = "Tab Layout"
+L.enable_pinning = "Enable Pinning"
+L.pin_message = "Pin Message"
+L.report_message = "Report Message"
+L.message_options = "Message Options"
 return L

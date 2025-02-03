@@ -11,6 +11,9 @@ function History:Initialize(addonObj)
 end
 
 function History:AddMessage(text, sender, channel)
+    -- Truncate messages over 255 characters
+    text = strsub(text, 1, 255)
+
     local db= self.db.profile
     if not db.messageHistory[channel] then
         db.messageHistory[channel]= {}
