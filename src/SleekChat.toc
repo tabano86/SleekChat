@@ -1,9 +1,11 @@
-## Interface: 110005
+## Interface: 11400
 ## Title: SleekChat
-## Notes: Enhanced chat plugin with improved localization, modular code integration, and sleek appearance.
-## Author: YourName
-## Version: 1.0.0
-## SavedVariables: SleekChatDB
+## Notes: A sleek, dynamic chat addon for WoW
+## Author: You
+## Version: 1.0
 
+# Load the library + module references
 Embeds.xml
+
+# Addon entry point
 SleekChat.lua

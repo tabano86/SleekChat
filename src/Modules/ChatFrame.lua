@@ -1,7 +1,10 @@
 local _, addon = ...
 local AceLocale = LibStub("AceLocale-3.0")
-local L = AceLocale:GetLocale("SleekChat", true)
 local SM = LibStub("LibSharedMedia-3.0")
+
+local L = AceLocale:GetLocale("SleekChat", true)
+local ChatFrame = {}
+addon.ChatFrame = ChatFrame
 
 -- Utility shortcuts
 local floor, format, gsub, strlower, strsplit = floor, format, gsub, strlower, strsplit
@@ -11,22 +14,27 @@ local PLAYER_NAME = UnitName("player") or "Player"
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS or CUSTOM_CLASS_COLORS or {}
 local DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
 
-addon.ChatFrame = {}
-local ChatFrame = addon.ChatFrame
-
 --------------------------------------------------------------------------------
--- Simple approach: Single chat feed + top channel bar
+-- Initialize main chat UI
 --------------------------------------------------------------------------------
-
 function ChatFrame:Initialize(addonObj)
+    self.addonObj = addonObj
     self.db = addonObj.db
+    self.pinnedMessages = {}   -- For pinned message feature
+    self.activeChannel = "SAY" -- Default selection
+    self.messageQueue = {}
 
-    -- Main UI Frame
+    -- Main window
     local f = CreateFrame("Frame", "SleekChat_MainFrame", UIParent, "BackdropTemplate")
     self.mainFrame = f
     f:SetSize(self.db.profile.width, self.db.profile.height)
-    f:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint,
-            floor(self.db.profile.position.x), floor(self.db.profile.position.y))
+    f:SetPoint(
+            self.db.profile.position.point,
+            UIParent,
+            self.db.profile.position.relPoint,
+            floor(self.db.profile.position.x),
+            floor(self.db.profile.position.y)
+    )
     f:SetMovable(true)
     f:SetResizable(true)
     f:EnableMouse(true)
@@ -40,7 +48,6 @@ function ChatFrame:Initialize(addonObj)
         self.db.profile.position.x = xOfs
         self.db.profile.position.y = yOfs
     end)
-
     if f.SetResizeBounds then
         f:SetResizeBounds(300, 150)
     elseif f.SetMinResize then
@@ -49,7 +56,7 @@ function ChatFrame:Initialize(addonObj)
 
     -- Resize handle
     local resize = CreateFrame("Button", nil, f)
-    resize:SetSize(16, 16)
+    resize:SetSize(16,16)
     resize:SetPoint("BOTTOMRIGHT")
     resize:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
     resize:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
@@ -59,9 +66,7 @@ function ChatFrame:Initialize(addonObj)
         f:StopMovingOrSizing()
         self.db.profile.width  = floor(f:GetWidth())
         self.db.profile.height = floor(f:GetHeight())
-        self:LayoutChannelButtons()
-        self:LayoutMessageFrame()
-        self:LayoutInputBox()
+        self:LayoutFrames()
     end)
 
     -- Backdrop
@@ -69,24 +74,17 @@ function ChatFrame:Initialize(addonObj)
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 16,
-        insets = { left=4, right=4, top=4, bottom=4 },
+        insets  = {left=4, right=4, top=4, bottom=4},
     })
     f:SetBackdropColor(0,0,0,0.8)
 
-    -- Channel Bar (top)
-    local channelBar = CreateFrame("Frame", nil, f, "BackdropTemplate")
-    self.channelBar = channelBar
-    channelBar:SetPoint("TOPLEFT", 4, -4)
-    channelBar:SetPoint("TOPRIGHT", -4, -4)
-    channelBar:SetHeight(28)
-
-    -- Scrollable message frame (large)
-    local msgFrame = CreateFrame("ScrollingMessageFrame", "SleekChat_MessageFrame", f)
-    self.msgFrame = msgFrame
-    msgFrame:SetFading(false)
-    msgFrame:SetMaxLines(1000)
-    msgFrame:SetHyperlinksEnabled(true)
-    msgFrame:SetScript("OnHyperlinkClick", function(_, link, text, button)
+    -- MessageFrame
+    local msg = CreateFrame("ScrollingMessageFrame", "SleekChat_MessageFrame", f)
+    self.msgFrame = msg
+    msg:SetFading(false)
+    msg:SetMaxLines(2000)
+    msg:SetHyperlinksEnabled(true)
+    msg:SetScript("OnHyperlinkClick", function(_, link, text, button)
         local linkType, value = strsplit(":", link, 2)
         if linkType == "url" then
             self:HandleURL(value)
@@ -94,19 +92,21 @@ function ChatFrame:Initialize(addonObj)
             self:SwitchChannel("WHISPER:"..value)
         end
     end)
-
-    msgFrame:SetScript("OnMouseWheel", function(_, delta)
+    msg:EnableMouseWheel(true)
+    msg:SetScript("OnMouseWheel", function(_, delta)
         local scrollSpeed = self.db.profile.scrollSpeed or 3
-        if IsShiftKeyDown() then scrollSpeed = scrollSpeed * 3 end
+        if IsShiftKeyDown() then
+            scrollSpeed = scrollSpeed * 3
+        end
         if delta > 0 then
-            msgFrame:ScrollUp(scrollSpeed)
+            msg:ScrollUp(scrollSpeed)
         else
-            msgFrame:ScrollDown(scrollSpeed)
+            msg:ScrollDown(scrollSpeed)
         end
     end)
 
-    -- Input box (bottom)
-    local edit = CreateFrame("EditBox", "SleekChat_InputBox", f, "InputBoxTemplate")
+    -- Input box
+    local edit = CreateFrame("EditBox","SleekChat_InputBox", f, "InputBoxTemplate")
     self.inputBox = edit
     edit:SetAutoFocus(false)
     edit:SetHeight(24)
@@ -119,101 +119,319 @@ function ChatFrame:Initialize(addonObj)
         box:ClearFocus()
     end)
 
-    -- A button to focus this input, so we can bind it in KeyBindings or override
-    --local focusBtn = CreateFrame("Button", "SleekChatFocusButton", UIParent, "UIPanelButtonTemplate")
-    --focusBtn:SetScript("OnClick", function()
-    --    SleekChat_InputBox:SetFocus()
-    --end)
-    --focusBtn:Hide()
+    -- "Gear" icon or button for channel manager
+    local gear = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    gear:SetSize(24,24)
+    gear:SetPoint("TOPRIGHT", -4, -4)
+    gear:SetText("⚙")  -- Potential font fallback issue; see #Issue2 below
+    gear:SetScript("OnClick", function() self:ToggleChannelManager() end)
 
-    -- Channels known
-    self.channelButtons = {}
-    self.activeChannel = "SAY"
+    -- Channel manager frame (initially hidden)
+    self:CreateChannelManager()
 
-    self:CreateChannelButtons()
-    self:LayoutChannelButtons()
-    self:LayoutMessageFrame()
-    self:LayoutInputBox()
-
-    -- Setup fonts
+    -- Final layout
+    self:LayoutFrames()
     self:SetChatFont()
+    self:ApplyTheme()
+
+    addonObj:PrintDebug("SleekChat UI initialized")
 end
 
 --------------------------------------------------------------------------------
--- Layout helpers
+-- Layout/Positioning
 --------------------------------------------------------------------------------
-function ChatFrame:LayoutChannelButtons()
-    local pad = 4
-    local totalWidth = self.mainFrame:GetWidth() - 8
-    local numChannels = #self.channelButtons
-    local btnWidth = math.floor((totalWidth - pad*(numChannels-1)) / numChannels)
+function ChatFrame:LayoutFrames()
+    local f = self.mainFrame
+    local pad = 8
 
-    for i, btn in ipairs(self.channelButtons) do
-        btn:SetWidth(btnWidth)
-        btn:SetHeight(24)
-        btn:ClearAllPoints()
-        if i == 1 then
-            btn:SetPoint("LEFT", self.channelBar, "LEFT", 0, 0)
-        else
-            btn:SetPoint("LEFT", self.channelButtons[i-1], "RIGHT", pad, 0)
-        end
-    end
-end
-
-function ChatFrame:LayoutMessageFrame()
+    -- The message frame
     self.msgFrame:ClearAllPoints()
-    self.msgFrame:SetPoint("TOPLEFT", self.channelBar, "BOTTOMLEFT", 4, -4)
-    self.msgFrame:SetPoint("TOPRIGHT", self.channelBar, "BOTTOMRIGHT", -4, -4)
+    self.msgFrame:SetPoint("TOPLEFT", f, "TOPLEFT", pad, -40)
+    self.msgFrame:SetPoint("TOPRIGHT", f, "TOPRIGHT", -pad, -40)
     self.msgFrame:SetPoint("BOTTOM", self.inputBox, "TOP", 0, 4)
-end
 
-function ChatFrame:LayoutInputBox()
+    -- The input box
     self.inputBox:ClearAllPoints()
-    self.inputBox:SetPoint("LEFT", self.mainFrame, "LEFT", 10, 8)
-    self.inputBox:SetPoint("RIGHT", self.mainFrame, "RIGHT", -10, 8)
+    self.inputBox:SetPoint("LEFT", f, "LEFT", pad, 8)
+    self.inputBox:SetPoint("RIGHT", f, "RIGHT", -pad, 8)
     self.inputBox:SetHeight(24)
 end
 
 --------------------------------------------------------------------------------
--- Creating channel buttons
+-- Channel Manager
 --------------------------------------------------------------------------------
-function ChatFrame:CreateChannelButtons()
-    local channels = {
-        "SAY", "WHISPER", "PARTY", "GUILD", "RAID", "YELL", "ALL"
-        -- You can expand with trade/lfg if you want
-    }
+function ChatFrame:CreateChannelManager()
+    local cm = CreateFrame("Frame", "SleekChat_ChannelManager", self.mainFrame, "BackdropTemplate")
+    self.channelManager = cm
+    cm:SetSize(200, 250)
+    cm:SetPoint("TOPRIGHT", self.mainFrame, "TOPLEFT", -4, 0)
+    cm:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile= "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize= 16,
+    })
+    cm:SetBackdropColor(0,0,0,0.9)
+    cm:Hide()
 
-    for _, ch in ipairs(channels) do
-        local btn = CreateFrame("Button", nil, self.channelBar, "UIPanelButtonTemplate")
-        btn:SetText(ch)
-        btn:SetScript("OnClick", function() self:SwitchChannel(ch) end)
-        table.insert(self.channelButtons, btn)
+    local title = cm:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", 0, -10)
+    title:SetText("Channels")
+
+    cm.scrollFrame = CreateFrame("ScrollFrame", nil, cm, "UIPanelScrollFrameTemplate")
+    cm.scrollFrame:SetPoint("TOPLEFT", 10, -30)
+    cm.scrollFrame:SetPoint("BOTTOMRIGHT", -30, 10)
+
+    -- Child frame for the scroll area
+    local content = CreateFrame("Frame", nil, cm.scrollFrame)
+    cm.scrollFrame:SetScrollChild(content)
+    content:SetSize(160, 200)
+    cm.content = content
+
+    cm.checkButtons = {}
+end
+
+function ChatFrame:ToggleChannelManager()
+    if self.channelManager:IsShown() then
+        self.channelManager:Hide()
+    else
+        self:RefreshChannelManager()
+        self.channelManager:Show()
+    end
+end
+
+function ChatFrame:RefreshChannelManager()
+    local cm = self.channelManager
+    if not cm then return end
+
+    local content = cm.content
+    local checks = cm.checkButtons
+
+    -- Wipe old
+    for _, chk in ipairs(checks) do
+        chk:Hide()
+    end
+
+    local channels = self:GetAvailableChannels()  -- see below
+    local offsetY = -5
+    local idx = 1
+
+    for _, chName in ipairs(channels) do
+        -- #1 FIX: Provide a non-nil, unique name for the check button
+        local checkName = "SleekChatCheckButton"..idx
+        local chk = checks[idx]
+        if not chk then
+            chk = CreateFrame("CheckButton", checkName, content, "ChatConfigCheckButtonTemplate")
+            checks[idx] = chk
+        end
+
+        -- #2 Now we can safely do:
+        chk.text = _G[checkName.."Text"] or chk:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        chk.text:SetPoint("LEFT", chk, "RIGHT", 0, 1)
+
+        chk:Show()
+        chk:SetPoint("TOPLEFT", 10, offsetY)
+
+        -- Possibly user renamed
+        local label = chName
+        if self.db.profile.renamedChannels and self.db.profile.renamedChannels[chName] then
+            label = self.db.profile.renamedChannels[chName]
+        end
+        -- #3 fallback if label is somehow nil
+        if not label then
+            label = "[Unknown]"
+        end
+        chk.text:SetText(label)
+
+        -- If the user toggled channelName off, store false in db
+        local defaultOn = (chName ~= "SYSTEM") -- or your logic
+        local current = self.db.profile.channels[chName]
+        if current == nil then
+            current = defaultOn
+        end
+        chk:SetChecked(current)
+
+        chk:SetScript("OnClick", function(btn)
+            local c = btn:GetChecked()
+            self.db.profile.channels[chName] = c
+            -- #4 optional: re-display chat to reflect immediate toggles
+            self:UpdateAll()
+        end)
+
+        offsetY = offsetY - 24
+        idx = idx + 1
+    end
+
+    content:SetHeight(math.abs(offsetY) + 30)
+end
+
+-- Example dynamic channel fetch:
+function ChatFrame:GetAvailableChannels()
+    local list = {}
+
+    -- Built-in ephemeral channels
+    local ephemeral = {"SAY","YELL","PARTY","RAID","GUILD","WHISPER","SYSTEM"}
+    for _, name in ipairs(ephemeral) do
+        tinsert(list, name)
+    end
+
+    -- Grab custom channels from the game
+    for i=1,30 do
+        local id, chName = GetChannelName(i)
+        if id and id > 0 and chName and chName:trim() ~= "" then
+            tinsert(list, chName)
+        end
+    end
+
+    table.sort(list)
+    return list
+end
+
+--------------------------------------------------------------------------------
+-- Handling user typed messages
+--------------------------------------------------------------------------------
+function ChatFrame:SendMessage(text)
+    self:AddIncoming(text, PLAYER_NAME, self.activeChannel)
+end
+
+function ChatFrame:AddIncoming(text, sender, channel)
+    -- Chat moderation
+    if addon.ChatModeration and addon.ChatModeration:IsMuted(sender) then
+        return
+    end
+    if addon.ChatModeration then
+        text = addon.ChatModeration:FilterMessage(text)
+    end
+
+    -- Save in History
+    if addon.History then
+        addon.History:AddMessage(text, sender, channel)
+    end
+
+    -- If channel is toggled on, we show it
+    local show = self:ShouldDisplayChannel(channel)
+    if show then
+        self:AddMessageToFrame(text, channel, sender, true)
+    end
+end
+
+function ChatFrame:ShouldDisplayChannel(chName)
+    if self.activeChannel == "ALL" then
+        local enabled = self.db.profile.channels[chName]
+        if enabled == nil then
+            return true
+        else
+            return enabled
+        end
+    else
+        return (self.activeChannel == chName)
+    end
+end
+
+function ChatFrame:AddMessageToFrame(text, channel, sender, newMsg)
+    local line = self:FormatMessage(text, sender, channel)
+    self.msgFrame:AddMessage(line)
+    if newMsg then
+        self.msgFrame:ScrollToBottom()
+    end
+end
+
+function ChatFrame:FormatMessage(text, sender, channel)
+    local final = ""
+    if self.db.profile.timestamps then
+        final = format("|cff808080[%s]|r ", date(self.db.profile.timestampFormat))
+    end
+
+    if sender and sender ~= "" then
+        local color = RAID_CLASS_COLORS["PRIEST"] or {r=1,g=1,b=1}
+        if sender == PLAYER_NAME then
+            color = RAID_CLASS_COLORS["MAGE"] or color
+        end
+        final = final .. format("|cff%02x%02x%02x%s|r: ", color.r*255,color.g*255,color.b*255, sender)
+    end
+
+    if channel ~= "ALL" and channel ~= "SYSTEM" then
+        final = final .. format("|cff00ffff[%s]|r ", channel)
+    end
+
+    final = final .. (text or "")
+    return final
+end
+
+--------------------------------------------------------------------------------
+-- If we get a whisper event
+--------------------------------------------------------------------------------
+function ChatFrame:HandleWhisper(sender, msg)
+    -- e.g. open a dedicated “WHISPER:Name” or show in “WHISPER”
+end
+
+--------------------------------------------------------------------------------
+-- Pinned Messages
+--------------------------------------------------------------------------------
+function ChatFrame:PinMessage(msg)
+    if not self.db.profile.enablePinning then return end
+    tinsert(self.pinnedMessages, msg)
+    self:UpdateAll()
+end
+
+function ChatFrame:UpdateAll()
+    self.msgFrame:Clear()
+    for _, pinned in ipairs(self.pinnedMessages) do
+        self.msgFrame:AddMessage("|cffFFD700[PINNED]|r ".. pinned)
+    end
+
+    if addon.History and addon.History.messages then
+        for ch, list in pairs(addon.History.messages) do
+            for i = #list,1,-1 do
+                local data = list[i]
+                if self:ShouldDisplayChannel(ch) then
+                    self:AddMessageToFrame(data.text, data.channel, data.sender, false)
+                end
+            end
+        end
     end
 end
 
 --------------------------------------------------------------------------------
--- Switch channel (like a tab)
+-- Theming & Font
+--------------------------------------------------------------------------------
+function ChatFrame:ApplyTheme()
+    local dark = self.db.profile.darkMode
+    local bgAlpha = dark and 0.6 or self.db.profile.backgroundOpacity
+    self.mainFrame:SetBackdropColor(0, 0, 0, bgAlpha)
+end
+
+function ChatFrame:SetChatFont()
+    local fontPath = SM:Fetch("font", self.db.profile.font) or DEFAULT_FONT
+    local fontSize = self.db.profile.fontSize or 12
+    if fontSize < 8 then fontSize = 8 end
+    if fontSize > 24 then fontSize = 24 end
+    self.msgFrame:SetFont(fontPath, fontSize, "")
+end
+
+--------------------------------------------------------------------------------
+-- Expose a channel switch for ephemeral usage
 --------------------------------------------------------------------------------
 function ChatFrame:SwitchChannel(ch)
     self.activeChannel = ch
     self.msgFrame:Clear()
 
     if ch == "ALL" then
-        -- Show all messages from all channels
-        if addon.History and addon.History.messages then
-            for chan, messages in pairs(addon.History.messages) do
-                for i = #messages, 1, -1 do
-                    local msgData = messages[i]
-                    self:AddMessageToFrame(msgData.text, msgData.channel, msgData.sender, false)
+        if addon.History then
+            for cName, messages in pairs(addon.History.messages or {}) do
+                for i=#messages,1,-1 do
+                    local data = messages[i]
+                    if self:ShouldDisplayChannel(cName) then
+                        self:AddMessageToFrame(data.text, data.channel, data.sender, false)
+                    end
                 end
             end
         end
     else
-        -- Show only the chosen channel's messages
-        if addon.History and addon.History.messages and addon.History.messages[ch] then
-            for i = #addon.History.messages[ch], 1, -1 do
-                local msgData = addon.History.messages[ch][i]
-                self:AddMessageToFrame(msgData.text, msgData.channel, msgData.sender, false)
+        if addon.History and addon.History.messages[ch] then
+            local list = addon.History.messages[ch]
+            for i=#list,1,-1 do
+                local data = list[i]
+                self:AddMessageToFrame(data.text, data.channel, data.sender, false)
             end
         end
     end
@@ -221,95 +439,8 @@ function ChatFrame:SwitchChannel(ch)
 end
 
 --------------------------------------------------------------------------------
--- Sending a chat message
---------------------------------------------------------------------------------
-function ChatFrame:SendMessage(text)
-    -- If activeChannel is e.g. "WHISPER", we might need a "target"
-    -- For simplicity, if user typed "/w <target> hello", we parse that
-    local actualChannel = self.activeChannel
-    -- e.g. if the user is on channel "WHISPER" but hasn't chosen a target,
-    -- you might parse the text or open a popup. We'll keep it simple:
-    self:AddIncoming(text, PLAYER_NAME, actualChannel)
-end
-
---------------------------------------------------------------------------------
--- Called from the Events module for incoming messages
---------------------------------------------------------------------------------
-function ChatFrame:AddIncoming(text, sender, channel)
-    if addon.ChatModeration and addon.ChatModeration:IsMuted(sender) then
-        return -- do nothing
-    end
-    if addon.ChatModeration then
-        text = addon.ChatModeration:FilterMessage(text)
-    end
-
-    -- Log to history
-    if addon.History then
-        addon.History:AddMessage(text, sender, channel)
-    end
-
-    -- If channel == activeChannel or activeChannel == "ALL", we display
-    if self.activeChannel == "ALL" or self.activeChannel == channel then
-        self:AddMessageToFrame(text, channel, sender, true)
-    end
-end
-
-function ChatFrame:AddMessageToFrame(text, channel, sender, newMessage)
-    local out = self:FormatMessage(text, sender, channel)
-    self.msgFrame:AddMessage(out)
-    if newMessage then
-        self.msgFrame:ScrollToBottom()
-    end
-end
-
---------------------------------------------------------------------------------
--- Format message (timestamps, coloring, etc.)
---------------------------------------------------------------------------------
-function ChatFrame:FormatMessage(text, sender, channel)
-    local final = ""
-
-    if self.db.profile.timestamps then
-        final = format("|cff808080[%s]|r ", date(self.db.profile.timestampFormat))
-    end
-
-    if sender and sender ~= "" then
-        local color = RAID_CLASS_COLORS["PRIEST"] or { r=1, g=1, b=1 }
-        -- You can do better class detection if you want:
-        if sender == PLAYER_NAME then
-            color = RAID_CLASS_COLORS["MAGE"] or color
-        end
-        final = final .. format("|cff%02x%02x%02x%s|r: ", color.r*255, color.g*255, color.b*255, sender)
-    end
-
-    if channel ~= "ALL" then
-        final = final .. format("|cff00ffff[%s]|r ", channel)
-    end
-
-    final = final .. text
-    return final
-end
-
---------------------------------------------------------------------------------
--- Overriding the default ENTER, if needed
---------------------------------------------------------------------------------
-function ChatFrame:FocusInputBox()
-    if not self.inputBox:IsShown() then
-        self.inputBox:Show()
-    end
-    self.inputBox:SetFocus()
-end
-
---------------------------------------------------------------------------------
--- Also keep or remove as you see fit
+-- URL Handling
 --------------------------------------------------------------------------------
 function ChatFrame:HandleURL(url)
     StaticPopup_Show("SLEEKCHAT_URL_DIALOG", nil, nil, { url = url })
-end
-
-function ChatFrame:SetChatFont()
-    local fontPath = SM:Fetch("font", self.db.profile.font) or DEFAULT_FONT
-    local fontSize = (tonumber(self.db.profile.fontSize) or 12)
-    if fontSize < 8 then fontSize = 8 end
-    if fontSize > 24 then fontSize = 24 end
-    self.msgFrame:SetFont(fontPath, fontSize, "")
 end

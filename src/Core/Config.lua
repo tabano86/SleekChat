@@ -594,10 +594,10 @@ function Config:Initialize(addonObj)
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
     AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
     AceConfigDialog:AddToBlizOptions("SleekChat", "SleekChat")
+
     addonObj:RegisterChatCommand("screset", function()
         addonObj.db:ResetProfile()
         addonObj:Print(L.settings_reset)
     end)
 end
-
 return Config

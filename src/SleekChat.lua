@@ -3,25 +3,26 @@ local AceAddon = LibStub("AceAddon-3.0")
 local AceDB = LibStub("AceDB-3.0")
 local AceLocale = LibStub("AceLocale-3.0")
 
--- We add "AceTimer-3.0" to allow scheduled tasks, if needed
 SleekChat = AceAddon:NewAddon("SleekChat", "AceConsole-3.0", "AceEvent-3.0", "AceTimer-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 
 function SleekChat:OnInitialize()
-    -- 1) Load or create user DB
-    self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults())
+    -- 1) Load user DB or create fresh
+    self.db = AceDB:New("SleekChatDB", addon.Core.GetDefaults(), true)
 
-    -- 2) Init core and config
+    -- 2) Initialize core
     addon.Core:Initialize(self)
+
+    -- 3) Initialize config (AceConfig)
     addon.Config:Initialize(self)
 
-    -- 3) Create our chat UI (which we do in ChatFrame.lua)
+    -- 4) Create our custom chat UI
     addon.ChatFrame:Initialize(self)
 
-    -- 4) Hide default chat frames
+    -- 5) Hide default chat frames if user wants
     self:HookDefaultChat()
 
-    -- 5) Show load message
+    -- 6) Inform the user we’re loaded
     self:Print(string.format(L.addon_loaded, GetAddOnMetadata("SleekChat", "Version")))
 end
 
@@ -44,49 +45,43 @@ function SleekChat:OnEnable()
 end
 
 --------------------------------------------------------------------------------
--- Hide default Blizzard chat frames
+-- Hide the default Blizzard chat frames
 --------------------------------------------------------------------------------
 function SleekChat:HookDefaultChat()
     if ChatFrameMenuButton then ChatFrameMenuButton:Hide() end
     if QuickJoinToastButton then QuickJoinToastButton:Hide() end
 
-    -- Hide 10 default chat frames
     for i = 1, 10 do
         local cf = _G["ChatFrame"..i]
         local tab = _G["ChatFrame"..i.."Tab"]
         if cf then cf:Hide() end
         if tab then
             tab:Hide()
-            tab.Show = function() end  -- prevent re-showing
+            tab.Show = function() end
         end
     end
 
-    -- Hide CombatText and so on
     if DEFAULT_CHAT_FRAME then
         DEFAULT_CHAT_FRAME:Hide()
     end
 end
 
 function SleekChat:UpdateChatVisibility()
-    if not self.db or not self.db.profile then return end
-    if self.db.profile.showDefaultChat then
-        for i = 1, 10 do
-            local cf = _G["ChatFrame"..i]
-            if cf then cf:Show() end
-        end
-    else
+    if not self.db.profile.showDefaultChat then
         for i = 1, 10 do
             local cf = _G["ChatFrame"..i]
             if cf then cf:Hide() end
         end
+    else
+        for i = 1, 10 do
+            local cf = _G["ChatFrame"..i]
+            if cf then cf:Show() end
+        end
     end
 end
 
---------------------------------------------------------------------------------
--- Utility for debug prints
---------------------------------------------------------------------------------
 function SleekChat:PrintDebug(msg)
     if self.db and self.db.profile and self.db.profile.debug then
-        self:Print("|cFFFF00FF[SleekChat Debug]|r " .. msg)
+        self:Print("|cFFFF00FF[SleekChat Debug]|r ".. msg)
     end
 end

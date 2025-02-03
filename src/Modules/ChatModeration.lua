@@ -13,8 +13,8 @@ end
 
 function ChatModeration:IsMuted(sender)
     local muteList = addon.db.profile.muteList or {}
-    for _, muted in ipairs(muteList) do
-        if muted:lower() == sender:lower() then
+    for _, m in ipairs(muteList) do
+        if m:lower() == sender:lower() then
             return true
         end
     end
