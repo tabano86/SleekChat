@@ -1,3 +1,4 @@
+-- Modules/Search.lua
 local _, addon = ...
 addon.Search = {}
 local Search = addon.Search
@@ -16,3 +17,5 @@ function Search:CreateSearchBox()
         addon.ChatFrame:FilterMessages(self:GetText())
     end)
 end
+
+return Search

@@ -5,7 +5,7 @@ param(
 $clipboardContent = ""
 
 # Retrieve and process all .lua, .loc, and .xml files (with recursion), ignoring files under any "Libs" folder
-Get-ChildItem -Path $SourceDirectory -Recurse -Include *.lua, *.loc, *.xml -File |
+Get-ChildItem -Path $SourceDirectory -Recurse -Include *.lua, *.loc, *.md, *.xml -File |
         Where-Object { $_.FullName -notmatch '(\\|/)Libs(\\|/)' } |
         ForEach-Object {
             # Build a relative path (including folder name) unless it's just the file name

@@ -1,14 +1,15 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-    <!-- Libraries (Ace, etc.) -->
+    <!-- Libraries -->
     <Script file="Libs\LibStub\LibStub.lua"/>
     <Script file="Libs\AceAddon-3.0\AceAddon-3.0.lua"/>
     <Script file="Libs\AceDB-3.0\AceDB-3.0.lua"/>
     <Script file="Libs\AceConfig-3.0\AceConfig-3.0.lua"/>
+    <Script file="Libs\AceConfigDialog-3.0\AceConfigDialog-3.0.lua"/>
     <Script file="Libs\AceConsole-3.0\AceConsole-3.0.lua"/>
     <Script file="Libs\AceEvent-3.0\AceEvent-3.0.lua"/>
     <Script file="Libs\AceTimer-3.0\AceTimer-3.0.lua"/>
     <Script file="Libs\AceLocale-3.0\AceLocale-3.0.lua"/>
-    <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
+    <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 
     <!-- Localization -->
     <Include file="Locales\enUS.lua"/>
@@ -25,7 +26,7 @@
     <Include file="Modules\Notifications.lua"/>
     <Include file="Modules\Integration.lua"/>
     <Include file="Modules\AdvancedMessaging.lua"/>
-
-    <!-- The tab-based UI -->
     <Include file="Modules\ChatTabs.lua"/>
+    <Include file="Modules\ChatFrame.lua"/>
+    <Include file="Modules\Search.lua"/>
 </Ui>

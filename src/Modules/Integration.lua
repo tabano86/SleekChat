@@ -1,13 +1,14 @@
+-- Modules/Integration.lua
 local _, addon = ...
-addon.Integration={}
-local Integration= addon.Integration
+addon.Integration = {}
+local Integration = addon.Integration
 
-function Integration:SendToDiscord(text,channel,sender)
-    -- Stub for cross-sending to external system
+function Integration:SendToDiscord(text, channel, sender)
+    -- Integration stub: send to external system
 end
 
-function Integration:SyncMessage(text,channel,sender)
-    -- Stub for cross-character or external bridging
+function Integration:SyncMessage(text, channel, sender)
+    -- Integration stub: cross-character syncing
 end
 
 return Integration

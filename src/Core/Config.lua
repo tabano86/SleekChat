@@ -1,10 +1,11 @@
+-- Core/Config.lua
 local _, addon = ...
-local AceLocale= LibStub("AceLocale-3.0")
+local AceLocale = LibStub("AceLocale-3.0")
 local L = AceLocale:GetLocale("SleekChat", true)
 local SM = LibStub("LibSharedMedia-3.0")
 
-addon.Config={}
-local Config= addon.Config
+addon.Config = {}
+local Config = addon.Config
 
 local function CreateGeneralOptions(addonObj)
     return {
@@ -22,7 +23,7 @@ local function CreateGeneralOptions(addonObj)
                     addonObj:UpdateChatVisibility()
                 end,
             },
-            debugMode= {
+            debugMode = {
                 name = L.debug_mode,
                 desc = L.debug_mode_desc,
                 type = "toggle",
@@ -33,23 +34,23 @@ local function CreateGeneralOptions(addonObj)
                     addonObj:Print(val and L.debug_enabled or L.debug_disabled)
                 end,
             },
-            timestamps= {
+            timestamps = {
                 name = L.timestamps,
                 desc = L.timestamps_desc,
                 type = "toggle",
-                order= 3,
+                order = 3,
                 get = function() return addonObj.db.profile.timestamps end,
                 set = function(_, val)
                     addonObj.db.profile.timestamps = val
                 end,
             },
-            timestampFormat= {
-                name= L.timestamp_format,
-                desc= L.timestamp_format_desc,
-                type= "input",
-                order= 4,
-                get= function() return addonObj.db.profile.timestampFormat end,
-                set= function(_, val)
+            timestampFormat = {
+                name = L.timestamp_format,
+                desc = L.timestamp_format_desc,
+                type = "input",
+                order = 4,
+                get = function() return addonObj.db.profile.timestampFormat end,
+                set = function(_, val)
                     if pcall(date, val) then
                         addonObj.db.profile.timestampFormat = val
                     else
@@ -57,47 +58,12 @@ local function CreateGeneralOptions(addonObj)
                     end
                 end,
             },
-            storeCombat= {
-                name= "Store Combat Logs",
-                desc= "Capture combat logs in the custom chat (somewhat verbose).",
-                type= "toggle",
-                order=5,
-                get= function() return addonObj.db.profile.storeCombat end,
-                set= function(_, val) addonObj.db.profile.storeCombat= val end,
-            },
-            storeSystem= {
-                name= "Store System Logs",
-                desc= "Capture system messages in the custom chat.",
-                type= "toggle",
-                order=6,
-                get= function() return addonObj.db.profile.storeSystem end,
-                set= function(_, val) addonObj.db.profile.storeSystem= val end,
-            },
-            autoHideInCombat= {
-                name= "Auto-Hide In Combat",
-                type= "toggle",
-                order=7,
-                get= function() return addonObj.db.profile.autoHideInCombat end,
-                set= function(_, val) addonObj.db.profile.autoHideInCombat= val end,
-            },
-            tabOrientation = {
-                name = "Tab Layout",
-                desc = "Arrange tabs vertically or horizontally",
-                type = "select",
-                order = 8,
-                values = { Vertical = "Vertical", Horizontal = "Horizontal" },
-                get = function() return addonObj.db.profile.tabOrientation end,
-                set = function(_, val)
-                    addonObj.db.profile.tabOrientation = val
-                    addonObj.ChatTabs:UpdateTabLayout()
-                end,
-            },
-            enablePinning = {
-                name = "Enable Message Pinning",
+            autoHideInCombat = {
+                name = "Auto-Hide In Combat",
                 type = "toggle",
-                order = 9,
-                get = function() return addonObj.db.profile.enablePinning end,
-                set = function(_, val) addonObj.db.profile.enablePinning = val end,
+                order = 5,
+                get = function() return addonObj.db.profile.autoHideInCombat end,
+                set = function(_, val) addonObj.db.profile.autoHideInCombat = val end,
             },
         },
     }
@@ -105,54 +71,54 @@ end
 
 local function CreateAppearanceOptions(addonObj)
     return {
-        name= L.appearance_settings,
-        type= "group",
-        args= {
-            darkMode= {
-                name= L.dark_mode,
-                desc= L.dark_mode_desc,
-                type= "toggle",
-                order=1,
-                get= function() return addonObj.db.profile.darkMode end,
-                set= function(_, val)
-                    addonObj.db.profile.darkMode= val
+        name = L.appearance_settings,
+        type = "group",
+        args = {
+            darkMode = {
+                name = L.dark_mode,
+                desc = L.dark_mode_desc,
+                type = "toggle",
+                order = 1,
+                get = function() return addonObj.db.profile.darkMode end,
+                set = function(_, val)
+                    addonObj.db.profile.darkMode = val
                     if addonObj.ChatFrame then addonObj.ChatFrame:ApplyTheme() end
                 end,
             },
-            backgroundOpacity= {
-                name= L.background_opacity,
-                desc= L.background_opacity_desc,
-                type= "range",
-                order=2,
-                min=0, max=1, step=0.05,
-                get= function() return addonObj.db.profile.backgroundOpacity end,
-                set= function(_, val)
-                    addonObj.db.profile.backgroundOpacity= val
+            backgroundOpacity = {
+                name = L.background_opacity,
+                desc = L.background_opacity_desc,
+                type = "range",
+                order = 2,
+                min = 0, max = 1, step = 0.05,
+                get = function() return addonObj.db.profile.backgroundOpacity end,
+                set = function(_, val)
+                    addonObj.db.profile.backgroundOpacity = val
                     if addonObj.ChatFrame then addonObj.ChatFrame:ApplyTheme() end
                 end,
             },
-            font= {
-                name= L.font,
-                type= "select",
-                dialogControl= "LSM30_Font",
-                order=3,
-                values= SM:HashTable("font"),
-                get= function() return addonObj.db.profile.font end,
-                set= function(_, val)
-                    addonObj.db.profile.font= val
+            font = {
+                name = L.font,
+                type = "select",
+                dialogControl = "LSM30_Font",
+                order = 3,
+                values = SM:HashTable("font"),
+                get = function() return addonObj.db.profile.font end,
+                set = function(_, val)
+                    addonObj.db.profile.font = val
                     if addonObj.ChatFrame and addonObj.ChatFrame.SetChatFont then
                         addonObj.ChatFrame:SetChatFont()
                     end
                 end,
             },
-            fontSize= {
-                name= L.font_size,
-                type= "range",
-                order=4,
-                min=8, max=24, step=1,
-                get= function() return addonObj.db.profile.fontSize end,
-                set= function(_, val)
-                    addonObj.db.profile.fontSize= val
+            fontSize = {
+                name = L.font_size,
+                type = "range",
+                order = 4,
+                min = 8, max = 24, step = 1,
+                get = function() return addonObj.db.profile.fontSize end,
+                set = function(_, val)
+                    addonObj.db.profile.fontSize = val
                     if addonObj.ChatFrame and addonObj.ChatFrame.SetChatFont then
                         addonObj.ChatFrame:SetChatFont()
                     end
@@ -164,49 +130,45 @@ end
 
 local function CreateNotificationsOptions(addonObj)
     return {
-        name= L.notifications_settings,
-        type= "group",
-        args= {
-            enableNotifications= {
-                name= L.enable_notifications,
-                type= "toggle",
-                order=1,
-                get= function() return addonObj.db.profile.enableNotifications end,
-                set= function(_, val) addonObj.db.profile.enableNotifications= val end,
+        name = L.notifications_settings,
+        type = "group",
+        args = {
+            enableNotifications = {
+                name = L.enable_notifications,
+                type = "toggle",
+                order = 1,
+                get = function() return addonObj.db.profile.enableNotifications end,
+                set = function(_, val) addonObj.db.profile.enableNotifications = val end,
             },
-            notificationSound= {
-                name= L.notification_sound,
-                desc= L.notification_sound_desc,
-                type= "select",
-                dialogControl= "LSM30_Sound",
-                order=2,
-                values= SM:HashTable("sound"),
-                get= function() return addonObj.db.profile.notificationSound end,
-                set= function(_, val)
-                    addonObj.db.profile.notificationSound= val
-                    if val~="None" then
-                        PlaySoundFile(SM:Fetch("sound", val))
-                    end
+            notificationSound = {
+                name = L.notification_sound,
+                desc = L.notification_sound_desc,
+                type = "select",
+                dialogControl = "LSM30_Sound",
+                order = 2,
+                values = SM:HashTable("sound"),
+                get = function() return addonObj.db.profile.notificationSound end,
+                set = function(_, val)
+                    addonObj.db.profile.notificationSound = val
+                    if val ~= "None" then PlaySoundFile(SM:Fetch("sound", val)) end
                 end,
             },
-            soundVolume= {
-                name= L.sound_volume,
-                desc= L.sound_volume_desc,
-                type= "range",
-                order=3,
-                min=0, max=1, step=0.1,
-                get= function() return addonObj.db.profile.soundVolume end,
-                set= function(_, val)
-                    addonObj.db.profile.soundVolume= val
-                end,
+            soundVolume = {
+                name = L.sound_volume,
+                desc = L.sound_volume_desc,
+                type = "range",
+                order = 3,
+                min = 0, max = 1, step = 0.1,
+                get = function() return addonObj.db.profile.soundVolume end,
+                set = function(_, val) addonObj.db.profile.soundVolume = val end,
             },
-            flashTaskbar= {
-                name= L.flash_taskbar,
-                desc= L.flash_taskbar_desc,
-                type= "toggle",
-                order=4,
-                get= function() return addonObj.db.profile.flashTaskbar end,
-                set= function(_, val) addonObj.db.profile.flashTaskbar= val end,
+            flashTaskbar = {
+                name = L.flash_taskbar,
+                desc = L.flash_taskbar_desc,
+                type = "toggle",
+                order = 4,
+                get = function() return addonObj.db.profile.flashTaskbar end,
+                set = function(_, val) addonObj.db.profile.flashTaskbar = val end,
             },
         },
     }
@@ -214,28 +176,13 @@ end
 
 local function GetOptions(addonObj)
     return {
-        name= "SleekChat",
-        type= "group",
-        childGroups= "tab",
-        args= {
-            general= {
-                name= L.general_settings,
-                type= "group",
-                order=1,
-                args= CreateGeneralOptions(addonObj).args,
-            },
-            appearance= {
-                name= L.appearance_settings,
-                type= "group",
-                order=2,
-                args= CreateAppearanceOptions(addonObj).args,
-            },
-            notifications= {
-                name= L.notifications_settings,
-                type= "group",
-                order=3,
-                args= CreateNotificationsOptions(addonObj).args,
-            },
+        name = "SleekChat",
+        type = "group",
+        childGroups = "tab",
+        args = {
+            general = CreateGeneralOptions(addonObj),
+            appearance = CreateAppearanceOptions(addonObj),
+            notifications = CreateNotificationsOptions(addonObj),
         },
     }
 end
@@ -243,59 +190,22 @@ end
 function Config:Initialize(addonObj)
     local AceConfig = LibStub("AceConfig-3.0")
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
+    local AceGUI = LibStub("AceGUI-3.0")
 
-    -- Improved scrollable options container
-    local optionsFrame = CreateFrame("Frame", "SleekChatOptions", UIParent, "BasicFrameTemplateWithInset")
-    optionsFrame:SetSize(650, 550)
-    optionsFrame:SetPoint("CENTER")
-    optionsFrame:Hide()
-    optionsFrame:SetFrameStrata("DIALOG")
-
-    local scrollFrame = CreateFrame("ScrollFrame", nil, optionsFrame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 8, -32)
-    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
-
-    local scrollChild = CreateFrame("Frame")
-    scrollChild:SetSize(600, 900)
-    scrollFrame:SetScrollChild(scrollChild)
-
-    -- Add decorative elements
-    local header = optionsFrame:CreateTexture(nil, "ARTWORK")
-    header:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
-    header:SetSize(350, 64)
-    header:SetPoint("TOP", 0, 12)
-
-    local title = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("TOP", header, "TOP", 0, -14)
-    title:SetText("SleekChat Configuration")
+    local optionsContainer = AceGUI:Create("Frame")
+    optionsContainer:SetTitle("SleekChat Configuration")
+    optionsContainer:SetLayout("Fill")
+    optionsContainer:Hide()
 
     AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
-    AceConfigDialog:SetDefaultSize("SleekChat", 600, 500)
-    AceConfigDialog:Open("SleekChat", scrollChild)
+    AceConfigDialog:Open("SleekChat", optionsContainer)
 
-    -- Enhanced close button
-    optionsFrame.closeBtn = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
-    optionsFrame.closeBtn:SetSize(32, 32)
-    optionsFrame.closeBtn:SetPoint("TOPRIGHT", -6, -6)
-    optionsFrame.closeBtn:SetScript("OnClick", function()
-        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
-        optionsFrame:Hide()
-    end)
-
-    -- Add category icons
-    local function AddCategoryIcon(panel, texture)
-        local icon = panel:CreateTexture(nil, "ARTWORK")
-        icon:SetTexture(texture)
-        icon:SetSize(64, 64)
-        icon:SetPoint("TOPLEFT", 10, 10)
-    end
-
-    AddCategoryIcon(optionsFrame, "Interface\\ICONS\\INV_Misc_Note_01")
+    optionsContainer.frame:SetSize(650, 550)
+    optionsContainer.frame:SetPoint("CENTER")
+    optionsContainer.frame:SetFrameStrata("DIALOG")
 
     addonObj.ShowConfig = function()
-        optionsFrame:Show()
-        scrollFrame:SetVerticalScroll(0)
-        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+        optionsContainer:Show()
     end
 end
 
