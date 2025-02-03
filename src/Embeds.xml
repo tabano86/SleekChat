@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-    <!-- Libraries -->
+    <!-- Libraries (Ace, etc.) -->
     <Script file="Libs\LibStub\LibStub.lua"/>
     <Script file="Libs\AceAddon-3.0\AceAddon-3.0.lua"/>
     <Script file="Libs\AceDB-3.0\AceDB-3.0.lua"/>
@@ -18,16 +18,14 @@
     <Include file="Core\Config.lua"/>
     <Include file="Core\Events.lua"/>
 
-    <!-- Addon modules -->
-    <Include file="Modules\ChatModeration.lua"/>
+    <!-- Additional modules -->
+    <Include file="Modules\Hooks.lua"/>
     <Include file="Modules\History.lua"/>
+    <Include file="Modules\ChatModeration.lua"/>
     <Include file="Modules\Notifications.lua"/>
     <Include file="Modules\Integration.lua"/>
     <Include file="Modules\AdvancedMessaging.lua"/>
 
-    <!-- TEAMS-LIKE chat:
-         ChatFrame (UI) + ThreadManager (threads)
-    -->
-    <Include file="Modules\ThreadManager.lua"/>
-    <Include file="Modules\ChatFrame.lua"/>
+    <!-- The tab-based UI -->
+    <Include file="Modules\ChatTabs.lua"/>
 </Ui>

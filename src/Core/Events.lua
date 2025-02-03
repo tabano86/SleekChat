@@ -1,67 +1,62 @@
 local _, addon = ...
 local Events = {}
 
+-- Maps WoW “CHAT_MSG_*” events to logical channel identifiers
 local EVENT_MAP = {
-    CHAT_MSG_SAY     = "SAY",
-    CHAT_MSG_YELL    = "YELL",
-    CHAT_MSG_PARTY   = "PARTY",
+    CHAT_MSG_SAY = "SAY",
+    CHAT_MSG_YELL = "YELL",
+    CHAT_MSG_PARTY = "PARTY",
     CHAT_MSG_PARTY_LEADER = "PARTY",
-    CHAT_MSG_RAID    = "RAID",
-    CHAT_MSG_RAID_LEADER = "RAID",
-    CHAT_MSG_GUILD   = "GUILD",
+    CHAT_MSG_GUILD = "GUILD",
     CHAT_MSG_OFFICER = "OFFICER",
+    CHAT_MSG_RAID = "RAID",
+    CHAT_MSG_RAID_LEADER = "RAID",
+    CHAT_MSG_RAID_WARNING = "RAIDWARNING",
     CHAT_MSG_WHISPER = "WHISPER",
     CHAT_MSG_WHISPER_INFORM = "WHISPER",
     CHAT_MSG_BN_WHISPER = "BNWHISPER",
     CHAT_MSG_BN_WHISPER_INFORM = "BNWHISPER",
-    CHAT_MSG_EMOTE   = "EMOTE",
-    CHAT_MSG_TEXT_EMOTE= "EMOTE",
-    CHAT_MSG_SYSTEM  = "SYSTEM",
-
-    -- BG or instance
-    --CHAT_MSG_BATTLEGROUND        = "BATTLEGROUND",
-    --CHAT_MSG_BATTLEGROUND_LEADER = "BATTLEGROUND",
-    CHAT_MSG_INSTANCE_CHAT       = "INSTANCE",
-    CHAT_MSG_INSTANCE_CHAT_LEADER= "INSTANCE",
-    CHAT_MSG_RAID_WARNING        = "RAIDWARNING",
-
-    -- Channel
-    CHAT_MSG_CHANNEL  = "CHANNEL",
-    CHAT_MSG_COMMUNITIES_CHANNEL= "COMMUNITY",
-
-    -- Combat-like
-    CHAT_MSG_COMBAT_XP_GAIN  = "COMBAT",
-    CHAT_MSG_COMBAT_HONOR_GAIN= "COMBAT",
-    CHAT_MSG_COMBAT_FACTION_CHANGE= "COMBAT",
-    CHAT_MSG_LOOT           = "COMBAT",
-    CHAT_MSG_MONEY          = "COMBAT",
-    CHAT_MSG_SKILL          = "COMBAT",
-    CHAT_MSG_TRADESKILLS    = "COMBAT",
-    CHAT_MSG_BG_SYSTEM_ALLIANCE = "COMBAT",
-    CHAT_MSG_BG_SYSTEM_HORDE    = "COMBAT",
-    CHAT_MSG_BG_SYSTEM_NEUTRAL  = "COMBAT",
-
-    -- Monster NPC
-    CHAT_MSG_MONSTER_SAY    = "MONSTER",
-    CHAT_MSG_MONSTER_YELL   = "MONSTER",
-    CHAT_MSG_MONSTER_EMOTE  = "MONSTER",
-    CHAT_MSG_MONSTER_WHISPER= "MONSTER",
-    CHAT_MSG_MONSTER_PARTY  = "MONSTER",
-    CHAT_MSG_RAID_BOSS_EMOTE= "BOSS",
-    CHAT_MSG_RAID_BOSS_WHISPER="BOSS",
-
-    -- More
-    CHAT_MSG_IGNORED        = "SYSTEM",
-    CHAT_MSG_FILTERED       = "SYSTEM",
-    CHAT_MSG_RESTRICTED     = "SYSTEM",
-    CHAT_MSG_TARGETICONS    = "SYSTEM",
-    CHAT_MSG_GUILD_ACHIEVEMENT= "GUILDACHV",
+    CHAT_MSG_EMOTE = "EMOTE",
+    CHAT_MSG_TEXT_EMOTE = "EMOTE",
+    CHAT_MSG_SYSTEM = "SYSTEM",
+    CHAT_MSG_CHANNEL = "CHANNEL",
+    CHAT_MSG_COMMUNITIES_CHANNEL = "COMMUNITY",
+    CHAT_MSG_INSTANCE_CHAT = "INSTANCE",
+    CHAT_MSG_INSTANCE_CHAT_LEADER = "INSTANCE",
+    CHAT_MSG_MONSTER_SAY = "MONSTER",
+    CHAT_MSG_MONSTER_YELL = "MONSTER",
+    CHAT_MSG_MONSTER_PARTY = "MONSTER",
+    CHAT_MSG_MONSTER_WHISPER = "MONSTER",
+    CHAT_MSG_MONSTER_EMOTE = "MONSTER",
+    CHAT_MSG_RAID_BOSS_EMOTE = "BOSS",
+    CHAT_MSG_RAID_BOSS_WHISPER = "BOSS",
+    CHAT_MSG_BG_SYSTEM_ALLIANCE = "BGSYS",
+    CHAT_MSG_BG_SYSTEM_HORDE = "BGSYS",
+    CHAT_MSG_BG_SYSTEM_NEUTRAL = "BGSYS",
+    CHAT_MSG_LOOT = "LOOT",
+    CHAT_MSG_MONEY = "LOOT",
+    CHAT_MSG_SKILL = "SKILL",
+    CHAT_MSG_TRADESKILLS = "TRADESKILL",
+    CHAT_MSG_IGNORED = "SYSTEM",
+    CHAT_MSG_FILTERED = "SYSTEM",
+    CHAT_MSG_RESTRICTED = "SYSTEM",
+    CHAT_MSG_TARGETICONS = "SYSTEM",
+    CHAT_MSG_GUILD_ACHIEVEMENT = "GUILDACHV",
 }
 
 function Events:Initialize(addonObj)
-    local frame = CreateFrame("Frame")
+    -- Store a reference to our addon object if needed
+    self.addonObj = addonObj
 
-    -- comprehensive list of chat events
+    -- Safely prepare database references to avoid errors if not defined
+    addonObj.db = addonObj.db or {}
+    addonObj.db.profile = addonObj.db.profile or {}
+    addonObj.db.profile.autoHideInCombat = addonObj.db.profile.autoHideInCombat or false
+
+    -- Frame to capture events
+    local eventFrame = CreateFrame("Frame", nil, UIParent)
+
+    -- List all relevant chat/combat events
     local chatEvents = {
         "CHAT_MSG_SAY",
         "CHAT_MSG_YELL",
@@ -79,32 +74,24 @@ function Events:Initialize(addonObj)
         "CHAT_MSG_EMOTE",
         "CHAT_MSG_TEXT_EMOTE",
         "CHAT_MSG_SYSTEM",
-        --"CHAT_MSG_BATTLEGROUND",
-        --"CHAT_MSG_BATTLEGROUND_LEADER",
-        "CHAT_MSG_INSTANCE_CHAT",
-        "CHAT_MSG_INSTANCE_CHAT_LEADER",
         "CHAT_MSG_CHANNEL",
         "CHAT_MSG_COMMUNITIES_CHANNEL",
-
-        "CHAT_MSG_COMBAT_XP_GAIN",
-        "CHAT_MSG_COMBAT_HONOR_GAIN",
-        "CHAT_MSG_COMBAT_FACTION_CHANGE",
+        "CHAT_MSG_INSTANCE_CHAT",
+        "CHAT_MSG_INSTANCE_CHAT_LEADER",
+        "CHAT_MSG_MONSTER_SAY",
+        "CHAT_MSG_MONSTER_YELL",
+        "CHAT_MSG_MONSTER_PARTY",
+        "CHAT_MSG_MONSTER_EMOTE",
+        "CHAT_MSG_MONSTER_WHISPER",
+        "CHAT_MSG_RAID_BOSS_EMOTE",
+        "CHAT_MSG_RAID_BOSS_WHISPER",
+        "CHAT_MSG_BG_SYSTEM_ALLIANCE",
+        "CHAT_MSG_BG_SYSTEM_HORDE",
+        "CHAT_MSG_BG_SYSTEM_NEUTRAL",
         "CHAT_MSG_LOOT",
         "CHAT_MSG_MONEY",
         "CHAT_MSG_SKILL",
         "CHAT_MSG_TRADESKILLS",
-        "CHAT_MSG_BG_SYSTEM_ALLIANCE",
-        "CHAT_MSG_BG_SYSTEM_HORDE",
-        "CHAT_MSG_BG_SYSTEM_NEUTRAL",
-
-        "CHAT_MSG_MONSTER_SAY",
-        "CHAT_MSG_MONSTER_YELL",
-        "CHAT_MSG_MONSTER_EMOTE",
-        "CHAT_MSG_MONSTER_WHISPER",
-        "CHAT_MSG_MONSTER_PARTY",
-        "CHAT_MSG_RAID_BOSS_EMOTE",
-        "CHAT_MSG_RAID_BOSS_WHISPER",
-
         "CHAT_MSG_IGNORED",
         "CHAT_MSG_FILTERED",
         "CHAT_MSG_RESTRICTED",
@@ -112,50 +99,69 @@ function Events:Initialize(addonObj)
         "CHAT_MSG_GUILD_ACHIEVEMENT",
     }
 
+    -- Register all chat events
     for _, evt in ipairs(chatEvents) do
-        frame:RegisterEvent(evt)
+        eventFrame:RegisterEvent(evt)
     end
 
-    -- Also handle fade in/out in combat
-    frame:RegisterEvent("PLAYER_REGEN_DISABLED")
-    frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    -- Combat log event (unfiltered)
+    eventFrame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 
-    frame:SetScript("OnEvent", function(_, event, ...)
-        -- Combat fade
-        if event=="PLAYER_REGEN_DISABLED" then
-            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame and addon.ChatFrame.mainFrame then
-                addon.ChatFrame.mainFrame:SetAlpha(0)
-            end
-            return
-        elseif event=="PLAYER_REGEN_ENABLED" then
-            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame and addon.ChatFrame.mainFrame then
-                addon.ChatFrame.mainFrame:SetAlpha(1)
+    -- Monitor player entering/exiting combat to adjust UI if desired
+    eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+
+    eventFrame:SetScript("OnEvent", function(_, event, ...)
+        -- If entering combat
+        if event == "PLAYER_REGEN_DISABLED" then
+            if addonObj.db.profile.autoHideInCombat and addon.ChatTabs and addon.ChatTabs.mainFrame then
+                addon.ChatTabs.mainFrame:SetAlpha(0)
             end
             return
         end
 
+        -- If leaving combat
+        if event == "PLAYER_REGEN_ENABLED" then
+            if addonObj.db.profile.autoHideInCombat and addon.ChatTabs and addon.ChatTabs.mainFrame then
+                addon.ChatTabs.mainFrame:SetAlpha(1)
+            end
+            return
+        end
+
+        -- Handle combat log data
+        if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+            local info = { CombatLogGetCurrentEventInfo() }
+            local timeStamp = info[1]   -- e.g. event time
+            local subEvent  = info[2]   -- e.g. SPELL_CAST_START, SWING_DAMAGE, etc.
+            local srcName   = info[5] or "?"
+            local dstName   = info[9] or "?"
+
+            if addon.ChatTabs then
+                local line = string.format(
+                        "[%.2f] %s -> %s : %s",
+                        (GetTime() % 60),
+                        srcName,
+                        dstName,
+                        subEvent or ""
+                )
+                addon.ChatTabs:AddIncoming(line, "CombatLog", "COMBAT")
+            end
+            return
+        end
+
+        -- Process normal chat messages
         local msg, sender, _, _, channelName = ...
+        local mappedChannel = EVENT_MAP[event] or "ALL"
 
-        local mapped = EVENT_MAP[event] or "ALL"
-
-        -- If user opted out of storing system logs, skip
-        if mapped=="SYSTEM" and (not addonObj.db.profile.storeSystem) then
-            return
-        end
-        -- If mapped is COMBAT but user doesn't want them
-        if mapped=="COMBAT" and (not addonObj.db.profile.storeCombat) then
-            return
-        end
-
-        -- Now pass to ChatFrame
-        if addon.ChatFrame and addon.ChatFrame.AddIncoming then
-            if event=="CHAT_MSG_CHANNEL" then
-                addon.ChatFrame:AddIncoming(msg, sender, channelName or mapped)
+        if addon.ChatTabs then
+            if event == "CHAT_MSG_CHANNEL" then
+                addon.ChatTabs:AddIncoming(msg or "", sender or "Unknown", channelName or mappedChannel)
             else
-                addon.ChatFrame:AddIncoming(msg, sender, mapped)
+                addon.ChatTabs:AddIncoming(msg or "", sender or "Unknown", mappedChannel)
             end
         end
     end)
 end
 
+-- Expose Events API to the addon
 addon.Events = Events
