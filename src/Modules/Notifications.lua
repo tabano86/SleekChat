@@ -14,6 +14,9 @@ function Notifications:ShowWhisperAlert(sender, msg)
     if not self.db.profile.enableNotifications then return end
     if self.db.profile.notificationSound and self.db.profile.notificationSound~="None" then
         PlaySoundFile(SM:Fetch("sound", self.db.profile.notificationSound), "Master", self.db.profile.soundVolume or 1.0)
+        if addon.AdvancedMessaging:IsMentioned(msg) then
+            PlaySoundFile(SM:Fetch("sound", "UI_Quest_Log_Open"), "Master")
+        end
     end
     if self.db.profile.flashTaskbar then
         FlashClientIcon()

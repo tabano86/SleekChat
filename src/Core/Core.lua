@@ -11,6 +11,10 @@ function Core.GetDefaults()
             version=10,
             showDefaultChat= false,
             debug= false,
+            tabOrientation = "Horizontal",
+            enablePinning = true,
+            unreadCounts = {},
+            mentionKeywords = { "@" .. UnitName("player") },
 
             -- Chat window settings
             position= { point="BOTTOMLEFT", relPoint="BOTTOMLEFT", x=50,y=50 },

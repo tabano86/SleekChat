@@ -80,6 +80,25 @@ local function CreateGeneralOptions(addonObj)
                 get= function() return addonObj.db.profile.autoHideInCombat end,
                 set= function(_, val) addonObj.db.profile.autoHideInCombat= val end,
             },
+            tabOrientation = {
+                name = "Tab Layout",
+                desc = "Arrange tabs vertically or horizontally",
+                type = "select",
+                order = 8,
+                values = { Vertical = "Vertical", Horizontal = "Horizontal" },
+                get = function() return addonObj.db.profile.tabOrientation end,
+                set = function(_, val)
+                    addonObj.db.profile.tabOrientation = val
+                    addonObj.ChatTabs:UpdateTabLayout()
+                end,
+            },
+            enablePinning = {
+                name = "Enable Message Pinning",
+                type = "toggle",
+                order = 9,
+                get = function() return addonObj.db.profile.enablePinning end,
+                set = function(_, val) addonObj.db.profile.enablePinning = val end,
+            },
         },
     }
 end

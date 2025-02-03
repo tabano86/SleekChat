@@ -432,3 +432,12 @@ end
 function ChatFrame:HandleURL(url)
     StaticPopup_Show("SLEEKCHAT_URL_DIALOG",nil,nil,{ url=url })
 end
+
+function ChatFrame:FilterMessages(searchText)
+    self.messageFrame:Clear()
+    for _, msg in ipairs(self.db.profile.messageHistory) do
+        if msg.text:lower():find(searchText:lower()) then
+            self:AddMessageToFrame(msg.text, msg.channel, msg.sender)
+        end
+    end
+end

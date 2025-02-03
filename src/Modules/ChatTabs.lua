@@ -77,6 +77,29 @@ function ChatTabs:Initialize(addonObj)
     self:LayoutFrames()
     self:CreateDefaultTabs()
     self:SelectTab(1)
+
+    self.unreadCounts = self.db.profile.unreadCounts or {}
+    self:UpdateTabLayout()
+end
+
+function ChatTabs:UpdateTabLayout()
+    local orientation = self.db.profile.tabOrientation
+    for i, btn in ipairs(self.tabButtons) do
+        btn:ClearAllPoints()
+        if orientation == "Vertical" then
+            if i == 1 then
+                btn:SetPoint("TOPLEFT", self.mainFrame, "TOPLEFT", 8, -8)
+            else
+                btn:SetPoint("TOP", self.tabButtons[i-1], "BOTTOM", 0, -4)
+            end
+        else
+            if i == 1 then
+                btn:SetPoint("TOPLEFT", self.mainFrame, "TOPLEFT", 8, -8)
+            else
+                btn:SetPoint("LEFT", self.tabButtons[i-1], "RIGHT", 4, 0)
+            end
+        end
+    end
 end
 
 function ChatTabs:LayoutFrames()
@@ -153,6 +176,8 @@ function ChatTabs:SelectTab(index)
         end
     end
     self.msgFrame:ScrollToBottom()
+    self.unreadCounts[index] = 0
+    self:UpdateTabAppearance(index)
 end
 
 function ChatTabs:AddIncoming(text, sender, channel)
@@ -165,6 +190,16 @@ function ChatTabs:AddIncoming(text, sender, channel)
     if self:ShouldDisplay(idx, channel) then
         self:AddMessageToFrame(text, channel, sender)
     end
+    if self.activeTabIndex ~= idx then
+        self.unreadCounts[idx] = (self.unreadCounts[idx] or 0) + 1
+        self:UpdateTabAppearance(idx)
+    end
+end
+
+function ChatTabs:UpdateTabAppearance(index)
+    local btn = self.tabButtons[index]
+    local count = self.unreadCounts[index] or 0
+    btn:SetText(string.format("%s (%d)", self.tabs[index].name, count))
 end
 
 function ChatTabs:ShouldDisplay(tabIndex, channel)
@@ -180,10 +215,29 @@ function ChatTabs:ShouldDisplay(tabIndex, channel)
     return fs[channel] or false
 end
 
-function ChatTabs:AddMessageToFrame(text, channel, sender)
-    local line= self:FormatMessage(text, sender, channel)
-    self.msgFrame:AddMessage(line)
-    self.msgFrame:ScrollToBottom()
+function ChatFrame:AddMessageToFrame(text, channel, sender)
+    local line = self:FormatMessage(text, sender, channel)
+    local isPinned = false
+
+    -- Add pin button
+    if self.db.profile.enablePinning then
+        local pinBtn = CreateFrame("Button", nil, self.messageFrame)
+        pinBtn:SetSize(16, 16)
+        pinBtn:SetNormalTexture("Interface\\BUTTONS\\UI-GuildButton-PublicNote-Up")
+        pinBtn:SetScript("OnClick", function()
+            self:PinMessage(line)
+            pinBtn:Hide()
+        end)
+        -- Position pin button next to message
+    end
+
+    -- Highlight mentions
+    if addon.AdvancedMessaging:IsMentioned(text) then
+        line = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_6:16|t" .. line
+    end
+
+    self.messageFrame:AddMessage(line)
+    self.messageFrame:ScrollToBottom()
 end
 
 function ChatTabs:FormatMessage(text, sender, channel)
