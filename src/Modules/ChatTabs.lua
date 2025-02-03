@@ -8,6 +8,9 @@ local floor= math.floor
 function ChatTabs:Initialize(addonObj)
     self.db= addonObj.db
 
+    -- Initialize unreadCounts first
+    self.unreadCounts = self.db.profile.unreadCounts or {}
+
     -- We'll create a main frame with a row of tabs (like default chat).
     local f= CreateFrame("Frame","SleekChatTabs_Main",UIParent,"BackdropTemplate")
     self.mainFrame= f
@@ -180,6 +183,13 @@ function ChatTabs:SelectTab(index)
     self:UpdateTabAppearance(index)
 end
 
+-- This new function fixes the "AddMessageToFrame" nil error:
+function ChatTabs:AddMessageToFrame(text, channel, sender)
+    -- You can expand or adjust the formatting as needed:
+    local line = self:FormatMessage(text, sender, channel)
+    self.msgFrame:AddMessage(line)
+end
+
 function ChatTabs:AddIncoming(text, sender, channel)
     -- store in history
     if addon.History then
@@ -213,31 +223,6 @@ function ChatTabs:ShouldDisplay(tabIndex, channel)
     end
     -- If the filter set has "channel==true," show. If not present, skip.
     return fs[channel] or false
-end
-
-function ChatFrame:AddMessageToFrame(text, channel, sender)
-    local line = self:FormatMessage(text, sender, channel)
-    local isPinned = false
-
-    -- Add pin button
-    if self.db.profile.enablePinning then
-        local pinBtn = CreateFrame("Button", nil, self.messageFrame)
-        pinBtn:SetSize(16, 16)
-        pinBtn:SetNormalTexture("Interface\\BUTTONS\\UI-GuildButton-PublicNote-Up")
-        pinBtn:SetScript("OnClick", function()
-            self:PinMessage(line)
-            pinBtn:Hide()
-        end)
-        -- Position pin button next to message
-    end
-
-    -- Highlight mentions
-    if addon.AdvancedMessaging:IsMentioned(text) then
-        line = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_6:16|t" .. line
-    end
-
-    self.messageFrame:AddMessage(line)
-    self.messageFrame:ScrollToBottom()
 end
 
 function ChatTabs:FormatMessage(text, sender, channel)

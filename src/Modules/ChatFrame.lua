@@ -334,7 +334,26 @@ function ChatFrame:ShouldDisplayChannel(ch)
 end
 
 function ChatFrame:AddMessageToFrame(text, channel, sender)
-    local line= self:FormatMessage(text, sender, channel)
+    local line = self:FormatMessage(text, sender, channel)
+    local isPinned = false
+
+    -- Add pin button
+    if self.db.profile.enablePinning then
+        local pinBtn = CreateFrame("Button", nil, self.messageFrame)
+        pinBtn:SetSize(16, 16)
+        pinBtn:SetNormalTexture("Interface\\BUTTONS\\UI-GuildButton-PublicNote-Up")
+        pinBtn:SetScript("OnClick", function()
+            self:PinMessage(line)
+            pinBtn:Hide()
+        end)
+        -- Position pin button next to message
+    end
+
+    -- Highlight mentions
+    if addon.AdvancedMessaging:IsMentioned(text) then
+        line = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_6:16|t" .. line
+    end
+
     self.messageFrame:AddMessage(line)
     self.messageFrame:ScrollToBottom()
 end
