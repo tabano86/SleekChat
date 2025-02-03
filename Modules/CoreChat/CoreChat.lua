@@ -2,15 +2,19 @@
 -- SleekChat v2.0 - CoreChat.lua
 -- Core hooking and baseline chat modifications
 -- ===========================================================================
+
 local CoreChat = {}
 SleekChat_CoreChat = CoreChat
 
 local eventsFrame = CreateFrame("Frame", "SleekChatCoreFrame", UIParent)
+
 local function OnEvent(self, event, ...)
     if event == "ADDON_LOADED" then
         local addonName = ...
         if addonName == "SleekChat" then
-            if not SleekChatDB then SleekChatDB = {} end
+            if not SleekChatDB then
+                SleekChatDB = {}
+            end
             SleekChat_Config:InitializeDefaults()
             CoreChat:RegisterSlashCommands()
             print("|cff00ff00SleekChat v2.0 Loaded.|r")
@@ -76,17 +80,6 @@ function CoreChat:RegisterSlashCommands()
             CoreChat:ClearChatFrames()
         else
             print("Unknown command. Available: config, reload, debug, clear")
-        end
-    end
-end
-
--- Modules\QoL\QoL.lua
-function QoL:AutoRejoinChannels()
-    local channels = SleekChat_Config.Get("qol", "autoRejoinChannels") or {}
-    for _, ch in ipairs(channels) do
-        local success, err = pcall(JoinChannelByName, ch)
-        if not success then
-            print("|cff00ff00SleekChat|r: Error joining "..ch..": "..tostring(err))
         end
     end
 end

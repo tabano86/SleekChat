@@ -21,7 +21,6 @@ local function mergeTable(dest, src)
 end
 
 function SleekChat_Config:InitializeDefaults()
-    -- Retrieve defaults from each module
     if not SleekChatDB then
         SleekChatDB = {}
     end
@@ -42,18 +41,18 @@ function SleekChat_Config:InitializeDefaults()
         SleekChatDB.config.ui = {
             autoHideInput = true,
             splitTrade = false,
-            fontPath = "Fonts\\FRIZQT__.TTF"
+            fontPath = "Fonts\\FRIZQT__.TTF",
         }
     end
 
     -- Notifications defaults
     if not SleekChatDB.config.notifications then
         SleekChatDB.config.notifications = {
-            keywords = {"heal", "tank", "dps"},
+            keywords = { "heal", "tank", "dps" },
             regexTriggers = { "%[Epic%]" },
             playSound = true,
             conditionalAlerts = {
-                { phrase = "Need tank", class = "WARRIOR" } -- Removed spec field
+                { phrase = "Need tank", class = "WARRIOR" }
             }
         }
     end
@@ -62,13 +61,16 @@ function SleekChat_Config:InitializeDefaults()
     if not SleekChatDB.config.qol then
         SleekChatDB.config.qol = {
             inactivityThreshold = 300,
-            autoRejoinChannels = { "General", "Trade", "LocalDefense" }
+            autoRejoinChannels = { "General", "Trade", "LocalDefense" },
         }
     end
 end
 
 function SleekChat_Config.Get(category, key)
-    if not SleekChatDB or not SleekChatDB.config then return nil end
+    if not SleekChatDB or not SleekChatDB.config then
+        return nil
+    end
+
     if SleekChatDB.config[category] then
         return SleekChatDB.config[category][key]
     end
@@ -76,9 +78,13 @@ function SleekChat_Config.Get(category, key)
 end
 
 function SleekChat_Config.Set(category, key, value)
-    if not SleekChatDB or not SleekChatDB.config then return end
+    if not SleekChatDB or not SleekChatDB.config then
+        return
+    end
+
     if not SleekChatDB.config[category] then
         SleekChatDB.config[category] = {}
     end
+
     SleekChatDB.config[category][key] = value
 end

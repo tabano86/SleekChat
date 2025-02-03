@@ -7,23 +7,23 @@
 ## DefaultState: Enabled
 
 # Core
-Modules/CoreChat/CoreChat.lua
-Modules/CoreChat/CoreChatConfig.lua
+Modules\CoreChat\CoreChat.lua
+Modules\CoreChat\CoreChatConfig.lua
 
 # UI Enhancements
-Modules/UIEnhancements/UIEnhancements.lua
+Modules\UIEnhancements\UIEnhancements.lua
 
 # Notifications
-Modules/Notifications/Notifications.lua
+Modules\Notifications\Notifications.lua
 
 # Linking
-Modules/Linking/Linking.lua
+Modules\Linking\Linking.lua
 
 # QoL
-Modules/QoL/QoL.lua
+Modules\QoL\QoL.lua
 
 # Future / Roadmap (disabled until production-ready)
-Modules/FutureRoadmap/CombatLogEnhancement.lua
+Modules\FutureRoadmap\CombatLogEnhancement.lua
 
 # Config
-Config/Config.lua
+Config\Config.lua

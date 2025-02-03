@@ -3,35 +3,14 @@
 -- Provides in-chat search, extended scrollback, channel auto-rejoin,
 -- inactivity timers, chat transcript export, and clear chat functionality.
 -- ===========================================================================
+
 local QoL = {}
 SleekChat_QoL = QoL
 
 local frame = CreateFrame("Frame", "SleekChatQoLFrame", UIParent)
 frame:RegisterEvent("PLAYER_LOGIN")
 
-function QoL:CreateExportFrame()
-    local frame = CreateFrame("Frame", "SleekChatExportFrame", UIParent, "BasicFrameTemplate")
-    frame:SetSize(600, 400)
-    frame:SetPoint("CENTER")
-    frame:SetTitle("Chat Transcript")
-    frame:Hide()
-
-    local scroll = CreateFrame("ScrollFrame", "SleekChatExportScroll", frame, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 8, -30)
-    scroll:SetPoint("BOTTOMRIGHT", -30, 8)
-
-    local edit = CreateFrame("EditBox", nil, scroll)
-    edit:SetSize(scroll:GetSize())
-    edit:SetMultiLine(true)
-    edit:SetFontObject("ChatFontNormal")
-    edit:SetAutoFocus(false)
-    scroll:SetScrollChild(edit)
-
-    frame.editBox = edit
-    return frame
-end
-
--- Inactivity timer / auto-lock chat frames
+-- Inactivity & auto-lock
 local function OnUpdate(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
     if self.elapsed >= 5 then
@@ -50,7 +29,6 @@ end
 
 frame:SetScript("OnUpdate", OnUpdate)
 
--- Reset inactivity timer on user input and unlock chat frames if needed
 local function OnUserInput(self, event)
     self.lastInput = GetTime()
     for i = 1, NUM_CHAT_WINDOWS do
@@ -64,7 +42,7 @@ end
 frame:EnableKeyboard(true)
 frame:SetScript("OnKeyDown", OnUserInput)
 
--- Auto rejoin channels on login
+-- Auto rejoin channels
 function QoL:AutoRejoinChannels()
     local channels = SleekChat_Config.Get("qol", "autoRejoinChannels") or {}
     for _, ch in ipairs(channels) do
@@ -82,7 +60,7 @@ function QoL:AutoRejoinChannels()
     end
 end
 
--- In-chat search command
+-- Chat search
 SLASH_SLEEKCHAT_SEARCH1 = "/chatsearch"
 SlashCmdList["SLEEKCHAT_SEARCH"] = function(query)
     if not query or query == "" then
@@ -95,6 +73,7 @@ end
 function QoL:SearchCurrentChat(query)
     local cf = SELECTED_CHAT_FRAME
     if not cf then return end
+
     local found = false
     for _, region in ipairs({ cf:GetRegions() }) do
         if region:GetObjectType() == "FontString" then
@@ -105,12 +84,13 @@ function QoL:SearchCurrentChat(query)
             end
         end
     end
+
     if not found then
         print("No matches found for '" .. query .. "' in the current chat frame.")
     end
 end
 
--- Chat transcript export command
+-- Chat export
 SLASH_SLEEKCHAT_EXPORT1 = "/chatexport"
 SlashCmdList["SLEEKCHAT_EXPORT"] = function()
     if not SleekChat_QoL.ExportTranscript then
@@ -120,10 +100,32 @@ SlashCmdList["SLEEKCHAT_EXPORT"] = function()
     SleekChat_QoL:ExportTranscript()
 end
 
+function QoL:CreateExportFrame()
+    local exportFrame = CreateFrame("Frame", "SleekChatExportFrame", UIParent, "BasicFrameTemplate")
+    exportFrame:SetSize(600, 400)
+    exportFrame:SetPoint("CENTER")
+    exportFrame:SetTitle("Chat Transcript")
+    exportFrame:Hide()
+
+    local scroll = CreateFrame("ScrollFrame", "SleekChatExportScroll", exportFrame, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 8, -30)
+    scroll:SetPoint("BOTTOMRIGHT", -30, 8)
+
+    local edit = CreateFrame("EditBox", nil, scroll)
+    edit:SetSize(scroll:GetWidth(), scroll:GetHeight())
+    edit:SetMultiLine(true)
+    edit:SetFontObject("ChatFontNormal")
+    edit:SetAutoFocus(false)
+    scroll:SetScrollChild(edit)
+
+    exportFrame.editBox = edit
+    return exportFrame
+end
+
 function QoL:ExportTranscript()
     local cf = SELECTED_CHAT_FRAME
     if not cf or not cf.sleekChatMessages then
-        print("SleekChat: No transcript available")
+        print("SleekChat: No transcript available.")
         return
     end
 
@@ -136,7 +138,6 @@ function QoL:ExportTranscript()
     self.exportFrame:Show()
 end
 
--- Add message capturing in QoL initialization
 function QoL:HookChatFrames()
     for i = 1, NUM_CHAT_WINDOWS do
         local cf = _G["ChatFrame"..i]
@@ -156,7 +157,6 @@ function QoL:HookChatFrames()
     end
 end
 
--- Update OnEvent handler
 frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         QoL:AutoRejoinChannels()

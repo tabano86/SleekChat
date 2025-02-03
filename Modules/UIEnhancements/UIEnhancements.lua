@@ -2,23 +2,25 @@
 -- SleekChat v2.0 - UIEnhancements.lua
 -- Handles dynamic tab management, auto-hiding the input bar, and custom fonts/themes.
 -- ===========================================================================
+
 local UIEnhancements = {}
 SleekChat_UIEnhancements = UIEnhancements
 
 local frame = CreateFrame("Frame", "SleekChatEnhFrame", UIParent, "BackdropTemplate")
 frame:SetBackdrop({
-    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile     = true,
+    tile = true,
     tileSize = 32,
     edgeSize = 32,
-    insets   = { left = 8, right = 8, top = 8, bottom = 8 },
+    insets = { left = 8, right = 8, top = 8, bottom = 8 },
 })
 frame:RegisterEvent("PLAYER_LOGIN")
 
 local chatTabs = {}
 
 local function OnChatMsg(self, event, message, sender, ...)
+    -- Example usage: if channel name is "Trade" and splitTrade is enabled, redirect messages.
     if event == "CHAT_MSG_CHANNEL" then
         local channelName = select(9, ...)
         if channelName and channelName:lower():find("trade") then
@@ -71,7 +73,6 @@ function UIEnhancements:InitializeInputBehavior()
     end
 end
 
--- Modules\UIEnhancements\UIEnhancements.lua
 function UIEnhancements:ApplyCustomFonts()
     local fontPath = SleekChat_Config.Get("ui", "fontPath")
     if fontPath and fontPath ~= "" then
@@ -92,7 +93,7 @@ frame:SetScript("OnEvent", function(self, event)
         UIEnhancements:InitializeInputBehavior()
         UIEnhancements:ApplyCustomFonts()
         ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", OnChatMsg)
+        -- 'CHAT_MSG_TRADE' does not exist in Classic; removing it avoids errors.
         ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", OnChatMsg)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_TRADE", OnChatMsg)
     end
 end)

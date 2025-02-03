@@ -2,6 +2,7 @@
 -- SleekChat v2.0 - Notifications.lua
 -- Implements keyword alerts, regex triggers, and sound notifications.
 -- ===========================================================================
+
 local Notifications = {}
 SleekChat_Notifications = Notifications
 
@@ -50,8 +51,8 @@ function Notifications:TriggerRegexAlert(pattern, msg)
     UIErrorsFrame:AddMessage(("Regex match [%s]: %s"):format(pattern, msg), 1.0, 0.5, 0.5, 53, 5)
 end
 
--- Modules\Notifications\Notifications.lua
 local function OnChatEvent(self, event, msg, sender, ...)
+    -- Check conditional alerts
     local conditions = SleekChat_Config.Get("notifications", "conditionalAlerts") or {}
     local playerClass = select(2, UnitClass("player"))
 
@@ -66,6 +67,5 @@ local function OnChatEvent(self, event, msg, sender, ...)
     CheckForKeywords(msg, sender, event)
     CheckForRegex(msg)
 end
-
 
 frame:SetScript("OnEvent", OnChatEvent)

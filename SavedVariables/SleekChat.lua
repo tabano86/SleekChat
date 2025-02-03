@@ -3,10 +3,27 @@
 -- Example structure:
 -- SleekChatDB = {
 --   config = {
---     core = { historyLines = 5000, preserveDefault = true },
---     ui = { autoHideInput = true, splitTrade = false, fontPath = "Fonts\\FRIZQT__.TTF" },
---     notifications = { keywords = {...}, regexTriggers = {...}, playSound = true, conditionalAlerts = {...} },
---     qol = { inactivityThreshold = 300, autoRejoinChannels = {"General", "Trade", "LocalDefense"}, enableChatExport = true }
+--     core = {
+--       historyLines = 5000,
+--       preserveDefault = true,
+--     },
+--     ui = {
+--       autoHideInput = true,
+--       splitTrade = false,
+--       fontPath = "Fonts\\FRIZQT__.TTF",
+--     },
+--     notifications = {
+--       keywords = {"heal", "tank", "dps"},
+--       regexTriggers = {"%[Epic%]"},
+--       playSound = true,
+--       conditionalAlerts = {
+--         { phrase = "Need tank", class = "WARRIOR" }
+--       }
+--     },
+--     qol = {
+--       inactivityThreshold = 300,
+--       autoRejoinChannels = {"General", "Trade", "LocalDefense"},
+--     }
 --   },
 --   debug = false,
 -- }

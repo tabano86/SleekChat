@@ -2,6 +2,7 @@
 -- SleekChat v2.0 - Linking.lua
 -- In-chat linking commands for items and quests
 -- ===========================================================================
+
 local Linking = {}
 SleekChat_Linking = Linking
 
@@ -49,7 +50,6 @@ function Linking:RegisterSlashCommands()
     end
 end
 
--- Modules\Linking\Linking.lua
 function Linking:FindItemIDByName(name)
     -- Check player's bags and bank
     for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
@@ -79,8 +79,8 @@ function Linking:FindItemIDByName(name)
 end
 
 function Linking:GenerateQuestLink(questName)
-    local questID = 12345 -- Replace with a lookup from quest log or internal DB.
-    return "|cffffff00|Hquest:"..questID..":60|h["..questName.."]|h|r"
+    local questID = 12345  -- Placeholder for a real lookup or internal DB
+    return "|cffffff00|Hquest:" .. questID .. ":60|h[" .. questName .. "]|h|r"
 end
 
 frame:SetScript("OnEvent", function(self, event)
