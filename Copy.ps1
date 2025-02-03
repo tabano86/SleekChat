@@ -1,5 +1,5 @@
 param(
-    [string]$SourceDirectory = "C:\Users\Taban\IdeaProjects\SleekChat\src"  # Update as needed
+    [string]$SourceDirectory = "C:\Users\Taban\IdeaProjects\SleekChat"  # Update as needed
 )
 
 $clipboardContent = ""
