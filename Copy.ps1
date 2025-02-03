@@ -1,11 +1,10 @@
 param(
-    [string]$SourceDirectory = "C:\Users\Taban\IdeaProjects\SleekChat"  # Update as needed
+    [string]$SourceDirectory = (Get-Location).Path
 )
 
 $clipboardContent = ""
 
-# Retrieve and process all .lua, .loc, and .xml files (with recursion), ignoring files under any "Libs" folder
-Get-ChildItem -Path $SourceDirectory -Recurse -Include *.lua, *.loc, *.md, *.xml -File |
+Get-ChildItem -Path $SourceDirectory -Recurse -Include *.toc, *.md, *.lua -File |
         Where-Object { $_.FullName -notmatch '(\\|/)Libs(\\|/)' } |
         ForEach-Object {
             # Build a relative path (including folder name) unless it's just the file name
@@ -18,7 +17,7 @@ Get-ChildItem -Path $SourceDirectory -Recurse -Include *.lua, *.loc, *.md, *.xml
             }
 
             $clipboardContent += "File: $relativePath" + [Environment]::NewLine
-            $clipboardContent += '```'
+            $clipboardContent += '```powershell'
             $clipboardContent += (Get-Content -Path $_.FullName -Raw)
             $clipboardContent += '```' + [Environment]::NewLine
         }
@@ -26,13 +25,11 @@ Get-ChildItem -Path $SourceDirectory -Recurse -Include *.lua, *.loc, *.md, *.xml
 $clipboardContent += "" + [Environment]::NewLine
 $clipboardContent += "" + [Environment]::NewLine
 
-# Only set the clipboard if we actually have content; handle empty results gracefully
-if ([string]::IsNullOrWhiteSpace($clipboardContent))
-{
-    Write-Host "No content found to copy. No .lua, .loc, or .xml files are present in $SourceDirectory (outside Libs folders)."
+# Only set the clipboard if we actually have content
+if ([string]::IsNullOrWhiteSpace($clipboardContent)) {
+    Write-Host "No content found to copy. No .toc, .md, or .lua files (outside Libs folders) in $SourceDirectory."
 }
-else
-{
+else {
     Set-Clipboard -Value $clipboardContent
-    Write-Host "All relevant files (excluding those under Libs) have been processed, and their contents have been copied to your clipboard."
+    Write-Host "All relevant files (excluding 'Libs' folder) have been processed, and their contents have been copied to your clipboard."
 }

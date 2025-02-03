@@ -11,13 +11,15 @@ frame:RegisterEvent("PLAYER_LOGIN")
 
 -- For dynamic tab creation, we'll watch chat messages and possibly rearrange
 local function OnChatMsg(self, event, message, sender, ...)
-    -- Example pseudo-code for auto-splitting channels:
-    if event == "CHAT_MSG_TRADE" then
-        -- If user has "splitTrade" enabled in config, move these messages to a dedicated frame
-        local separateTrade = SleekChat_Config.Get("ui", "splitTrade")
-        if separateTrade then
-            UIEnhancements:RedirectChatToCustomFrame("Trade", event, message, sender, ...)
-            return true
+    if event == "CHAT_MSG_CHANNEL" then
+        local channelName = select(9, ...)
+        if channelName and string.find(channelName, "Trade") then
+            -- If user has "splitTrade" enabled in config, move these messages to a dedicated frame
+            local separateTrade = SleekChat_Config.Get("ui", "splitTrade")
+            if separateTrade then
+                UIEnhancements:RedirectChatToCustomFrame("Trade", event, message, sender, ...)
+                return true
+            end
         end
     end
 
