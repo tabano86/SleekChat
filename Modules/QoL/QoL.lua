@@ -9,6 +9,28 @@ SleekChat_QoL = QoL
 local frame = CreateFrame("Frame", "SleekChatQoLFrame", UIParent)
 frame:RegisterEvent("PLAYER_LOGIN")
 
+function QoL:CreateExportFrame()
+    local frame = CreateFrame("Frame", "SleekChatExportFrame", UIParent, "BasicFrameTemplate")
+    frame:SetSize(600, 400)
+    frame:SetPoint("CENTER")
+    frame:SetTitle("Chat Transcript")
+    frame:Hide()
+
+    local scroll = CreateFrame("ScrollFrame", "SleekChatExportScroll", frame, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 8, -30)
+    scroll:SetPoint("BOTTOMRIGHT", -30, 8)
+
+    local edit = CreateFrame("EditBox", nil, scroll)
+    edit:SetSize(scroll:GetSize())
+    edit:SetMultiLine(true)
+    edit:SetFontObject("ChatFontNormal")
+    edit:SetAutoFocus(false)
+    scroll:SetScrollChild(edit)
+
+    frame.editBox = edit
+    return frame
+end
+
 -- Inactivity timer / auto-lock chat frames
 local function OnUpdate(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
@@ -100,27 +122,44 @@ end
 
 function QoL:ExportTranscript()
     local cf = SELECTED_CHAT_FRAME
-    if not cf then return end
-    local transcript = {}
-    for i = 1, cf:GetNumMessages() do
-        local msg = cf:GetMessage(i)
-        if msg then
-            table.insert(transcript, msg)
-        end
+    if not cf or not cf.sleekChatMessages then
+        print("SleekChat: No transcript available")
+        return
     end
-    -- In a real addon, you would write to a file or open an in-game UI window.
-    -- Here we simply print the transcript to the chat.
-    print("----- Chat Transcript -----")
-    for _, line in ipairs(transcript) do
-        print(line)
+
+    if not self.exportFrame then
+        self.exportFrame = self:CreateExportFrame()
     end
-    print("----- End Transcript -----")
+
+    local text = table.concat(cf.sleekChatMessages, "\n")
+    self.exportFrame.editBox:SetText(text)
+    self.exportFrame:Show()
 end
 
--- Clear chat command is provided by CoreChat slash (/sleekchat clear)
+-- Add message capturing in QoL initialization
+function QoL:HookChatFrames()
+    for i = 1, NUM_CHAT_WINDOWS do
+        local cf = _G["ChatFrame"..i]
+        if cf and not cf.sleekChatHooked then
+            hooksecurefunc(cf, "AddMessage", function(self, text, ...)
+                if not self.sleekChatMessages then
+                    self.sleekChatMessages = {}
+                end
+                table.insert(self.sleekChatMessages, text)
+                -- Keep last 5000 messages
+                while #self.sleekChatMessages > 5000 do
+                    table.remove(self.sleekChatMessages, 1)
+                end
+            end)
+            cf.sleekChatHooked = true
+        end
+    end
+end
 
+-- Update OnEvent handler
 frame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         QoL:AutoRejoinChannels()
+        QoL:HookChatFrames()
     end
 end)

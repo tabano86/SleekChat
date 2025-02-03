@@ -71,13 +71,17 @@ function UIEnhancements:InitializeInputBehavior()
     end
 end
 
+-- Modules\UIEnhancements\UIEnhancements.lua
 function UIEnhancements:ApplyCustomFonts()
     local fontPath = SleekChat_Config.Get("ui", "fontPath")
     if fontPath and fontPath ~= "" then
+        local font = CreateFont("SleekChatCustomFont")
+        font:SetFont(fontPath, 14, "")
+
         for i = 1, NUM_CHAT_WINDOWS do
             local cf = _G["ChatFrame"..i]
             if cf then
-                cf:SetFont(fontPath, 14, "")
+                cf:SetFontObject("SleekChatCustomFont")
             end
         end
     end

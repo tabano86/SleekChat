@@ -53,7 +53,7 @@ function SleekChat_Config:InitializeDefaults()
             regexTriggers = { "%[Epic%]" },
             playSound = true,
             conditionalAlerts = {
-                { phrase = "Need tank", class = "WARRIOR", spec = nil }
+                { phrase = "Need tank", class = "WARRIOR" } -- Removed spec field
             }
         }
     end

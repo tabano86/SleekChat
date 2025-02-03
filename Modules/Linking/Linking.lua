@@ -49,14 +49,32 @@ function Linking:RegisterSlashCommands()
     end
 end
 
--- NOTE: This is a simplified implementation. In production, use WoW’s item/quest APIs.
+-- Modules\Linking\Linking.lua
 function Linking:FindItemIDByName(name)
-    for itemID = 1, 200000 do
-        local item = GetItemInfo(itemID)
-        if item and strlower(item) == strlower(name) then
-            return itemID
+    -- Check player's bags and bank
+    for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
+        for slot = 1, GetContainerNumSlots(bag) do
+            local itemID = GetContainerItemID(bag, slot)
+            if itemID then
+                local itemName = GetItemInfo(itemID)
+                if itemName and strlower(itemName) == strlower(name) then
+                    return itemID
+                end
+            end
         end
     end
+
+    -- Check equipped items
+    for slot = INVSLOT_FIRST_EQUIPPED, INVSLOT_LAST_EQUIPPED do
+        local itemID = GetInventoryItemID("player", slot)
+        if itemID then
+            local itemName = GetItemInfo(itemID)
+            if itemName and strlower(itemName) == strlower(name) then
+                return itemID
+            end
+        end
+    end
+
     return nil
 end
 

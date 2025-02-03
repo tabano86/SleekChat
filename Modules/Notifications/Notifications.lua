@@ -50,19 +50,22 @@ function Notifications:TriggerRegexAlert(pattern, msg)
     UIErrorsFrame:AddMessage(("Regex match [%s]: %s"):format(pattern, msg), 1.0, 0.5, 0.5, 53, 5)
 end
 
+-- Modules\Notifications\Notifications.lua
 local function OnChatEvent(self, event, msg, sender, ...)
     local conditions = SleekChat_Config.Get("notifications", "conditionalAlerts") or {}
+    local playerClass = select(2, UnitClass("player"))
+
     for _, cond in ipairs(conditions) do
-        local playerClass = select(2, UnitClass("player"))
-        local playerSpec = GetSpecialization() or 0
-        if (cond.class and cond.class == playerClass) or (cond.spec and cond.spec == playerSpec) then
+        if cond.class and cond.class == playerClass then
             if msg:lower():find(cond.phrase:lower(), 1, true) then
                 Notifications:TriggerAlert(cond.phrase, msg, sender, event)
             end
         end
     end
+
     CheckForKeywords(msg, sender, event)
     CheckForRegex(msg)
 end
+
 
 frame:SetScript("OnEvent", OnChatEvent)

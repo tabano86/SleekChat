@@ -7,12 +7,10 @@
 ## DefaultState: Enabled
 
 # Core
-Modules/CoreChat/CoreChat.xml
 Modules/CoreChat/CoreChat.lua
 Modules/CoreChat/CoreChatConfig.lua
 
 # UI Enhancements
-Modules/UIEnhancements/UIEnhancements.xml
 Modules/UIEnhancements/UIEnhancements.lua
 
 # Notifications
