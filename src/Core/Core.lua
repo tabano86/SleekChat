@@ -8,61 +8,47 @@ local Core = addon.Core
 function Core.GetDefaults()
     return {
         profile = {
-            enable = true,
             version = 6,
-            layout = "CLASSIC",
-            position = { point = "BOTTOMLEFT", relPoint = "BOTTOMLEFT", x = 50, y = 50 },
+            showDefaultChat = false,
+            debug = false,
+
+            -- UI layout
+            position = { point="BOTTOMLEFT", relPoint="BOTTOMLEFT", x=50, y=50 },
             width = 600,
-            height = 400,
-            tabWidth = 80,
-            inputHeight = 20,
-            classColors = true,
+            height= 500,
+            backgroundOpacity = 0.8,
+            darkMode = false,
+
+            -- Timestamps, pinned, advanced
             timestamps = true,
             timestampFormat = "[%H:%M]",
-            urlDetection = true,
-            enableNotifications = true,
+            enablePinning = true,
+            enableEmotes = false,
+            historySize = 1000,
+
+            -- Channels toggles
+            channels = {},
+
+            -- Chat appearance
             font = "Friz Quadrata",
             fontSize = 12,
-            historySize = 1000,
-            channels = {},  -- We store toggles here: channels["Trade"] = true
-            backgroundOpacity = 0.8,
-            debug = false,
-            showDefaultChat = false,
-            enablePinning = true,
-            enableAutoComplete = true,
             scrollSpeed = 3,
-            customFontColor = {1,1,1,1},
+
+            -- Threading
+            threadedReplies = true,
+
+            -- Mute / filter
+            profanityFilter = false,
+            muteList = {},
+
+            -- Combat fade
+            autoHideInCombat = false,
+
+            -- Notifications
+            enableNotifications = true,
             notificationSound = "None",
             soundVolume = 1.0,
             flashTaskbar = false,
-            messageHistory = {},
-            sidebarEnabled = false,
-            threadedReplies = false,
-            darkMode = false,
-            profanityFilter = false,
-            muteList = {},
-            customTabOrder = false,
-            tabRenaming = false,
-            autoCollapseTabs = false,
-            tabColor = {0.2, 0.2, 0.2, 0.8},
-            unreadBadge = false,
-            tabTooltips = false,
-            tabLocking = false,
-            smartTabGrouping = false,
-            dynamicTabScrolling = false,
-            tabNotificationSound = "None",
-            tabHistoryPreview = false,
-            tabFlashing = false,
-            tabFont = "Friz Quadrata",
-            tabFontSize = 12,
-            autoSwitchTab = false,
-            clearUnreadOnDoubleClick = false,
-            tabLockIcon = false,
-            dragDropFileSupport = false,
-            customHotkeys = "",
-            tabSessionPersistence = false,
-            animatedTabTransitions = false,
-            autoHideInCombat = false,
         },
     }
 end
@@ -78,7 +64,7 @@ local function SetupStaticPopup()
                     ChatFrame_OpenBrowser(data.url)
                 else
                     EditBox_CopyTextToClipboard(data.url)
-                    addon:PrintDebug(L.url_copied or ("URL copied: " .. data.url))
+                    addon:PrintDebug(L.url_copied or ("URL copied to clipboard: ".. data.url))
                 end
             end
         end,
@@ -91,23 +77,22 @@ local function SetupStaticPopup()
 end
 
 local function ApplyMigrations(addonObj)
-    if addonObj.db.profile.version < 5 then
-        addonObj.db.profile.autoHideInCombat = addonObj.db.profile.autoHideInCombat or false
-        addonObj.db.profile.version = 5
+    if addonObj.db.profile.version < 6 then
+        addonObj.db.profile.version = 6
     end
 end
 
 local function RegisterCommands(addonObj)
     addonObj:RegisterChatCommand("scstatus", function()
         addonObj:Print("SleekChat Status:")
-        addonObj:Print("Debug: " .. (addonObj.db.profile.debug and "ON" or "OFF"))
-        addonObj:Print("Default Chat Visible: " .. (addonObj.db.profile.showDefaultChat and "YES" or "NO"))
+        addonObj:Print("Debug: ".. (addonObj.db.profile.debug and "ON" or "OFF"))
+        addonObj:Print("Default Chat Visible: ".. (addonObj.db.profile.showDefaultChat and "YES" or "NO"))
     end)
 end
 
 function Core:Initialize(addonObj)
     if not addonObj.db then
-        error("Database not initialized!")
+        error("DB not initialized!")
         return
     end
     SetupStaticPopup()

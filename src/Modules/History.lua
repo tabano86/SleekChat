@@ -2,7 +2,7 @@ local _, addon = ...
 addon.History = {}
 local History = addon.History
 
-local function EnsureChannelTableExists(db, channel)
+local function EnsureChannel(db, channel)
     if not db.profile.messageHistory[channel] then
         db.profile.messageHistory[channel] = {}
     end
@@ -15,25 +15,24 @@ function History:Initialize(addonObj)
 end
 
 function History:AddMessage(text, sender, channel)
-    EnsureChannelTableExists(self.db, channel)
+    EnsureChannel(self.db, channel)
     table.insert(self.db.profile.messageHistory[channel], 1, {
         text=text,
         sender=sender,
         channel=channel,
         time=time(),
     })
-
-    -- Keep size in check
-    while #self.db.profile.messageHistory[channel] > self.maxSize do
-        table.remove(self.db.profile.messageHistory[channel])
+    local arr = self.db.profile.messageHistory[channel]
+    while #arr>self.maxSize do
+        table.remove(arr)
     end
 end
 
-function History:UpdateMaxSize(newSize)
-    self.maxSize = newSize
-    for ch, msgs in pairs(self.db.profile.messageHistory) do
-        while #msgs>newSize do
-            table.remove(msgs)
+function History:UpdateMaxSize(sz)
+    self.maxSize = sz
+    for ch, arr in pairs(self.db.profile.messageHistory) do
+        while #arr>sz do
+            table.remove(arr)
         end
     end
 end
