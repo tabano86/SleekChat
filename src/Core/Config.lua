@@ -244,32 +244,58 @@ function Config:Initialize(addonObj)
     local AceConfig = LibStub("AceConfig-3.0")
     local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 
-    -- Create scrollable options container
+    -- Improved scrollable options container
     local optionsFrame = CreateFrame("Frame", "SleekChatOptions", UIParent, "BasicFrameTemplateWithInset")
-    optionsFrame:SetSize(600, 500)
+    optionsFrame:SetSize(650, 550)
     optionsFrame:SetPoint("CENTER")
     optionsFrame:Hide()
+    optionsFrame:SetFrameStrata("DIALOG")
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, optionsFrame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", 4, -28)
-    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 4)
+    scrollFrame:SetPoint("TOPLEFT", 8, -32)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -28, 8)
 
     local scrollChild = CreateFrame("Frame")
+    scrollChild:SetSize(600, 900)
     scrollFrame:SetScrollChild(scrollChild)
-    scrollChild:SetSize(550, 800)
+
+    -- Add decorative elements
+    local header = optionsFrame:CreateTexture(nil, "ARTWORK")
+    header:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
+    header:SetSize(350, 64)
+    header:SetPoint("TOP", 0, 12)
+
+    local title = optionsFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", header, "TOP", 0, -14)
+    title:SetText("SleekChat Configuration")
 
     AceConfig:RegisterOptionsTable("SleekChat", GetOptions(addonObj))
     AceConfigDialog:SetDefaultSize("SleekChat", 600, 500)
     AceConfigDialog:Open("SleekChat", scrollChild)
 
-    -- Custom close button
+    -- Enhanced close button
     optionsFrame.closeBtn = CreateFrame("Button", nil, optionsFrame, "UIPanelCloseButton")
-    optionsFrame.closeBtn:SetPoint("TOPRIGHT", -4, -4)
-    optionsFrame.closeBtn:SetScript("OnClick", function() optionsFrame:Hide() end)
+    optionsFrame.closeBtn:SetSize(32, 32)
+    optionsFrame.closeBtn:SetPoint("TOPRIGHT", -6, -6)
+    optionsFrame.closeBtn:SetScript("OnClick", function()
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+        optionsFrame:Hide()
+    end)
+
+    -- Add category icons
+    local function AddCategoryIcon(panel, texture)
+        local icon = panel:CreateTexture(nil, "ARTWORK")
+        icon:SetTexture(texture)
+        icon:SetSize(64, 64)
+        icon:SetPoint("TOPLEFT", 10, 10)
+    end
+
+    AddCategoryIcon(optionsFrame, "Interface\\ICONS\\INV_Misc_Note_01")
 
     addonObj.ShowConfig = function()
         optionsFrame:Show()
         scrollFrame:SetVerticalScroll(0)
+        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
     end
 end
 

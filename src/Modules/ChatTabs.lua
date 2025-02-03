@@ -180,6 +180,32 @@ function ChatTabs:CreateTab(tabName, filters)
 
     self.tabButtons[index] = b
     self:UpdateTabLayout()
+
+    b:SetScript("OnEnter", function()
+        b:GetFontString():SetTextColor(1, 0.82, 0)
+        b:SetAlpha(1)
+        GameTooltip:SetOwner(b, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(tabName, 1, 1, 1)
+        GameTooltip:AddLine("Click to switch to this tab", 0.6, 0.6, 0.6)
+        GameTooltip:Show()
+    end)
+
+    b:SetScript("OnLeave", function()
+        b:GetFontString():SetTextColor(1, 1, 1)
+        b:SetAlpha(0.9)
+        GameTooltip:Hide()
+    end)
+
+    -- Active tab highlighting
+    b:SetScript("OnShow", function()
+        if self.activeTabIndex == index then
+            b:GetFontString():SetTextColor(0, 1, 0)
+            b:SetAlpha(1)
+        else
+            b:GetFontString():SetTextColor(1, 1, 1)
+            b:SetAlpha(0.8)
+        end
+    end)
 end
 
 function ChatTabs:SelectTab(index)

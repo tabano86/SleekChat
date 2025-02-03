@@ -167,6 +167,32 @@ function ChatFrame:Initialize(addonObj)
         self:FilterMessages(box:GetText())
     end)
 
+    -- Add chat frame border
+    local border = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    border:SetPoint("TOPLEFT", self.messageFrame, -5, 5)
+    border:SetPoint("BOTTOMRIGHT", self.messageFrame, 5, -5)
+    border:SetBackdrop({
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 16,
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
+    })
+    border:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8)
+
+    -- Add channel watermark
+    self.watermark = self.messageFrame:CreateFontString(nil, "BACKGROUND")
+    self.watermark:SetFontObject("GameFontNormalHuge")
+    self.watermark:SetTextColor(0.3, 0.3, 0.3, 0.4)
+    self.watermark:SetPoint("CENTER")
+    self.watermark:SetText(self.activeChannel)
+
+    -- Add scroll tracker
+    local scrollBar = CreateFrame("Slider", nil, self.messageFrame, "UIPanelScrollBarTemplate")
+    scrollBar:SetPoint("TOPRIGHT", self.messageFrame, "TOPRIGHT", -12, -16)
+    scrollBar:SetPoint("BOTTOMRIGHT", self.messageFrame, "BOTTOMRIGHT", -12, 16)
+    scrollBar:SetScript("OnValueChanged", function(_, value)
+        self.messageFrame:SetScrollOffset(value)
+    end)
+
     addonObj:PrintDebug("Teams-like chat UI initialized.")
 end
 
@@ -491,6 +517,11 @@ function ChatFrame:ApplyTheme()
     local dark= self.db.profile.darkMode
     local alpha= dark and 0.7 or (self.db.profile.backgroundOpacity or 0.8)
     self.mainFrame:SetBackdropColor(0,0,0, alpha)
+
+    -- Add theme-based text coloring
+    local textColor = dark and {r=0.8, g=0.8, b=0.8} or {r=0.1, g=0.1, b=0.1}
+    self.messageFrame:SetTextColor(textColor.r, textColor.g, textColor.b)
+    self.inputBox:SetTextColor(textColor.r, textColor.g, textColor.b)
 end
 
 function ChatFrame:SetChatFont()

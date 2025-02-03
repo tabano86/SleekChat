@@ -13,6 +13,9 @@ function Core.GetDefaults()
             debug= false,
             tabOrientation = "Horizontal",
             enablePinning = true,
+            chatLocked = false,
+            showWatermark = true,
+            animationSpeed = 0.3,
             unreadCounts = {},
             mentionKeywords = { "@" .. UnitName("player") },
 

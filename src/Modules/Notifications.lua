@@ -61,4 +61,19 @@ function Notifications:ShowWhisperAlert(sender, msg)
         frame:ClearAllPoints()
         frame:SetPoint("TOP", UIParent, "TOP", 0, -150 - ((i-1) * 45))
     end
+
+    local _, class = UnitClass(sender)
+    local color = RAID_CLASS_COLORS[class] or {r=0.4, g=0.4, b=1}
+    f:SetBackdropBorderColor(color.r, color.g, color.b, 0.8)
+
+    -- Add reply button
+    local replyBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
+    replyBtn:SetSize(80, 22)
+    replyBtn:SetPoint("RIGHT", f, -4, 0)
+    replyBtn:SetText("Reply")
+    replyBtn:SetScript("OnClick", function()
+        addon.ChatFrame:SwitchChannel("WHISPER")
+        addon.ChatFrame.inputBox:SetFocus()
+        f:Hide()
+    end)
 end
