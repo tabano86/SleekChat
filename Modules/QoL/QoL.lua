@@ -56,10 +56,10 @@ function QoL:AutoRejoinChannels()
     local channels = SleekChat_Config.Get("qol", "autoRejoinChannels") or {}
     for _, ch in ipairs(channels) do
         local idTable = { GetChannelList() }
-        local alreadyJoined = false
-        for i=1, #idTable, 2 do
-            local index, name = idTable[i], idTable[i+1]
-            if name:lower() == ch:lower() then
+        for i = 1, #idTable, 2 do
+            local index = idTable[i]
+            local name  = idTable[i+1]
+            if type(name) == "string" and name:lower() == ch:lower() then
                 alreadyJoined = true
                 break
             end

@@ -6,7 +6,15 @@
 local UIEnhancements = {}
 SleekChat_UIEnhancements = UIEnhancements
 
-local frame = CreateFrame("Frame", "SleekChatUIEnhFrame", UIParent)
+local f = CreateFrame("Frame", "SleekChatEnhFrame", UIParent, "BackdropTemplate")
+f:SetBackdrop({
+    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile     = true,
+    tileSize = 32,
+    edgeSize = 32,
+    insets   = { left=8, right=8, top=8, bottom=8 },
+})
 frame:RegisterEvent("PLAYER_LOGIN")
 
 -- For dynamic tab creation, we'll watch chat messages and possibly rearrange
@@ -78,7 +86,9 @@ function UIEnhancements:ApplyCustomFonts()
     for i = 1, NUM_CHAT_WINDOWS do
         local chatFrame = _G["ChatFrame"..i]
         if chatFrame then
-            chatFrame:SetFont(fontPath, 14)
+            if type(fontPath) == "string" and fontPath ~= "" then
+                chatFrame:SetFont(fontPath, 14, "")
+            end
         end
     end
 end

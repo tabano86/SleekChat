@@ -11,7 +11,6 @@
         <Anchors>
             <Anchor point="CENTER" />
         </Anchors>
-        <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"/>
         <Scripts>
             <OnLoad>
                 -- Stub: Could register for ADDON_LOADED if needed

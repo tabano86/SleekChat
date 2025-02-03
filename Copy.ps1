@@ -1,35 +1,55 @@
 param(
-    [string]$SourceDirectory = (Get-Location).Path
+    [string]$SourceDirectory = (Get-Location).Path,
+    [string[]]$ExcludeFiles = @()  # Provide partial or full names of files to exclude if desired
 )
 
+# This variable will store the final text that we place on the clipboard.
 $clipboardContent = ""
 
-Get-ChildItem -Path $SourceDirectory -Recurse -Include *.toc, *.md, *.lua -File |
-        Where-Object { $_.FullName -notmatch '(\\|/)Libs(\\|/)' } |
-        ForEach-Object {
-            # Build a relative path (including folder name) unless it's just the file name
-            $relativePath = $_.FullName.Replace($SourceDirectory, "")
-            $relativePath = $relativePath.TrimStart('\','/')
-
-            # If $relativePath is empty (root folder), just use the file name
-            if ([string]::IsNullOrWhiteSpace($relativePath)) {
-                $relativePath = $_.Name
+try {
+    # Recursively get files matching the specified extensions,
+    # excluding any files in "Libs" folders.
+    $files = Get-ChildItem -Path $SourceDirectory -Recurse -Include *.toc, *.md, *.lua -File |
+            Where-Object {
+                $_.FullName -notmatch '(\\|/)Libs(\\|/)' -and
+                        $ExcludeFiles -notcontains $_.Name
             }
 
-            $clipboardContent += "File: $relativePath" + [Environment]::NewLine
-            $clipboardContent += '```powershell'
-            $clipboardContent += (Get-Content -Path $_.FullName -Raw)
-            $clipboardContent += '```' + [Environment]::NewLine
+    if (-not $files) {
+        Write-Host "No content found to copy. No .toc, .md, or .lua files (outside Libs folders) in $SourceDirectory."
+        return
+    }
+
+    foreach ($file in $files) {
+        # Build a relative path by stripping out the source directory path.
+        $relativePath = $file.FullName.Substring($SourceDirectory.Length).TrimStart('\','/')
+        if ([string]::IsNullOrWhiteSpace($relativePath)) {
+            $relativePath = $file.Name
         }
 
-$clipboardContent += "" + [Environment]::NewLine
-$clipboardContent += "" + [Environment]::NewLine
+        # Append file header
+        $clipboardContent += "File: $relativePath" + [Environment]::NewLine
 
-# Only set the clipboard if we actually have content
-if ([string]::IsNullOrWhiteSpace($clipboardContent)) {
-    Write-Host "No content found to copy. No .toc, .md, or .lua files (outside Libs folders) in $SourceDirectory."
+        # Read file content safely, placing content in a code block
+        try {
+            $content = Get-Content -Path $file.FullName -Raw
+            $clipboardContent += '```powershell' + [Environment]::NewLine
+            $clipboardContent += $content + [Environment]::NewLine
+            $clipboardContent += '```' + [Environment]::NewLine
+        }
+        catch {
+            $clipboardContent += "Error reading file: $($_.Exception.Message)" + [Environment]::NewLine
+        }
+    }
+
+    # Only set clipboard if we have something to copy
+    if (-not [string]::IsNullOrWhiteSpace($clipboardContent)) {
+        Set-Clipboard -Value $clipboardContent
+        Write-Host "All relevant files (excluding 'Libs' folder) have been processed, and their contents have been copied to your clipboard."
+    } else {
+        Write-Host "No content found to copy after processing. Exclusion rules may have filtered out all files."
+    }
 }
-else {
-    Set-Clipboard -Value $clipboardContent
-    Write-Host "All relevant files (excluding 'Libs' folder) have been processed, and their contents have been copied to your clipboard."
+catch {
+    Write-Host "An unexpected error occurred: $($_.Exception.Message)"
 }
