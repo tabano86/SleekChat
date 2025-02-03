@@ -7,85 +7,92 @@ addon.Core = {}
 local Core = addon.Core
 
 function Core.GetDefaults()
+    -- Full user DB defaults, referencing new features (stubs + existing)
     return {
         profile = {
-            version = 20,
+            version = 21,
             showDefaultChat = false,
             debug = false,
-            tabOrientation = "Horizontal",
-            enablePinning = true,
-            chatLocked = false,
-            showWatermark = true,
-            animationSpeed = 0.3,
-            unreadCounts = {},
-            mentionKeywords = { "@" .. UnitName("player") },
-            position = { point = "CENTER", relPoint = "CENTER", x = 0, y = 0 },
-            width = 600,
-            height = 400,
+
+            -- Basic visual and theme settings
             backgroundOpacity = 0.8,
             darkMode = false,
-            timestamps = true,
-            timestampFormat = "[%H:%M]",
-            enableEmotes = false,
-            historySize = 2000,
-            channels = {},
             font = "Friz Quadrata",
             fontSize = 12,
             scrollSpeed = 3,
+            timestamps = true,
+            timestampFormat = "[%H:%M]",
+
+            -- Behavior
+            autoHideInCombat = false,
+            enablePinning = true,
+            chatLocked = false,
+            autoRejoinChannels = true,
+
+            -- Expanded advanced linking / item display
+            advancedLinkingEnabled = true,
+
+            -- Regex-based filter
+            regexFilters = {},
+
+            -- Notification & alerts
             enableNotifications = true,
             notificationSound = "None",
             soundVolume = 1.0,
             flashTaskbar = false,
-            profanityFilter = false,
+
+            -- Mute / spam
             muteList = {},
-            autoHideInCombat = false,
-            messageHistory = {},
-            -- For dynamic tab management:
+            blockedKeywords = { "badword1", "badword2" },
+
+            -- Tabs & channels
             tabs = {
-                { name = "General", filters = { SAY=true, YELL=true, PARTY=true, RAID=true, GUILD=true, WHISPER=true } },
-                { name = "Combat", filters = { COMBAT=true, RAIDWARNING=true, MONSTER=true, BOSS=true } },
-                { name = "System", filters = { SYSTEM=true } },
-                { name = "All", filters = {} },
+                {
+                    name = "General",
+                    filters = { SAY=true, YELL=true, PARTY=true, RAID=true, GUILD=true, WHISPER=true },
+                },
+                {
+                    name = "Combat",
+                    filters = { COMBAT=true, RAIDWARNING=true, MONSTER=true, BOSS=true },
+                },
+                {
+                    name = "System",
+                    filters = { SYSTEM=true },
+                },
+                {
+                    name = "All",
+                    filters = {},
+                },
             },
+            tabOrientation = "Horizontal",
+
+            -- Chat history
+            historySize = 2000,
+            messageHistory = {},
+
+            -- Additional placeholders
+            pinnedMessages = {},
+            mentionKeywords = { "@" .. (UnitName("player") or "Player") },
+            unreadCounts = {},
+            channels = {},     -- Extra user-defined channels
+            position = { point="CENTER", relPoint="CENTER", x=0, y=0 },
+            width = 600,
+            height = 400,
         },
     }
 end
 
-local function SetupStaticPopup()
-    StaticPopupDialogs["SLEEKCHAT_URL_DIALOG"] = {
-        text = L.open_url_dialog or "Open URL:",
-        button1 = L.open or "Open",
-        button2 = L.cancel or "Cancel",
-        OnAccept = function(self, data)
-            if data and data.url then
-                if ChatFrame_OpenBrowser then
-                    ChatFrame_OpenBrowser(data.url)
-                else
-                    EditBox_CopyTextToClipboard(data.url)
-                end
-            end
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        hasEditBox = false,
-        preferIndex = 3,
-    }
-end
-
-local function ApplyMigrations(addonObj)
-    if addonObj.db.profile.version < 20 then
-        if not addonObj.db.profile.messageHistory then
-            addonObj.db.profile.messageHistory = {}
-        end
-        addonObj.db.profile.version = 20
+local function ApplyMigrations(db)
+    if db.profile.version < 21 then
+        -- Example migration
+        db.profile.version = 21
     end
 end
 
 local function RegisterCommands(addonObj)
     addonObj:RegisterChatCommand("sleekchat", function(input)
         if input and input ~= "" then
-            addonObj:Print("Unknown command: " .. input)
+            addonObj:Print(L.unknown_command .. ": " .. input)
         else
             addonObj.ShowConfig()
         end
@@ -94,8 +101,8 @@ end
 
 function Core:Initialize(addonObj)
     if not addonObj.db then error("DB not ready!") end
-    SetupStaticPopup()
-    ApplyMigrations(addonObj)
+    ApplyMigrations(addonObj.db)
+
     RegisterCommands(addonObj)
 end
 

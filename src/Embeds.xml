@@ -4,29 +4,39 @@
     <Script file="Libs\AceAddon-3.0\AceAddon-3.0.lua"/>
     <Script file="Libs\AceDB-3.0\AceDB-3.0.lua"/>
     <Script file="Libs\AceConfig-3.0\AceConfig-3.0.lua"/>
-    <Script file="Libs\AceConfigDialog-3.0\AceConfigDialog-3.0.lua"/>
+    <Script file="Libs/AceConfig-3.0\AceConfigDialog-3.0\AceConfigDialog-3.0.lua"/>
     <Script file="Libs\AceConsole-3.0\AceConsole-3.0.lua"/>
     <Script file="Libs\AceEvent-3.0\AceEvent-3.0.lua"/>
     <Script file="Libs\AceTimer-3.0\AceTimer-3.0.lua"/>
     <Script file="Libs\AceLocale-3.0\AceLocale-3.0.lua"/>
-    <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
+    <Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 
     <!-- Localization -->
     <Include file="Locales\enUS.lua"/>
 
-    <!-- Core modules -->
+    <!-- Core Modules -->
     <Include file="Core\Core.lua"/>
     <Include file="Core\Config.lua"/>
     <Include file="Core\Events.lua"/>
 
-    <!-- Additional modules -->
+    <!-- Hooks & Integration -->
     <Include file="Modules\Hooks.lua"/>
+    <Include file="Modules\Integration.lua"/>
+
+    <!-- Chat & Filtering Modules -->
     <Include file="Modules\History.lua"/>
     <Include file="Modules\ChatModeration.lua"/>
     <Include file="Modules\Notifications.lua"/>
-    <Include file="Modules\Integration.lua"/>
-    <Include file="Modules\AdvancedMessaging.lua"/>
-    <Include file="Modules\ChatTabs.lua"/>
+    <Include file="Modules\AdvancedLinking.lua"/>
+    <Include file="Modules\RegexFilter.lua"/>
+    <Include file="Modules\AutoHide.lua"/>
+
+    <!-- UI Modules -->
     <Include file="Modules\ChatFrame.lua"/>
+    <Include file="Modules\ChatTabs.lua"/>
+    <Include file="Modules\ChannelRejoin.lua"/>
     <Include file="Modules\Search.lua"/>
+
+    <!-- Main Addon File -->
+    <Script file="SleekChat.lua"/>
 </Ui>

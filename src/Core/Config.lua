@@ -34,36 +34,15 @@ local function CreateGeneralOptions(addonObj)
                     addonObj:Print(val and L.debug_enabled or L.debug_disabled)
                 end,
             },
-            timestamps = {
-                name = L.timestamps,
-                desc = L.timestamps_desc,
+            autoRejoinChannels = {
+                name = "Auto-Rejoin Channels",
+                desc = "Automatically rejoin user-defined channels when logging in",
                 type = "toggle",
                 order = 3,
-                get = function() return addonObj.db.profile.timestamps end,
+                get = function() return addonObj.db.profile.autoRejoinChannels end,
                 set = function(_, val)
-                    addonObj.db.profile.timestamps = val
+                    addonObj.db.profile.autoRejoinChannels = val
                 end,
-            },
-            timestampFormat = {
-                name = L.timestamp_format,
-                desc = L.timestamp_format_desc,
-                type = "input",
-                order = 4,
-                get = function() return addonObj.db.profile.timestampFormat end,
-                set = function(_, val)
-                    if pcall(date, val) then
-                        addonObj.db.profile.timestampFormat = val
-                    else
-                        addonObj:Print(L.invalid_format)
-                    end
-                end,
-            },
-            autoHideInCombat = {
-                name = "Auto-Hide In Combat",
-                type = "toggle",
-                order = 5,
-                get = function() return addonObj.db.profile.autoHideInCombat end,
-                set = function(_, val) addonObj.db.profile.autoHideInCombat = val end,
             },
         },
     }
@@ -150,7 +129,6 @@ local function CreateNotificationsOptions(addonObj)
                 get = function() return addonObj.db.profile.notificationSound end,
                 set = function(_, val)
                     addonObj.db.profile.notificationSound = val
-                    if val ~= "None" then PlaySoundFile(SM:Fetch("sound", val)) end
                 end,
             },
             soundVolume = {

@@ -1,172 +1,183 @@
-Below is a final, comprehensive README that covers an extensive array of quality‑of‑life (QoL) features—all within the chat domain—for a WoW Classic plugin. Every feature is designed to work strictly within Blizzard’s policies and WoW Classic’s API limitations, enhancing the chat experience without stepping outside its domain.
+Below is an updated README that not only describes the feature set and integration strategy for SleekChat v2.0 but also outlines the overall project architecture, directory structure, and considerations for extensibility, CI/CD, and modularity. This design is intended to support a robust, maintainable addon that can grow over time while strictly remaining within the WoW Classic API and Blizzard policies.
 
 * * *
 
-**SleekChat v2.0 – The Ultimate Chat Enhancement for WoW Classic**
-==================================================================
+**SleekChat v2.0 – Enhancing WoW Classic Chat (Not Replacing It!)**
+===================================================================
 
-SleekChat v2.0 is a modular, lightweight addon that reimagines the WoW Classic chat experience. By extending the native chat functionality—without replacing or conflicting with it—SleekChat delivers a rich set of features tailored specifically for chat users. It integrates with popular addons and preserves user settings automatically, ensuring a seamless and compliant upgrade to your chat system.
-
-* * *
-
-**Core Goals & Feasibility**
-----------------------------
-
-*   **Chat Domain Focus:**  
-    All features strictly enhance chat functionality—from dynamic organization and smart filtering to advanced linking and contextual actions—without venturing into external domains.
-
-*   **Seamless Integration:**  
-    Hooks into the default chat system and popular addons (Prat 3.0, WIM, BadBoy, etc.) using Blizzard-approved methods.
-
-*   **Automatic Settings Persistence:**  
-    User configurations (tabs, filters, themes, and more) are saved and migrated across updates.
-
-*   **Policy‑Compliant:**  
-    No automated message sending or external data transfers; all functionality is implemented using in‑game data and approved API calls.
-
+SleekChat v2.0 is a modular, lightweight addon that builds on top of WoW Classic’s default chat system. Our goal is to extend and enhance the existing chat functionality—improving dynamic tab management, filtering, advanced linking, and many other quality‑of‑life features—without replacing the built‑in chat app. By using approved API hooks and a modular architecture, SleekChat integrates seamlessly with the default system and with popular addons like Prat 3.0, WIM, and BadBoy.
 
 * * *
 
-**Key Chat Enhancements**
--------------------------
+**Core Goals & Integration Strategy**
+-------------------------------------
 
-### **A. Core Chat Organization & UI Improvements**
+*   **Enhance, Don’t Replace:**
 
-*   **Dynamic Tab & Channel Management:**
-    *   Create, rename, reorder, and manage chat tabs.
-    *   Smart routing of whispers, combat logs, and system messages.
-*   **Auto‑Hiding Input Bar & Resizable Windows:**
-    *   Input bar appears only on typing.
-    *   Chat frames are draggable, resizable, and snap-to-edge.
-*   **Custom Font & Theme Options:**
-    *   Choose between Dark Mode, custom color schemes, and scalable fonts.
-*   **Message Pinning & Extended Scrollback:**
-    *   Pin important messages temporarily.
-    *   Increase the scrollback buffer length within session limits.
-*   **Auto‑Rejoin Channels:**
-    *   Automatically rejoin preferred channels (LFG, Trade, etc.) on login.
-*   **Tab‑Specific Mute & Prioritization:**
-    *   Mute or emphasize specific channels as desired.
+    *   **Default Chat Preservation:** Our addon hooks into existing chat frames to add new features while keeping all native behaviors intact.
+    *   **Seamless Hooking:** Features such as advanced linking, smart filtering, and dynamic UI adjustments overlay the default system using Blizzard‑approved API calls.
+*   **Policy‑Compliant Enhancements:**
 
-### **B. Smart Notifications & Filtering**
+    *   All data and functions use in‑game APIs, saved variables, and approved UI modification methods.
+    *   No automated messaging, external data transfers, or violations of Blizzard’s secure frame rules.
+*   **Automatic Settings Persistence:**
 
-*   **Customizable Ping Alerts:**
-    *   Audio/visual alerts based on channels, keywords, or regex patterns.
-*   **Regex‑Based Filtering & Keyword Highlighting:**
-    *   Define custom rules to highlight or suppress specific text patterns.
-*   **Anti‑Spam Integration:**
-    *   Works with addons like BadBoy to filter spam and gold seller messages.
-*   **Guild & Raid Announcement Pinning:**
-    *   Keep critical messages visible for the entire session.
+    *   User settings (tab layouts, filters, themes, linking preferences, etc.) are stored in saved variables and automatically migrated across updates.
+    *   Integration with other addons is auto‑detected at startup, eliminating manual configuration via slash commands.
 
-### **C. Advanced Linking & In‑Chat Integrations (15+ Must‑Have Features)**
+* * *
 
-1.  **Character Linking:**
-    *   Click a player’s name to display a profile snippet (class, level, notes).
-2.  **Enhanced Item Linking:**
-    *   Improved tooltips for items, with extra details (stats, quality, etc.).
-3.  **Achievement Linking:**
-    *   Rich tooltips showing progress and details when linking achievements.
-4.  **Profession Linking:**
-    *   Hover on linked professions to view known tradeskills and recipes.
-5.  **Custom Link Filters:**
-    *   Define filters to suppress duplicate links or emphasize rare items.
-6.  **Quick Hyperlink Copy/Paste:**
-    *   One-click copy of item, achievement, or character links from chat.
-7.  **In‑Chat Linking Commands:**
-    *   Slash commands like `/linkchar` or `/linkitem` to quickly insert formatted links.
-8.  **In‑Chat Character Bio Display:**
-    *   Hovering over a name can optionally show a short bio or note (if configured).
-9.  **Auto‑Formatting of Gear Links:**
-    *   Color coding and formatting based on item rarity.
-10.  **Auction House Lookup Integration:**
-     *   Quick AH addon lookup options embedded in item links.
-11.  **Social Context Menu for Links:**
-     *   Right‑click on names for quick actions (add friend, invite, report).
-12.  **Chat Bubble Link Enhancement:**
-     *   Clickable links in chat bubbles following Blizzard’s tooltip standards.
-13.  **Cross‑Tab Message Linking:**
-     *   Copy unique identifiers from messages to reference them across tabs.
-14.  **Quick Link Export:**
-     *   Export chat logs with active hyperlinks (formatted as plain text or HTML).
-15.  **Advanced Linking Shortcuts:**
-     *   Commands like `/lastchar` to generate a link for your most recent character.
-16.  **Emoji & Emote Formatting:**
-     *   Enhance and format emotes in chat for better visibility.
-17.  **Clickable Channel Aliases:**
-     *   Define and click custom aliases for channels (e.g., “LFG” for LookingForGroup).
-18.  **Hyperlink History Navigation:**
-     *   A feature to quickly navigate between previously clicked links.
-19.  **Link Bookmarking:**
-     *   Save important links for later review during a session.
-20.  **Enhanced Tooltip Comparison:**
-     *   When hovering over item links, compare similar items (if data is available).
+**Key Feature Categories (All Within the Chat Domain)**
+-------------------------------------------------------
 
-### **D. Additional Chat Quality‑of‑Life Features (15+ Additions)**
+**A. Core Chat Organization & UI Improvements**
 
-1.  **In‑Chat Search & Filtering:**
-    *   Search history instantly using an in‑chat search box.
-2.  **Custom Scroll Speed Control:**
-    *   Adjust scroll speed to match your reading pace.
-3.  **Chat Log Export/Import:**
-    *   Manual export of chat history for archival purposes.
-4.  **Timestamp Customization:**
-    *   Options for 12‑hour/24‑hour formats, and server/local time displays.
-5.  **Inactivity Timer & Auto‑AFK Indicator:**
-    *   Visual cues for when you’re idle.
-6.  **Clickable Player Names for Quick Actions:**
-    *   Quickly whisper, invite, or report by clicking names.
-7.  **Auto‑Scroll Lock Toggle:**
-    *   Pause auto-scrolling in busy channels to catch up on messages.
-8.  **Enhanced Emote Display:**
-    *   Differentiate emotes with distinct formatting or color.
-9.  **Guild Roster Quick Access:**
-    *   A clickable icon in chat to instantly open the guild roster.
-10.  **Channel Filter Presets:**
-     *   Predefined filters to quickly switch between views (e.g., “Guild Only”).
-11.  **Custom Sound Cues:**
-     *   Assign unique sound effects for specific keywords or events.
-12.  **In‑Chat Macro Buttons:**
-     *   Clickable buttons in the chat frame for common commands.
-13.  **Unread Message Badges:**
-     *   Visual badges on tabs indicating unread messages.
-14.  **Conversation Bookmarking:**
-     *   Mark specific moments in chat to return to later.
-15.  **Enhanced Chat Bubble Transparency & Borders:**
-     *   Customize the look of chat bubbles for better readability.
+*   Dynamic Tab & Channel Management
+*   Auto‑Hiding Input Bar & Resizable Windows
+*   Custom Font & Theme Options
+*   Message Pinning & Extended Scrollback
+*   Auto‑Rejoin Preferred Channels
+*   Tab‑Specific Mute & Prioritization
+
+**B. Smart Notifications & Filtering**
+
+*   Customizable Ping Alerts & Regex‑Based Keyword Highlighting
+*   Anti‑Spam & LFG/Trade Filtering (integrated with BadBoy)
+*   Guild & Raid Announcement Pinning
+
+**C. Advanced Linking & In‑Chat Integrations (20+ Features)**
+
+*   Character, Item, Achievement, and Profession Linking
+*   Custom Link Filters & Hyperlink Copy/Paste
+*   In‑Chat Linking Commands and Shortcut Generation
+*   Social Context Menus and Auction House Lookup Integration
+*   Enhanced Tooltip Comparison and Link Bookmarking
+
+**D. Additional Chat Quality‑of‑Life Features (15+ Enhancements)**
+
+*   In‑Chat Search & Filtering, Custom Scroll Speed
+*   Chat Log Export/Import and Timestamp Customization
+*   Inactivity Timer, Clickable Names, and Auto‑Scroll Lock
+*   Enhanced Emote Display and Guild Roster Quick Access
+*   Channel Filter Presets, Custom Sound Cues, Macro Buttons, etc.
+
+**E. Future Roadmap (Planned Enhancements as Modules)**
+
+*   Enhanced Combat Log Grouping
+*   Loot Spam Management
+*   Advanced Raid Coordination Tools
+*   Expanded UI Themes & Customization
+*   Advanced Manual Chat Log Export
+
+* * *
+
+**Project Architecture & Structure**
+------------------------------------
+
+To ensure extensibility and maintainability, each feature group is developed as a separate module. This modular design allows for independent development, testing, and CI/CD integration.
+
+### **Languages & Technologies**
+
+*   **Lua:** Primary scripting language for WoW addons.
+*   **XML:** Used for defining UI layouts and frames.
+*   **YAML/JSON:** For CI/CD configuration (e.g., GitHub Actions).
+*   **Documentation:** Markdown files for developer and user guides.
+
+### **Directory Structure**
+
+```
+SleekChat/
+├── README.md                   # Project overview, features, and usage instructions.
+├── LICENSE                     # Open-source license file.
+├── .github/                    
+│   └── workflows/
+│       └── ci.yml              # CI/CD pipeline configuration for linting and tests.
+├── docs/                       
+│   ├── Architecture.md         # Detailed architectural decisions and module integration.
+│   └── FeatureModules.md       # Documentation on each feature module.
+├── Modules/                    
+│   ├── CoreChat/               # Core chat enhancements module.
+│   │   ├── CoreChat.lua
+│   │   ├── CoreChat.xml
+│   │   └── CoreChatConfig.lua
+│   ├── UIEnhancements/         # UI improvements module.
+│   │   ├── UIEnhancements.lua
+│   │   └── UIEnhancements.xml
+│   ├── Notifications/          # Custom notifications & filtering.
+│   │   └── Notifications.lua
+│   ├── Linking/                # Advanced linking and in‑chat integrations.
+│   │   └── Linking.lua
+│   ├── QoL/                    # Additional chat quality‑of‑life features.
+│   │   └── QoL.lua
+│   └── FutureRoadmap/          # Placeholder modules for future features.
+│       └── CombatLogEnhancement.lua
+├── Config/                     
+│   └── Config.lua              # Global configuration and settings management.
+├── SavedVariables/             
+│   └── SleekChat.lua           # Saved variables file for persistent user settings.
+└── Assets/                     
+    ├── Icons/                  # Iconography for UI enhancements.
+    └── Themes/                 # Theme and color scheme assets.
+
+```
+
+
+### **Extensibility & CI/CD**
+
+*   **Modular Development:** Each module resides under `Modules/` and is designed to be independent. New features can be added as separate modules and integrated via a central configuration.
+*   **CI/CD Pipeline:**
+    *   **GitHub Actions:** A CI pipeline (`.github/workflows/ci.yml`) runs linting (using Lua linters) and basic tests (if applicable) on each push to ensure code quality.
+    *   **Automated Tests:** Where possible, non‑UI logic is unit tested.
+*   **Documentation:** Detailed architecture and feature-specific documentation are maintained in the `docs/` directory.
+*   **Versioning:** Semantic versioning is applied, and release notes are generated to track changes, including migration of user settings between updates.
 
 * * *
 
 **Installation & Setup**
 ------------------------
 
-1.  **Download & Install:**
-    *   Copy the `SleekChat` folder into your `Interface/AddOns` directory.
-2.  **Launch WoW:**
-    *   SleekChat automatically detects your installed addons and configures itself at startup—no manual slash commands required.
-3.  **Enjoy the Upgraded Chat Experience:**
-    *   All settings and QoL features activate immediately, preserving your preferences and enhancing every chat interaction.
+1.  **Download & Install:**  
+    Copy the entire `SleekChat` folder into your `Interface/AddOns` directory.
+
+2.  **Launch WoW:**  
+    On startup, SleekChat auto‑detects installed addons and integrates with the default chat system. No manual slash commands are required—the addon applies all enhancements automatically.
+
+3.  **Enjoy the Enhanced Experience:**  
+    Your chat now includes advanced tab management, smart filtering, enhanced linking, and many quality‑of‑life improvements, all while preserving native chat functionality.
+
 
 * * *
 
-**Future Roadmap**
-------------------
+**Future Roadmap (as Features/Modules)**
+----------------------------------------
 
-*   **Enhanced Combat Log Grouping:**
-    *   Smarter filtering and grouping for combat-related messages.
-*   **Loot Spam Management:**
-    *   Further options to filter repetitive loot messages.
-*   **Raid Coordination Enhancements:**
-    *   Tools to better organize raid leader communications.
-*   **Expanded UI Themes & Customization:**
-    *   More options based on community feedback.
-*   **Advanced Manual Chat Log Export:**
-    *   Refinements for a more robust archival system with full hyperlink support.
+*   **Enhanced Combat Log Grouping:**  
+    Smarter filtering and grouping for combat messages.
+*   **Loot Spam Management:**  
+    Additional options for filtering repetitive loot messages.
+*   **Raid Coordination Tools:**  
+    Advanced features for organizing raid leader communications.
+*   **Expanded UI Themes & Customization:**  
+    More visual options and theme support.
+*   **Advanced Manual Chat Log Export:**  
+    Richer archival options with full hyperlink support.
 
 * * *
 
 **Conclusion**
 --------------
 
-SleekChat v2.0 delivers a complete suite of chat-focused QoL enhancements for WoW Classic. Every feature—from dynamic tab management and regex‑based filtering to advanced linking (character, item, achievement, profession) and an array of additional in‑chat conveniences—stays entirely within the chat domain and adheres to Blizzard’s policies. This comprehensive enhancement promises a cleaner, more organized, and highly interactive chat experience for both WoW veterans and new players alike.
+SleekChat v2.0 is a fully feasible, policy‑compliant enhancement that integrates with and builds upon the default WoW Classic chat system. Its modular architecture, extensive feature set, and robust CI/CD practices ensure a maintainable, extensible addon that will continue to evolve. Whether you’re a WoW Classic veteran or a new player, SleekChat provides a smarter, more connected chat experience—without reinventing the wheel.
 
+* * *
+
+💬 **Join the Community & Contribute**  
+Visit our [GitHub Repository](#) for updates, issue tracking, and contributions.
+
+* * *
+
+### **Have We Thought of Everything?**
+
+Within the chat domain, our architecture covers every key aspect—from dynamic UI enhancements and advanced linking to comprehensive QoL improvements and a clear future roadmap. Our modular design means we can add features as needed while preserving the default chat system’s integrity. Enjoy a smarter, more connected chat experience with SleekChat v2.0!
+
+* * *

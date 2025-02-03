@@ -7,5 +7,3 @@
 ## Dependencies: Ace3, LibSharedMedia-3.0
 
 Embeds.xml
-
-SleekChat.lua

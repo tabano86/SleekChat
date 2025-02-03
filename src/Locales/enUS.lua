@@ -1,5 +1,6 @@
 local L = LibStub("AceLocale-3.0"):NewLocale("SleekChat", "enUS", true, true)
 
+-- Basic
 L.addon_loaded = "SleekChat v%s loaded"
 L.general_settings = "General Settings"
 L.show_default_chat = "Show Default Chat"
@@ -31,4 +32,6 @@ L.sound_volume = "Sound Volume"
 L.sound_volume_desc = "Volume for notifications"
 L.flash_taskbar = "Flash Taskbar"
 L.whisper_notification = "New whisper from %s"
+L.unknown_command = "Unknown command"
+
 return L

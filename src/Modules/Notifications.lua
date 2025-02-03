@@ -14,29 +14,39 @@ end
 function Notifications:ShowWhisperAlert(sender, msg)
     if not self.db.profile.enableNotifications then return end
     if self.db.profile.notificationSound and self.db.profile.notificationSound ~= "None" then
-        PlaySoundFile(SM:Fetch("sound", self.db.profile.notificationSound), "Master", self.db.profile.soundVolume or 1.0)
-        if addon.AdvancedMessaging:IsMentioned(msg) then
+        PlaySoundFile(SM:Fetch("sound", self.db.profile.notificationSound), "Master")
+        if addon.AdvancedMessaging and addon.AdvancedMessaging:IsMentioned(msg) then
+            -- Extra beep for mention
             PlaySoundFile(SM:Fetch("sound", "UI_Quest_Log_Open"), "Master")
         end
     end
-    if self.db.profile.flashTaskbar then FlashClientIcon() end
+    if self.db.profile.flashTaskbar then
+        FlashClientIcon()
+    end
+
     local f = CreateFrame("Button", nil, UIParent, "BackdropTemplate")
     f:SetFrameStrata("DIALOG")
     f:SetSize(300, 40)
     f:SetPoint("TOP", 0, -150)
-    f:SetBackdrop({ bgFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 16 })
+    f:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 16,
+    })
     f:SetBackdropColor(0, 0, 0, 0.8)
     local txt = f:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    txt:SetPoint("TOPLEFT")
+    txt:SetPoint("CENTER")
     txt:SetText(string.format(L.whisper_notification, sender))
+
     f:SetScript("OnClick", function()
         if addon.ChatFrame and addon.ChatFrame.SwitchChannel then
             addon.ChatFrame:SwitchChannel("WHISPER")
         end
         f:Hide()
     end)
-    UIFrameFadeOut(f, 5, 1, 0)
-    f:SetScript("OnFadeComplete", function() f:Hide() end)
-end
 
-return Notifications
+    C_Timer.After(5, function()
+        UIFrameFadeOut(f, 1, 1, 0)
+        C_Timer.After(1, function() if f then f:Hide() end end)
+    end)
+end

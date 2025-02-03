@@ -14,13 +14,20 @@ local DEFAULT_FONT = "Fonts\\FRIZQT__.TTF"
 function ChatFrame:Initialize(addonObj)
     self.addonObj = addonObj
     self.db = addonObj.db
-    self.pinnedMessages = {}
+    self.pinnedMessages = self.db.profile.pinnedMessages or {}
     self.activeChannel = "ALL"
 
+    -- Create main frame
     local f = CreateFrame("Frame", "SleekChat_MainFrame", UIParent, "BackdropTemplate")
     self.mainFrame = f
     f:SetSize(self.db.profile.width, self.db.profile.height)
-    f:SetPoint(self.db.profile.position.point, UIParent, self.db.profile.position.relPoint, floor(self.db.profile.position.x), floor(self.db.profile.position.y))
+    f:SetPoint(
+            self.db.profile.position.point,
+            UIParent,
+            self.db.profile.position.relPoint,
+            floor(self.db.profile.position.x),
+            floor(self.db.profile.position.y)
+    )
     f:SetMovable(true)
     f:SetResizable(true)
     f:EnableMouse(true)
@@ -29,10 +36,13 @@ function ChatFrame:Initialize(addonObj)
     f:SetScript("OnDragStop", function()
         f:StopMovingOrSizing()
         local point, _, relPoint, x, y = f:GetPoint()
-        self.db.profile.position = { point = point, relPoint = relPoint, x = x, y = y }
+        self.db.profile.position = { point=point, relPoint=relPoint, x=x, y=y }
     end)
-    if f.SetResizeBounds then f:SetResizeBounds(400, 250) end
+    if f.SetResizeBounds then
+        f:SetResizeBounds(400, 250)
+    end
 
+    -- Resize handle
     local resize = CreateFrame("Button", nil, f)
     resize:SetSize(16, 16)
     resize:SetPoint("BOTTOMRIGHT")
@@ -45,11 +55,12 @@ function ChatFrame:Initialize(addonObj)
         self:LayoutFrames()
     end)
 
+    -- Background
     f:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
         edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+        insets = { left=4, right=4, top=4, bottom=4 },
     })
     f:SetBackdropColor(0, 0, 0, self.db.profile.backgroundOpacity or 0.8)
 
@@ -58,7 +69,11 @@ function ChatFrame:Initialize(addonObj)
     self.sidebar:SetPoint("TOPLEFT", f, "TOPLEFT", 4, -4)
     self.sidebar:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 4, 4)
     self.sidebar:SetWidth(120)
-    self.sidebar:SetBackdrop({ bgFile = "Interface\\ChatFrame\\ChatFrameBackground", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 12 })
+    self.sidebar:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+    })
     self.sidebar:SetBackdropColor(0, 0, 0, 0.9)
 
     local sf = CreateFrame("ScrollFrame", nil, self.sidebar, "UIPanelScrollFrameTemplate")
@@ -82,22 +97,30 @@ function ChatFrame:Initialize(addonObj)
     msg:EnableMouseWheel(true)
     msg:SetScript("OnMouseWheel", function(_, delta)
         local scrollSpeed = self.db.profile.scrollSpeed or 3
-        if IsShiftKeyDown() then scrollSpeed = scrollSpeed * 3 end
-        if delta > 0 then msg:ScrollUp(scrollSpeed) else msg:ScrollDown(scrollSpeed) end
+        if IsShiftKeyDown() then
+            scrollSpeed = scrollSpeed * 3
+        end
+        if delta > 0 then
+            msg:ScrollUp(scrollSpeed)
+        else
+            msg:ScrollDown(scrollSpeed)
+        end
     end)
     msg:SetScript("OnHyperlinkClick", function(_, link)
         local linkType, val = strsplit(":", link, 2)
-        if linkType == "url" then self:HandleURL(val) end
+        if linkType == "url" then
+            self:HandleURL(val)
+        end
     end)
 
-    -- Bottom input box (hidden until activated)
+    -- Input box (hidden by default)
     local edit = CreateFrame("EditBox", "SleekChat_InputBox", f, "InputBoxTemplate")
     self.inputBox = edit
     edit:SetAutoFocus(false)
     edit:SetHeight(24)
     edit:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 8, 8)
     edit:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -8, 8)
-    edit:Hide() -- hide by default
+    edit:Hide()
     edit:SetScript("OnEnterPressed", function(box)
         local text = box:GetText() and box:GetText():trim()
         if text and text ~= "" then
@@ -105,32 +128,37 @@ function ChatFrame:Initialize(addonObj)
         end
         box:SetText("")
         box:ClearFocus()
-        box:Hide()  -- hide input after sending
+        box:Hide()
     end)
 
-    -- Clicking the chat frame will show the input box
-    f:SetScript("OnMouseDown", function() edit:Show() edit:SetFocus() end)
+    -- Clicking on the main frame to show input
+    f:SetScript("OnMouseDown", function()
+        edit:Show()
+        edit:SetFocus()
+    end)
 
     self:LayoutFrames()
     self:SetChatFont()
     self:ApplyTheme()
     self:BuildChannelList()
 
-    -- Settings icon embedded inside chat window (top-right corner)
+    -- Quick settings button
     local settingsBtn = CreateFrame("Button", nil, f, "UIPanelButtonTemplate")
     settingsBtn:SetSize(24, 24)
     settingsBtn:SetPoint("TOPRIGHT", f, "TOPRIGHT", -4, -4)
     settingsBtn:SetText("⚙")
-    settingsBtn:SetScript("OnClick", function() addon.ShowConfig() end)
+    settingsBtn:SetScript("OnClick", function()
+        addon.ShowConfig()
+    end)
 
-    -- Watermark for active channel
+    -- Watermark
     self.watermark = self.messageFrame:CreateFontString(nil, "BACKGROUND")
     self.watermark:SetFontObject("GameFontNormalHuge")
     self.watermark:SetTextColor(0.3, 0.3, 0.3, 0.4)
     self.watermark:SetPoint("CENTER")
     self.watermark:SetText(self.activeChannel)
 
-    addon:PrintDebug("SleekChat v2.0 chat UI initialized.")
+    addonObj:PrintDebug("SleekChat v2.0 chat UI initialized.")
 end
 
 function ChatFrame:LayoutFrames()
@@ -159,7 +187,9 @@ function ChatFrame:BuildChannelList()
         btn:ClearAllPoints()
         btn:SetPoint("TOPLEFT", container, "TOPLEFT", 4, yOffset)
         btn:SetText(chName)
-        btn:SetScript("OnClick", function() self:SwitchChannel(chName) end)
+        btn:SetScript("OnClick", function()
+            self:SwitchChannel(chName)
+        end)
         yOffset = yOffset - 26
         index = index + 1
     end
@@ -173,10 +203,20 @@ function ChatFrame:GetChannelList()
     local list = { "ALL", "SYSTEM", "COMBAT", "SAY", "YELL", "PARTY", "RAID", "GUILD", "OFFICER", "WHISPER", "BNWHISPER", "EMOTE", "BATTLEGROUND", "INSTANCE", "RAIDWARNING" }
     if self.db.profile.channels then
         for chName, enabled in pairs(self.db.profile.channels) do
-            if enabled then tinsert(list, chName) end
+            if enabled then
+                tinsert(list, chName)
+            end
         end
     end
-    table.sort(list, function(a, b) if a=="ALL" then return true elseif b=="ALL" then return false else return a < b end end)
+    table.sort(list, function(a, b)
+        if a == "ALL" then
+            return true
+        elseif b == "ALL" then
+            return false
+        else
+            return a < b
+        end
+    end)
     return list
 end
 
@@ -190,7 +230,8 @@ function ChatFrame:SendSmartMessage(text)
         elseif cmd == "p" or cmd == "party" then channel = "PARTY"
         elseif cmd == "ra" or cmd == "raid" then channel = "RAID"
         elseif cmd == "g" or cmd == "guild" then channel = "GUILD"
-        elseif cmd == "o" or cmd == "officer" then channel = "OFFICER" end
+        elseif cmd == "o" or cmd == "officer" then channel = "OFFICER"
+        end
         text = text:gsub("^/%S+%s*", "")
     end
     self:SendToBlizzard(text, channel)
@@ -198,26 +239,55 @@ function ChatFrame:SendSmartMessage(text)
 end
 
 function ChatFrame:SendToBlizzard(text, channel)
-    local chatType = channel
+    -- Must remain within Blizzard's policy. E.g., no automation.
     if channel == "WHISPER" or channel == "BNWHISPER" then return end
-    SendChatMessage(text, chatType)
+    SendChatMessage(text, channel)
 end
 
 function ChatFrame:AddIncoming(text, sender, channel)
     if not self.messageFrame or not self.db then return end
-    if addon.ChatModeration and addon.ChatModeration:IsMuted(sender) then return end
-    if addon.ChatModeration then text = addon.ChatModeration:FilterMessage(text) end
-    if addon.History then addon.History:AddMessage(text, sender, channel) end
-    if self:ShouldDisplayChannel(channel) then self:AddMessageToFrame(text, channel, sender) end
+
+    -- Mute check
+    if addon.ChatModeration and addon.ChatModeration:IsMuted(sender) then
+        return
+    end
+
+    -- Basic chat moderation
+    if addon.ChatModeration then
+        text = addon.ChatModeration:FilterMessage(text)
+    end
+
+    -- Regex filters
+    if addon.RegexFilter then
+        text = addon.RegexFilter:ApplyFilters(text)
+        if text == "" then
+            return -- blocked
+        end
+    end
+
+    -- Advanced linking expansions
+    if addon.AdvancedLinking and self.db.profile.advancedLinkingEnabled then
+        text = addon.AdvancedLinking:ProcessIncoming(text)
+    end
+
+    if addon.History then
+        addon.History:AddMessage(text, sender, channel)
+    end
+
+    if self:ShouldDisplayChannel(channel) then
+        self:AddMessageToFrame(text, channel, sender)
+    end
 end
 
 function ChatFrame:ShouldDisplayChannel(ch)
-    return self.activeChannel == "ALL" or self.activeChannel == ch
+    return (self.activeChannel == "ALL" or self.activeChannel == ch)
 end
 
 function ChatFrame:AddMessageToFrame(text, channel, sender)
     local final = ""
-    if self.db.profile.timestamps then final = final .. format("|cff808080[%s]|r ", date(self.db.profile.timestampFormat)) end
+    if self.db.profile.timestamps then
+        final = final .. format("|cff808080[%s]|r ", date(self.db.profile.timestampFormat))
+    end
     if sender and sender ~= "" then
         final = final .. format("|cffFFFFFF%s|r: ", sender)
     end
@@ -232,33 +302,37 @@ end
 function ChatFrame:SwitchChannel(chName)
     self.activeChannel = chName
     self.messageFrame:Clear()
+
+    -- Re-display pinned messages
     for _, pin in ipairs(self.pinnedMessages) do
         self.messageFrame:AddMessage("|cffFFD700[PINNED]|r " .. pin)
     end
-    if self.activeChannel == "ALL" then
-        if addon.History and addon.History.db then
-            local stor = addon.History.db.profile.messageHistory
-            if stor then
-                for chName, arr in pairs(stor) do
+
+    -- Load from chat history
+    if addon.History and addon.History.db then
+        local stor = addon.History.db.profile.messageHistory
+        if stor then
+            if chName == "ALL" then
+                for storedChannel, arr in pairs(stor) do
                     for i = #arr, 1, -1 do
                         local msgData = arr[i]
                         self:AddMessageToFrame(msgData.text, msgData.channel, msgData.sender)
                     end
                 end
-            end
-        end
-    else
-        if addon.History and addon.History.db then
-            local stor = addon.History.db.profile.messageHistory
-            if stor and stor[chName] then
-                for i = #stor[chName], 1, -1 do
-                    local m = stor[chName][i]
-                    self:AddMessageToFrame(m.text, m.channel, m.sender)
+            else
+                if stor[chName] then
+                    for i = #stor[chName], 1, -1 do
+                        local m = stor[chName][i]
+                        self:AddMessageToFrame(m.text, m.channel, m.sender)
+                    end
                 end
             end
         end
     end
     self.messageFrame:ScrollToBottom()
+    if self.watermark then
+        self.watermark:SetText(chName)
+    end
 end
 
 function ChatFrame:PinMessage(msg)
@@ -289,9 +363,12 @@ end
 
 function ChatFrame:FilterMessages(searchText)
     self.messageFrame:Clear()
-    for _, msg in ipairs(self.db.profile.messageHistory or {}) do
-        if msg.text:lower():find(searchText:lower()) then
-            self:AddMessageToFrame(msg.text, msg.channel, msg.sender)
+    for ch, arr in pairs(self.db.profile.messageHistory or {}) do
+        for i = #arr, 1, -1 do
+            local msg = arr[i]
+            if msg.text and msg.text:lower():find(searchText:lower()) then
+                self:AddMessageToFrame(msg.text, msg.channel, msg.sender)
+            end
         end
     end
 end

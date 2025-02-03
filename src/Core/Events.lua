@@ -44,29 +44,28 @@ local EVENT_MAP = {
     CHAT_MSG_GUILD_ACHIEVEMENT = "GUILDACHV",
 }
 
+local chatEvents = {
+    "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER",
+    "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER", "CHAT_MSG_RAID_WARNING",
+    "CHAT_MSG_GUILD", "CHAT_MSG_OFFICER", "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM",
+    "CHAT_MSG_BN_WHISPER", "CHAT_MSG_BN_WHISPER_INFORM", "CHAT_MSG_EMOTE",
+    "CHAT_MSG_TEXT_EMOTE", "CHAT_MSG_SYSTEM", "CHAT_MSG_CHANNEL",
+    "CHAT_MSG_COMMUNITIES_CHANNEL", "CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_INSTANCE_CHAT_LEADER",
+    "CHAT_MSG_MONSTER_SAY", "CHAT_MSG_MONSTER_YELL", "CHAT_MSG_MONSTER_PARTY",
+    "CHAT_MSG_MONSTER_EMOTE", "CHAT_MSG_MONSTER_WHISPER", "CHAT_MSG_RAID_BOSS_EMOTE",
+    "CHAT_MSG_RAID_BOSS_WHISPER", "CHAT_MSG_BG_SYSTEM_ALLIANCE",
+    "CHAT_MSG_BG_SYSTEM_HORDE", "CHAT_MSG_BG_SYSTEM_NEUTRAL", "CHAT_MSG_LOOT",
+    "CHAT_MSG_MONEY", "CHAT_MSG_SKILL", "CHAT_MSG_TRADESKILLS",
+    "CHAT_MSG_IGNORED", "CHAT_MSG_FILTERED", "CHAT_MSG_RESTRICTED",
+    "CHAT_MSG_TARGETICONS", "CHAT_MSG_GUILD_ACHIEVEMENT",
+}
+
 function Events:Initialize(addonObj)
     self.addonObj = addonObj
     addonObj.db = addonObj.db or {}
     addonObj.db.profile = addonObj.db.profile or {}
-    addonObj.db.profile.autoHideInCombat = addonObj.db.profile.autoHideInCombat or false
 
     local eventFrame = CreateFrame("Frame", nil, UIParent)
-    local chatEvents = {
-        "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER",
-        "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER", "CHAT_MSG_RAID_WARNING",
-        "CHAT_MSG_GUILD", "CHAT_MSG_OFFICER", "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM",
-        "CHAT_MSG_BN_WHISPER", "CHAT_MSG_BN_WHISPER_INFORM", "CHAT_MSG_EMOTE",
-        "CHAT_MSG_TEXT_EMOTE", "CHAT_MSG_SYSTEM", "CHAT_MSG_CHANNEL",
-        "CHAT_MSG_COMMUNITIES_CHANNEL", "CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_INSTANCE_CHAT_LEADER",
-        "CHAT_MSG_MONSTER_SAY", "CHAT_MSG_MONSTER_YELL", "CHAT_MSG_MONSTER_PARTY",
-        "CHAT_MSG_MONSTER_EMOTE", "CHAT_MSG_MONSTER_WHISPER", "CHAT_MSG_RAID_BOSS_EMOTE",
-        "CHAT_MSG_RAID_BOSS_WHISPER", "CHAT_MSG_BG_SYSTEM_ALLIANCE",
-        "CHAT_MSG_BG_SYSTEM_HORDE", "CHAT_MSG_BG_SYSTEM_NEUTRAL", "CHAT_MSG_LOOT",
-        "CHAT_MSG_MONEY", "CHAT_MSG_SKILL", "CHAT_MSG_TRADESKILLS",
-        "CHAT_MSG_IGNORED", "CHAT_MSG_FILTERED", "CHAT_MSG_RESTRICTED",
-        "CHAT_MSG_TARGETICONS", "CHAT_MSG_GUILD_ACHIEVEMENT",
-    }
-
     for _, evt in ipairs(chatEvents) do
         eventFrame:RegisterEvent(evt)
     end
@@ -94,7 +93,6 @@ function Events:Initialize(addonObj)
                 local line = string.format("[%.2f] %s -> %s : %s", (GetTime() % 60), srcName, dstName, subEvent or "")
                 addon.ChatTabs:AddIncoming(line, "CombatLog", "COMBAT")
             end
-            return
         else
             local msg, sender, _, _, channelName = ...
             local mappedChannel = EVENT_MAP[event] or "ALL"
