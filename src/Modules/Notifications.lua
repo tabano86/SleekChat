@@ -1,13 +1,13 @@
-local _, addon = ...
+local _, addon= ...
 local AceLocale= LibStub("AceLocale-3.0")
-local L = AceLocale:GetLocale("SleekChat", true)
-local SM = LibStub("LibSharedMedia-3.0")
+local L= AceLocale:GetLocale("SleekChat", true)
+local SM= LibStub("LibSharedMedia-3.0")
 
 addon.Notifications={}
-local Notifications = addon.Notifications
+local Notifications= addon.Notifications
 
 function Notifications:Initialize(addonObj)
-    self.db = addonObj.db
+    self.db= addonObj.db
 end
 
 function Notifications:ShowWhisperAlert(sender, msg)
@@ -18,8 +18,7 @@ function Notifications:ShowWhisperAlert(sender, msg)
     if self.db.profile.flashTaskbar then
         FlashClientIcon()
     end
-
-    local f = CreateFrame("Button", nil, UIParent, "BackdropTemplate")
+    local f= CreateFrame("Button", nil, UIParent,"BackdropTemplate")
     f:SetFrameStrata("DIALOG")
     f:SetSize(300,40)
     f:SetPoint("TOP",0,-150)
@@ -29,17 +28,15 @@ function Notifications:ShowWhisperAlert(sender, msg)
         edgeSize=16,
     })
     f:SetBackdropColor(0,0,0,0.8)
-    local txt = f:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    txt:SetPoint("CENTER")
+    local txt= f:CreateFontString(nil,"OVERLAY","GameFontNormal")
+    txt:SetPoint("TOPLEFT")
     txt:SetText(string.format(L.whisper_notification, sender))
-
     f:SetScript("OnClick", function()
         if addon.ChatFrame and addon.ChatFrame.SwitchChannel then
-            addon.ChatFrame:SwitchChannel("WHISPER") -- or "WHISPER:"..sender
+            addon.ChatFrame:SwitchChannel("WHISPER")
         end
         f:Hide()
     end)
-
     UIFrameFadeOut(f,5,1,0)
     f:SetScript("OnFadeComplete", function() f:Hide() end)
 end

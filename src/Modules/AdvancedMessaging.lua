@@ -1,20 +1,18 @@
-local _, addon = ...
-addon.AdvancedMessaging = {}
-local AdvancedMessaging = addon.AdvancedMessaging
+local _, addon= ...
+addon.AdvancedMessaging={}
+local AdvancedMessaging= addon.AdvancedMessaging
 
-function AdvancedMessaging:ProcessOutgoing(text, channel, sender)
-    -- e.g. replace :smile: with an icon,
-    -- or highlight "@User" in orange
+function AdvancedMessaging:ProcessOutgoing(text,channel,sender)
+    -- e.g. replace emotes or highlight @someone
     return text
 end
 
 function AdvancedMessaging:ProcessIncoming(text, sender, channel)
-    -- do same expansions. Or mention detection
     return text
 end
 
 function AdvancedMessaging:SwitchChannel(channel)
-    -- if you track advanced state for that channel
+    -- if you want to do special logic on channel switch
 end
 
 return AdvancedMessaging

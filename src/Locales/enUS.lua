@@ -1,42 +1,31 @@
-local L = LibStub("AceLocale-3.0"):NewLocale("SleekChat", "enUS", true, true)
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+<!-- Libraries (Ace, etc.) -->
+<Script file="Libs\LibStub\LibStub.lua"/>
+<Script file="Libs\AceAddon-3.0\AceAddon-3.0.lua"/>
+<Script file="Libs\AceDB-3.0\AceDB-3.0.lua"/>
+<Script file="Libs\AceConfig-3.0\AceConfig-3.0.lua"/>
+<Script file="Libs\AceConsole-3.0\AceConsole-3.0.lua"/>
+<Script file="Libs\AceEvent-3.0\AceEvent-3.0.lua"/>
+<Script file="Libs\AceTimer-3.0\AceTimer-3.0.lua"/>
+<Script file="Libs\AceLocale-3.0\AceLocale-3.0.lua"/>
+<Script file="Libs\LibSharedMedia-3.0\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 
-L.addon_loaded = "SleekChat v%s loaded"
-L.show_default_chat = "Show Default Chat"
-L.show_default_chat_desc = "Keep Blizzard's chat frames visible"
-L.debug_mode = "Debug Mode"
-L.debug_mode_desc = "Show debug logs"
-L.debug_enabled  = "Debug mode enabled"
-L.debug_disabled = "Debug mode disabled"
+<!-- Localization -->
+<Include file="Locales\enUS.lua"/>
 
-L.timestamps = "Timestamps"
-L.timestamps_desc = "Show timestamps in chat"
-L.timestamp_format = "Timestamp Format"
-L.timestamp_format_desc = "Use e.g. [%H:%M]"
-L.general_settings = "General Settings"
+<!-- Core modules -->
+<Include file="Core\Core.lua"/>
+<Include file="Core\Config.lua"/>
+<Include file="Core\Events.lua"/>
 
-L.open_url_dialog = "Open URL:"
-L.open = "Open"
-L.cancel= "Cancel"
-L.url_copied = "URL copied to clipboard"
-L.invalid_format = "Invalid timestamp format"
-L.settings_reset = "Settings reset to defaults"
+<!-- Additional modules -->
+<Include file="Modules\Hooks.lua"/>
+<Include file="Modules\History.lua"/>
+<Include file="Modules\ChatModeration.lua"/>
+<Include file="Modules\Notifications.lua"/>
+<Include file="Modules\Integration.lua"/>
+<Include file="Modules\AdvancedMessaging.lua"/>
 
-L.appearance_settings = "Appearance"
-L.dark_mode = "Dark Mode"
-L.dark_mode_desc = "Toggle dark theme"
-L.background_opacity = "Background Opacity"
-L.background_opacity_desc = "Transparency for chat window"
-L.font = "Font"
-L.font_size = "Font Size"
-
-L.notifications_settings = "Notifications"
-L.enable_notifications= "Enable Notifications"
-L.notification_sound = "Notification Sound"
-L.notification_sound_desc = "Sound to play"
-L.sound_volume = "Sound Volume"
-L.sound_volume_desc= "Volume"
-L.flash_taskbar= "Flash Taskbar"
-
-L.whisper_notification = "New whisper from %s"
-
-return L
+<!-- The tab-based UI -->
+<Include file="Modules\ChatTabs.lua"/>
+</Ui>

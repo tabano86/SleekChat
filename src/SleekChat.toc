@@ -1,11 +1,11 @@
 ## Interface: 11400
-## Title: SleekChat
-## Notes: A sleek, dynamic chat addon for WoW
+## Title: SleekChat (Tabs + Hooks + Full)
+## Notes: A custom chat system capturing everything
 ## Author: You
-## Version: 1.0
+## Version: 2.0
 
-# Load the library + module references
+## Dependencies: Ace3, LibSharedMedia-3.0
+
 Embeds.xml
 
-# Addon entry point
 SleekChat.lua
