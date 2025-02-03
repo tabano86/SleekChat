@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Lua
+        uses: leafo/gh-actions-lua@v8
+        with:
+          luaVersion: "5.1"
+
+      - name: Install luacheck
+        run: |
+          sudo luarocks install luacheck
+
+      - name: Run luacheck
+        run: |
+          luacheck Modules/ Config/ --no-color

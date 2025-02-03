@@ -11,7 +11,7 @@ $wowAddonsPath = "C:\Program Files (x86)\World of Warcraft\_classic_era_\Interfa
 $sourceAddonPath = $PSScriptRoot
 
 # Directory to copy contents from
-$sourceFolder = "src"
+$sourceFolder = ""
 
 # ==================================
 # Functions
