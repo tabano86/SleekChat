@@ -33,6 +33,10 @@ function SleekChat:OnEnable()
     if addon.History then
         addon.History:Initialize(self)
     end
+    -- **Initialize ChatModeration** so self.db is set
+    if addon.ChatModeration then
+        addon.ChatModeration:Initialize(self)
+    end
     if addon.Notifications then
         addon.Notifications:Initialize(self)
     end
@@ -43,6 +47,7 @@ function SleekChat:OnEnable()
         addon.ChatFrame.mainFrame:Show()
     end
 end
+
 
 --------------------------------------------------------------------------------
 -- Hide the default Blizzard chat frames

@@ -1,67 +1,40 @@
 local _, addon = ...
 local Events = {}
 
--- We won't hardcode every single channel here, but some ephemeral ones:
-local CHANNEL_COMMANDS = {
-    SAY = { event = "CHAT_MSG_SAY", prefix = "/s " },
-    YELL = { event = "CHAT_MSG_YELL", prefix = "/y " },
-    PARTY = { event = "CHAT_MSG_PARTY", prefix = "/p " },
-    GUILD = { event = "CHAT_MSG_GUILD", prefix = "/g " },
-    RAID = { event = "CHAT_MSG_RAID", prefix = "/ra " },
-    WHISPER = { event = "CHAT_MSG_WHISPER", prefix = "/w " },
-    TRADE = { event = "CHAT_MSG_CHANNEL", channel = "Trade" },
-    LOCALDEFENSE = { event = "CHAT_MSG_CHANNEL", channel = "LocalDefense" },
-    LOOKINGFORGROUP = { event = "CHAT_MSG_CHANNEL", channel = "LookingForGroup" },
-    -- Player-joined channels (Trade, LocalDefense, LFG, custom) come through "CHAT_MSG_CHANNEL"
-}
-
 function Events:Initialize(addonObj)
     local frame = CreateFrame("Frame")
 
-    -- Register the known events
-    for _, data in pairs(CHANNEL_COMMANDS) do
-        frame:RegisterEvent(data.event)
+    -- We register chat events we want:
+    local chatEvents = {
+        "CHAT_MSG_SAY",
+        "CHAT_MSG_YELL",
+        "CHAT_MSG_PARTY",
+        "CHAT_MSG_GUILD",
+        "CHAT_MSG_RAID",
+        "CHAT_MSG_WHISPER",
+        "CHAT_MSG_CHANNEL",
+        "CHAT_MSG_SYSTEM",
+    }
+    for _, e in ipairs(chatEvents) do
+        frame:RegisterEvent(e)
     end
-    frame:RegisterEvent("CHAT_MSG_CHANNEL") -- covers "Trade", "LocalDefense", etc.
-    frame:RegisterEvent("CHAT_MSG_SYSTEM")
-
-    -- optional: fade in/out on combat
-    frame:RegisterEvent("PLAYER_REGEN_DISABLED")
-    frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     frame:SetScript("OnEvent", function(_, event, ...)
+        if not addon.ChatFrame or not addon.ChatFrame.AddIncoming then return end
         if event == "CHAT_MSG_SYSTEM" then
-            -- e.g. system messages
-            addon.ChatFrame:AddMessage(..., "SYSTEM")
-            return
-        elseif event == "PLAYER_REGEN_DISABLED" then
-            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.mainFrame then
-                addon.ChatFrame.mainFrame:SetAlpha(0)
-            end
-            return
-        elseif event == "PLAYER_REGEN_ENABLED" then
-            if addonObj.db.profile.autoHideInCombat and addon.ChatFrame.mainFrame then
-                addon.ChatFrame.mainFrame:SetAlpha(1)
-            end
+            -- could display system messages if you want
             return
         elseif event == "CHAT_MSG_CHANNEL" then
             local msg, sender, _, _, channelName = ...
-            -- Channel name might come with region suffix, e.g. "Trade - City"
-            -- We typically store just "Trade" or the full string.
-            addon.ChatFrame:AddMessage(msg, channelName, sender)
+            addon.ChatFrame:AddIncoming(msg, sender, channelName)
         else
-            -- Possibly one of the known ones from CHANNEL_COMMANDS
+            -- e.g. "CHAT_MSG_SAY" => the channel is "SAY"
             local msg, sender = ...
-            for ch, data in pairs(CHANNEL_COMMANDS) do
-                if event == data.event then
-                    addon.ChatFrame:AddMessage(msg, ch, sender)
-                    if ch == "WHISPER" then
-                        addon.Notifications:ShowWhisperAlert(sender, msg)
-                        addon.ChatFrame:HandleWhisper(sender, msg)
-                    end
-                    break
-                end
+            local channel = event:match("CHAT_MSG_(%S+)")
+            if channel then
+                channel = channel:upper() -- "SAY","YELL","PARTY","WHISPER", etc.
             end
+            addon.ChatFrame:AddIncoming(msg, sender, channel or "ALL")
         end
     end)
 end

@@ -4,21 +4,25 @@ local ChatModeration = addon.ChatModeration
 
 ChatModeration.blockedKeywords = { "badword1", "badword2" }
 
-function ChatModeration:FilterMessage(text)
-    for _, keyword in ipairs(self.blockedKeywords) do
-        text = text:gsub(keyword, string.rep("*", #keyword))
-    end
-    return text
+function ChatModeration:Initialize(addonObj)
+    self.db = addonObj.db -- fix the "nil db" issue
 end
 
 function ChatModeration:IsMuted(sender)
-    local muteList = addon.db.profile.muteList or {}
-    for _, m in ipairs(muteList) do
-        if m:lower() == sender:lower() then
+    local mutes = self.db.profile.muteList or {}
+    for _, name in ipairs(mutes) do
+        if name:lower() == sender:lower() then
             return true
         end
     end
     return false
+end
+
+function ChatModeration:FilterMessage(text)
+    for _, kw in ipairs(self.blockedKeywords) do
+        text = text:gsub(kw, string.rep("*", #kw))
+    end
+    return text
 end
 
 return ChatModeration
