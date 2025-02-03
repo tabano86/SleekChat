@@ -24,14 +24,14 @@ Modules/Linking/Linking.lua
 # QoL
 Modules/QoL/QoL.lua
 
-# Future
+# Future / Roadmap
 Modules/FutureRoadmap/CombatLogEnhancement.lua
 
 # Config
 Config/Config.lua
 
-# docs not loaded in-game
-# .github not loaded in-game
-# SavedVariables (this file is not loaded, data is stored by the engine)
+# Docs (not loaded in-game)
+# .github (not loaded in-game)
+# SavedVariables (WoW handles separately)
 
-# End
+# End of TOC

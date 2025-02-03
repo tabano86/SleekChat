@@ -7,7 +7,6 @@ local Linking = {}
 SleekChat_Linking = Linking
 
 local frame = CreateFrame("Frame", "SleekChatLinkingFrame", UIParent)
-
 frame:RegisterEvent("PLAYER_LOGIN")
 
 function Linking:OnPlayerLogin()
@@ -38,7 +37,6 @@ function Linking:RegisterSlashCommands()
 
     SLASH_SLEEKCHAT_LINKQUEST1 = "/linkquest"
     SlashCmdList["SLEEKCHAT_LINKQUEST"] = function(msg)
-        -- For demonstration, assume we look up a quest by name
         if not msg or msg == "" then
             print("Usage: /linkquest <quest name>")
             return
@@ -53,8 +51,8 @@ function Linking:RegisterSlashCommands()
 end
 
 function Linking:FindItemIDByName(name)
-    -- Simplified: in reality, you'd need a more robust approach or rely on already-cached items
-    -- This is a placeholder for demonstration.
+    -- Simplified: in reality, you'd need a more robust approach or rely on in-game caches
+    -- This is a placeholder for demonstration only.
     for itemID = 1, 200000 do
         local n = GetItemInfo(itemID)
         if n and string.lower(n) == string.lower(name) then
@@ -65,7 +63,7 @@ function Linking:FindItemIDByName(name)
 end
 
 function Linking:GenerateQuestLink(questName)
-    -- Stub: The real logic would search the quest log or an internal database
+    -- Stub: The real logic would search the quest log or an internal DB
     local questID = 12345 -- hypothetical
     local questLink = "|cffffff00|Hquest:"..questID..":60|h["..questName.."]|h|r"
     return questLink

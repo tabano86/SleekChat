@@ -16,7 +16,7 @@ local function OnUpdate(self, elapsed)
 
     if self.lastUpdate > 5 then
         if (GetTime() - (self.lastAction or 0)) > idleThreshold then
-            -- Possibly do something like auto-scroll lock
+            -- Example: auto-lock chat frames so they don't keep scrolling
             for i = 1, NUM_CHAT_WINDOWS do
                 local cf = _G["ChatFrame"..i]
                 if cf and not cf.isLocked then
@@ -75,6 +75,7 @@ function QoL:SearchCurrentChat(query)
     local cf = SELECTED_CHAT_FRAME
     if not cf then return end
 
+    -- Each ChatFrame region might be a FontString or other UI elements
     local lines = { cf:GetRegions() }
     local foundSomething = false
     for _, region in ipairs(lines) do

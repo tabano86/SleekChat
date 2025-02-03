@@ -2,11 +2,12 @@
      SleekChat v2.0 - CoreChat.xml
      Basic UI definitions, if needed
      ========================================================================== -->
-<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <!-- Example: We can define frames or FontStrings here if we want static UI elements -->
     <Frame name="SleekChatCoreFrameXML" parent="UIParent" enableMouse="false" movable="false">
         <Scripts>
-            <!-- This can be used if we want an OnLoad script, but in many cases we do it in Lua. -->
+            <!-- This can be used if we want an OnLoad script, but in many cases we do it purely in Lua. -->
         </Scripts>
     </Frame>
 </Ui>

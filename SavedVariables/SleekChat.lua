@@ -1,6 +1,5 @@
--- This file is typically empty or minimal. WoW uses the TOC to direct saved variable usage.
--- The actual saved data will be stored in the WTF folder under <Account>/SavedVariables/SleekChat.lua
--- This stub is just for reference to show we handle it here.
+-- This file is typically empty or minimal. WoW uses the TOC to direct the "SleekChatDB" saved variable here.
+-- The actual saved data will be stored in the WTF folder under <Account>/SavedVariables/SleekChat.lua.
 --
 -- Example structure if needed:
 -- SleekChatDB = {

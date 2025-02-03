@@ -2,8 +2,10 @@
      SleekChat v2.0 - UIEnhancements.xml
      Defines any additional UI components for Enhancements
      ========================================================================== -->
-<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <!-- Example container or custom config panel (stub) -->
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <!-- Example config panel (stub) -->
     <Frame name="SleekChatUIEnhConfigPanel" parent="UIParent" hidden="true">
         <Size x="400" y="300"/>
         <Anchors>
@@ -12,7 +14,7 @@
         <Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background"/>
         <Scripts>
             <OnLoad>
-                -- Stub: Could register for ADDON_LOADED here if needed
+                -- Stub: Could register for ADDON_LOADED if needed
             </OnLoad>
         </Scripts>
     </Frame>

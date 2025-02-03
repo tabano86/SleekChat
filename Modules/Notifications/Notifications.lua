@@ -14,7 +14,7 @@ frame:RegisterEvent("CHAT_MSG_YELL")
 frame:RegisterEvent("CHAT_MSG_PARTY")
 frame:RegisterEvent("CHAT_MSG_RAID")
 frame:RegisterEvent("CHAT_MSG_WHISPER")
--- etc, register for all relevant chat events
+-- etc, add other relevant chat events as needed
 
 local function CheckForKeywords(msg, event, sender)
     local keywords = SleekChat_Config.Get("notifications", "keywords")
@@ -45,7 +45,7 @@ function Notifications:TriggerAlert(keyword, msg, sender, event)
     if SleekChat_Config.Get("notifications", "playSound") then
         PlaySound(SOUNDKIT.RAID_WARNING, "Master")
     end
-    -- Possibly flash screen or show highlight
+    -- Possibly show a UI error or highlight
     UIErrorsFrame:AddMessage("Keyword ["..keyword.."] from "..sender..": "..msg, 1.0, 1.0, 0.0, 53, 5)
 end
 
@@ -70,7 +70,7 @@ local function OnChatEvent(self, event, msg, sender, ...)
     CheckForKeywords(msg, event, sender)
     CheckForRegex(msg)
 
-    -- Also pass message on (we're not filtering it out, just hooking)
+    -- Let normal chat processing continue (we're hooking, not filtering out)
 end
 
 frame:SetScript("OnEvent", OnChatEvent)

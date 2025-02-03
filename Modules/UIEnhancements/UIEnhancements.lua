@@ -13,7 +13,7 @@ frame:RegisterEvent("PLAYER_LOGIN")
 local function OnChatMsg(self, event, message, sender, ...)
     -- Example pseudo-code for auto-splitting channels:
     if event == "CHAT_MSG_TRADE" then
-        -- If user has "SplitChatTrade" enabled in config, move these messages to a dedicated frame
+        -- If user has "splitTrade" enabled in config, move these messages to a dedicated frame
         local separateTrade = SleekChat_Config.Get("ui", "splitTrade")
         if separateTrade then
             UIEnhancements:RedirectChatToCustomFrame("Trade", event, message, sender, ...)
@@ -24,7 +24,6 @@ local function OnChatMsg(self, event, message, sender, ...)
     return false  -- let normal chat process
 end
 
--- Example redirection function
 function UIEnhancements:RedirectChatToCustomFrame(frameName, event, message, sender, ...)
     local chatFrame = self:GetOrCreateTab(frameName)
     if chatFrame then
@@ -70,18 +69,6 @@ function UIEnhancements:InitializeAutoHideInput()
     end
 end
 
--- Player login initialization
-frame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_LOGIN" then
-        UIEnhancements:InitializeAutoHideInput()
-        UIEnhancements:ApplyCustomFonts()
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", OnChatMsg)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", OnChatMsg)
-        ChatFrame_AddMessageEventFilter("CHAT_MSG_TRADE", OnChatMsg)
-        -- Add more filters if needed
-    end
-end)
-
 function UIEnhancements:ApplyCustomFonts()
     local fontPath = SleekChat_Config.Get("ui", "fontPath")
     if not fontPath then return end
@@ -93,3 +80,16 @@ function UIEnhancements:ApplyCustomFonts()
         end
     end
 end
+
+-- Player login initialization
+frame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_LOGIN" then
+        UIEnhancements:InitializeAutoHideInput()
+        UIEnhancements:ApplyCustomFonts()
+
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", OnChatMsg)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY", OnChatMsg)
+        ChatFrame_AddMessageEventFilter("CHAT_MSG_TRADE", OnChatMsg)
+        -- Add more filters if needed
+    end
+end)

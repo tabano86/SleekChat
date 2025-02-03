@@ -12,8 +12,9 @@ frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 function CombatLogEnh:OnCombatLogEvent(...)
     -- Example: group repeated events
     -- For future implementation. Currently a stub.
-    local timestamp, subevent, hideCaster, srcGUID, srcName, srcFlags, dstGUID, dstName, dstFlags, spellID, spellName = ...
-    -- [Implement grouping logic here]
+    local timestamp, subevent, hideCaster, srcGUID, srcName, srcFlags,
+    dstGUID, dstName, dstFlags, spellID, spellName = ...
+    -- [Implement grouping logic here if desired]
 end
 
 frame:SetScript("OnEvent", function(self, event, ...)
